@@ -29,6 +29,8 @@ declare module 'vue' {
     Print: typeof import('./src/components/print.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    Team: typeof import('./src/components/team.vue')['default']
+    Team_editbox: typeof import('./src/components/team_editbox.vue')['default']
     Template: typeof import('./src/components/template.vue')['default']
     Template_editbox: typeof import('./src/components/template_editbox.vue')['default']
     Warn_reagent: typeof import('./src/components/warn_reagent.vue')['default']

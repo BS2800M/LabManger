@@ -17,10 +17,10 @@
           <li><RouterLink to="/warn_reagent"><button >提醒</button></RouterLink></li>
         </ul>
       </li>
-      <li><button>环境  <svg class="icon"><use xlink:href="#icon-wendu"></use></svg></button>
+      <li><button>信息  <svg class="icon"><use xlink:href="#icon-wendu"></use></svg></button>
         <ul>
-          <li><button>模板</button></li>
-          <li><button>记录</button></li>
+          <li><RouterLink to="/team"><button>检验小组</button></RouterLink></li>
+          <li><button>检验组套</button></li>
         </ul>
       </li>
       <li><RouterLink to="/loginout"><button>登出<svg class="icon"> <use xlink:href="#icon-dengchu"></use></svg></button></RouterLink>   </li>

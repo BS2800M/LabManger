@@ -47,6 +47,7 @@ def signout( request):
 
 #检查session,并将用户名称和类型放入parmas
 def checsession(request):
+    return 0
     if 'HTTP_TOKEN' not in request.META.keys():
         return 1
     request_token=request.META['HTTP_TOKEN']

@@ -5,7 +5,7 @@ import homebar from '@/components/homebar.vue'
 import home from '@/components/home.vue'
 import print from '@/components/print.vue'
 import loginout from '../components/loginout.vue'
-
+import team from '@/components/team.vue'
 // import reagent_template from '@/components/reagent_template.vue'
 // import lot from '@/components/lot.vue'
 // import inbound from '@/components/inbound.vue'
@@ -59,6 +59,10 @@ const router=createRouter({
         {
             path:'/warn_reagent',
             components:{main:warn_reagent,bar:homebar}
+        },
+        {
+            path:'/team',
+            components:{main:team,bar:homebar}
         },
         {
             path:'/print',

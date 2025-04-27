@@ -12,6 +12,7 @@
 
 import {ref,defineExpose} from 'vue'
 import {api_delete_Template,api_delete_lot,api_delete_operation} from '@/api/reagent_manger.js'
+import {api_delete_Team} from '@/api/test_manger.js'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 let messagebox_text = ref('') //消息弹窗的文本
 let messageboxstyle=ref(null) // 显示消息框
@@ -21,7 +22,6 @@ let message_button1text=ref() //更改按钮1的文本
 let message_button2text=ref() //更改按钮2的文本
 let message_button1function=ref() //更改按钮1的函数
 let message_button2function=ref() //更改按钮2的函数
-
 let seleteid=null
 
 
@@ -31,7 +31,8 @@ defineExpose({
   messagebox_delete_Template,
   messagebox_delete_Lot,
   messagebox_waitng,
-  messagebox_delete_operation
+  messagebox_delete_operation,
+  messagebox_delete_Team
 });
 
 
@@ -89,6 +90,13 @@ function messagebox_waitng(showtext){
   openmessagebox(showtext,"等待中","等待中",undefined,undefined)
 }
 
+function messagebox_delete_Team(id){
+  seleteid=id
+  openmessagebox("是否确认删除","删除","取消",delete_team,closemessagebox)
+}
+
+
+
 
 function delete_Template(){
   api_delete_Template(seleteid)
@@ -118,6 +126,18 @@ function delete_operation(){
   .then(data=>{
     closemessagebox()
     eventBus.emit(EVENT_TYPES.OPERATION_UPDATED)
+  })
+  .catch(err=>{
+    messagebox_warn(err)
+  })
+}
+
+
+function delete_team(){
+  api_delete_Team(seleteid)
+  .then(data=>{
+    closemessagebox()
+    eventBus.emit(EVENT_TYPES.TEAM_UPDATED)
   })
   .catch(err=>{
     messagebox_warn(err)

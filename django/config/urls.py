@@ -19,7 +19,7 @@ from mylogin.views import signin,signout
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/Reagent_Manger/',include('Reagent_Manger.urls')),
-    path('api/Test_Kit/',include('Test_Kit.urls')),
+    path('api/Test_Manger/',include('Test_Manger.urls')),
     path('api/signin/',signin),
     path('api/signout/',signout),
 

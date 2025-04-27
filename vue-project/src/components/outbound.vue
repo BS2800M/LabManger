@@ -25,12 +25,23 @@ let response_message=ref("")
 function outbound(){
   api_outbound(barcodenumber.value)
   .then(data=>{
-    barcodenumber.value=""
-    ElMessage({
-      message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-      h('span', null, data.data.msg)]),
-    })
+    if (barcodenumber.value==""){
+        ElMessage({
+          message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+          h('span', null, "请输入试剂条码号！")]),
+        })
+    }
+    else{
+        barcodenumber.value=""
+        ElMessage({
+          message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+          h('span', null, data.data.msg)]),
+        })
+    }
+
   })
+  
+
   .catch(err=>{
     to_messagebox.value.messagebox_warn(err)
                 })

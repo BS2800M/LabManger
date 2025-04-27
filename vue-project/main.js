@@ -73,7 +73,7 @@ function createWindow () {
   // mainWindow.loadURL('http://localhost:3000') 
   // printWindow.loadURL('http://localhost:3000/#/print')  
   // // 打开开发工具
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
   // printWindow.webContents.openDevTools()
   mainWindow.setMenu(null);
 }

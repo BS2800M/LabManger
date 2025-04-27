@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Reagent_Manger.apps.ReagentMangerConfig',
     'mylogin.apps.MyloginConfig',
-    'Test_Kit'
+    'Test_Manger'
 ]
             
 MIDDLEWARE = [
