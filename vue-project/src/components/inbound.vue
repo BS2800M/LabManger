@@ -77,7 +77,7 @@ const messageboxRef = ref()
 
 // 使用reactive统一管理状态
 const formData = reactive({
-    edit_number: 0, // 出库数量
+    edit_number: 1, // 出库数量
     editbox_disablebutton: true, // 是否禁用按钮 默认禁用
     edit_reagent_seletevalue: null, // 选择试剂下拉菜单对应的绑定值
     edit_lot_seletevalue: null, // 选择批号下拉菜单对应的绑定值
@@ -140,6 +140,7 @@ function select_reagentchange(){ //当选择的试剂发生改变时
     if (formData.edit_reagent_seletevalue != null) {
         formData.edit_reagent_id = formData.allreagentlist[formData.edit_reagent_seletevalue].id
         list_alllot()
+        checkinput()
         formData.edit_lot_seletevalue = null
 }
 }
@@ -148,6 +149,7 @@ function select_lotchange(){//当选择的批号发生改变时
     if (formData.edit_lot_seletevalue != null) {
             formData.edit_lot_id = formData.alllotlist[formData.edit_lot_seletevalue].id
         }
+        checkinput()
 }
 
 function ready_inbound() {
@@ -248,23 +250,6 @@ z-index: 0;
   background-color: rgb(255, 255, 255);
 }
 
-:deep(.searchinput .el-input__wrapper),
-:deep(.searchinput .el-input__inner),
-:deep(.searchinput .el-input-number__increase),
-:deep(.searchinput .el-input-number__decrease) {
-  line-height: 16px;
-  background-color: rgb(44, 62, 80);
-  --el-input-focus-border-color:white;
-  color: white;
-}
-:deep(.searchinput .el-select__wrapper.is-filterable),
-:deep(.searchinput .el-select),
-:deep(.searchinput .el-select__placeholder)
-{
-  background-color: #2c3e50;
-  color: white;
-  --el-select-input-color:rgb(255, 255, 255);
-}
 .icon {
   width: 1em;
   height: 1em;

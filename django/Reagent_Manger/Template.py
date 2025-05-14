@@ -8,6 +8,9 @@ from mylogin.views import checsession
 import traceback
 
 
+from django.core.cache import cache
+from django.db.models import QuerySet
+
 def Reagent_Template_Action(request):
     if checsession(request)==1:
         return JsonResponse({"status": 1, "msg": "非法请求"})
@@ -24,6 +27,8 @@ def Reagent_Template_Action(request):
     return JsonResponse({"status": "1", "msg": "不支持该类型操作"})
 
 def add_Template(request):
+    cache.delete("template_list")
+    cache.delete("template_page")
     try:
         with transaction.atomic():
             adddata=request.params["data"]
@@ -46,23 +51,34 @@ def add_Template(request):
     except Exception:
         traceback.print_exc()
         return JsonResponse({"status": "1", "msg": "添加模板失败"})
+    
 def list_Template(request):
     searchname=request.params["searchname"]
     pagenumber=request.params["pagenumber"]
-    if searchname=="":
-        listdata=Reagent_Template.objects.filter(using=True).order_by("-creation_time")
-    else:
-        listdata=Reagent_Template.objects.filter(name__icontains=searchname,using=True).order_by("-creation_time")
-    paginator=Paginator(listdata,13)
-    page=paginator.get_page(pagenumber)
+
+    if searchname=="" and pagenumber=="1" and cache.get("template_list")!=None and cache.get("template_page")!=None:
+        return JsonResponse({"status":"0","list":cache.get("template_list"),"total_pages":cache.get("template_page"),"current_page":"1"})
+
+
+    listdata=Reagent_Template.objects.filter(using=True).order_by("-creation_time")
+    if searchname!="":
+        listdata=listdata.filter(name__icontains=searchname)
     if pagenumber=="all":
         listdata=list(listdata.values())
     else:
+        paginator=Paginator(listdata,13)
+        page=paginator.get_page(pagenumber)
         listdata=list(page.object_list.values())
+    
+    if searchname=="" and pagenumber=="1":
+        cache.set("template_list",listdata,60)
+        cache.set("template_page",paginator.num_pages,60)
     return JsonResponse({"status":"0","list":listdata,"total_pages":paginator.num_pages,"current_page":page.number})
 
     
 def modify_Template(request):
+    cache.delete("template_list")
+    cache.delete("template_page")
     try:
         with transaction.atomic():
             modifyid=request.params["id"]
@@ -78,7 +94,7 @@ def modify_Template(request):
             modify.save()
             modify=Reagent_Warning.objects.get(reagent_id=modifyid)
             modify.cal_warn_time()
-            modify.save()
+            modify.save() 
             return JsonResponse({"status":"0","id":modifyid})
     except Exception :
         traceback.print_exc()
@@ -86,6 +102,7 @@ def modify_Template(request):
 
 def del_Template(request):
     try:
+        cache.clear()
         with transaction.atomic():
             deleteid=request.params["id"]
             delete = Reagent_Template.objects.get(id=deleteid)

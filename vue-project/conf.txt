@@ -1,1 +1,1 @@
-{"baseurl":"http://127.0.0.1:8000/api","printername":"Microsoft Print to PDF","select_printerid":"1","1":"1"}
+{"baseurl":"http://127.0.0.1:8000/api","printername":"Microsoft Print to PDF","select_printerid":"1","allow_print":false}

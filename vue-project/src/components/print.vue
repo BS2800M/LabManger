@@ -11,6 +11,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import JsBarcode from 'jsbarcode';
+import { my } from 'element-plus/es/locale/index.mjs';
 let reagentname=ref("no data")
 let lot=ref("no data")
 let barcodenumber='99999999'
@@ -26,15 +27,18 @@ let options = {
 
 async function loadstart(){
   myapi.printdata_send(async(event,args)=>{
-  for(let i in args){
-    reagentname.value=args[i].reagent__name
-    lot.value=args[i].lot__lot
-    barcodenumber=args[i].barcodenumber
-    JsBarcode('.barcode', barcodenumber,options)
-    await delay(1000)
-    myapi.print()
-  }
-})
+  let myconf= await myapi.read_conf()
+  if (myconf.allow_print==true){
+    for(let i in args){
+      reagentname.value=args[i].reagent__name
+      lot.value=args[i].lot__lot
+      barcodenumber=args[i].barcodenumber
+      JsBarcode('.barcode', barcodenumber,options)
+      await delay(1000)
+      myapi.print()
+        }
+    }
+    })
 }
 
 

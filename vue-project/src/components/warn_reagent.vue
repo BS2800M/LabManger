@@ -110,7 +110,7 @@ async  function exportToExcel() {
   }
 
 function refresh_reagent(){
-  api_refresh_reagent()
+  api_refresh_reagent(state.only_showwarn,state.current_page)
   .then(function(data){
     messageboxRef.value.messagebox_waitng("正在更正库存")
     list_reagentnumber()

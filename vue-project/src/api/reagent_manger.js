@@ -125,6 +125,19 @@ export let api_outbound=(barcodenumber)=>{
 
                         })
                   }
+
+export let api_special_outbound=(outnumber,outreagentid,outlotid)=>{
+      return myrequest.post('/Reagent_Manger/Reagent_Operation/',{
+            "action":"special_outbound",
+            "outnumber":outnumber,
+            "outreagentid":outreagentid,
+            "outlotid":outlotid
+            })
+      }      
+
+
+
+
 export let api_list_operation=(searchname_operation,searchlater_operation,searchearlier_operation,pagenumber,barcodenumber)=>{
       return myrequest.get('/Reagent_Manger/Reagent_Operation/',{
                         "action":"list_operation",     

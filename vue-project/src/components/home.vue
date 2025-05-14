@@ -8,6 +8,8 @@
       <div id="setting">
         <p>选择默认打印机</p>
         <el-select-v2 class="selectprinter"  placeholder="选择打印机" v-model="select_printerid" filterable :options="allprinter" style="width: 300px"  :height="500" @change="saveprinter_conf"/>
+        <p>是否开启条码打印</p>
+        <el-switch v-model="allow_print" size="large" active-text="开启"inactive-text="关闭"  @change="saveprinter_conf"/>
       </div>
   </div>
   <messagebox ref="to_messagebox"></messagebox>
@@ -24,6 +26,8 @@ let warn_style=ref()
 let allprinter = ref([])
 let select_printerid=ref()
 let to_messagebox=ref()
+let allow_print=ref()
+
 onMounted(list_reagentnumber)
 onMounted(readprinters)
 
@@ -58,13 +62,15 @@ async function readprinters(){
     )
   }
   select_printerid.value=data.select_printerid
+  allow_print.value=data.allow_print
 }
 
 
 function saveprinter_conf(){
   let selectname=allprinter.value[select_printerid.value].label
   let selectid=select_printerid.value
-  myapi.saveprinterconf(selectname,selectid)
+  let allowprint=allow_print.value
+  myapi.saveprinterconf(selectname,selectid,allowprint)
 }
 
 

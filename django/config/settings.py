@@ -85,8 +85,26 @@ DATABASES = {
                 'isolation_level': 'IMMEDIATE',
         }
     }
+
+
+    # 'default': {
+    # 'ENGINE': 'django.db.backends.mysql', # 数据库引擎
+    # 'NAME': 'test', # 数据库名称
+    # 'USER': 'root', # 数据库用户名
+    # 'PASSWORD': '10086', # 数据库密码
+    # 'HOST': '127.0.0.1', # 数据库主机地址
+    # 'PORT': '3306', # 数据库端口
+    # }
 }
 
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

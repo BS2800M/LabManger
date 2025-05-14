@@ -14,13 +14,14 @@ async function read_conf(){ //读取配置和打印机
  return data
 }
 
-async function saveconf(in_printername,in_select_printerid) //保存配置
+async function saveconf(in_printername,in_select_printerid,in_allowprint) //保存配置
 {
   let data= await read_conf()
   let writedata={}
   writedata.baseurl=data.baseurl
   writedata.printername=in_printername
   writedata.select_printerid=in_select_printerid
+  writedata.allow_print=in_allowprint
   writedata=JSON.stringify(writedata);
   fs.writeFileSync('./conf.txt',writedata)
 }
@@ -51,7 +52,7 @@ function createWindow () {
   })
 
   printWindow = new BrowserWindow({ 
-    show: true, 
+    show: false,  //隐藏窗口
     width: 500, 
     height: 300, 
     frame: true, // 禁用窗口框架，移除菜单和标题栏
@@ -63,9 +64,9 @@ function createWindow () {
     }
   })
   ipcMain.handle('read_conf',read_conf)
-  ipcMain.handle('save_printer',async (event,args1,args2) =>{saveconf(args1,args2)})
-  ipcMain.handle('gotoprint',async(event,args)=>{gotoprint(args)})
-  ipcMain.on('print', () =>{ printWindow.webContents.print(printOptions)}) //监听 printwindow 发送的打印命令
+  ipcMain.handle('save_printer',async (event,args1,args2,args3) =>{saveconf(args1,args2,args3)})
+  ipcMain.handle('gotoprint',async(event,args)=>{gotoprint(args)}) //监听 用户界面发出准备打印的命令发送到主进程
+  ipcMain.on('print', () =>{ printWindow.webContents.print(printOptions)}) //监听 printwindow渲染好的条码发送到主进程
 
   printWindow.loadFile('./dist/index.html', {hash: 'print'})
   mainWindow.loadFile('./dist/index.html') 
@@ -89,13 +90,17 @@ app.whenReady().then(() => {
     // 通常在 macOS 上，当点击 dock 中的应用程序图标时，如果没有其他
     // 打开的窗口，那么程序会重新创建一个窗口。
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
+
   })
+  mainWindow.on('close',()=>{app.quit()})
 })
 
 // 除了 macOS 外，当所有窗口都被关闭的时候退出程序。 因此，通常对程序和它们在
 // 任务栏上的图标来说，应当保持活跃状态，直到用户使用 Cmd + Q 退出。
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
+
+
 })
 
 

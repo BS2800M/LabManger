@@ -84,6 +84,7 @@ def list_operation(request):
     try:
         # 构建基础查询条件
         query = Reagent_Operation.objects.filter(using=True, creation_time__range=(search_later,search_earlier))
+        query=query.select_related("reagent","lot")
         # 如果 listname 不为空，添加试剂名称的过滤条件
         if listname:
             query = query.filter(reagent__name__icontains=listname)
@@ -127,7 +128,6 @@ def outbound(request):
                                 )
                 modify = Reagent_Warning.objects.get(reagent_id=search.reagent_id) 
                 modify.numbercal() #计算试剂数量
-                modify.lasttime=datetime.now()#更新最后一次出库时间
                 modify.cal_warn_time()#更新预警时间
                 modify.lastmonth_outnumbercal() #计算试剂上个月的出库数量
                 modify.save()
@@ -143,12 +143,52 @@ def outbound(request):
             traceback.print_exc()
             return JsonResponse({"status":"1","msg":"操作失败"})
 
+
+def special_outbound(request):
+    with transaction.atomic():
+        try:
+            outnumber=request.params["outnumber"]
+            outnumber=int(outnumber)
+            outreagentid=request.params["outreagentid"]
+            outlotid=request.params["outlotid"]
+            count=Reagent_Warning.objects.get(reagent_id=outreagentid)
+            count=count.reagent_number
+            if count<outnumber:
+                return JsonResponse({"status":"1","msg":"出库失败，库存量不足"})
+            else:
+                addlist=[]
+                for i in range(0,outnumber):
+                    add = Reagent_Operation(reagent_id=outreagentid,
+                        lot_id=outlotid ,
+                        operation_action="s_outbound",
+                        using=True,
+                        barcodenumber=-1,
+                        username=request.userdata['username']
+                        )
+                    addlist.append(add)
+                print(addlist)
+                Reagent_Operation.objects.bulk_create(addlist)
+                modify=Reagent_Warning.objects.select_related('reagent').get(reagent_id=outreagentid)
+                modify.numbercal()
+                modify.cal_warn_time()#更新预警时间
+                modify.lastmonth_outnumbercal() #计算试剂上个月的出库数量
+                modify.save()
+                return JsonResponse({"status":"0","msg":modify.reagent.name+"出库成功"})
+        except:
+            traceback.print_exc()
+            return JsonResponse({"status":"1","msg":"操作失败"})
+
+
 def delete_operation(request):
     deleteid=request.params["id"]
     try:
         with transaction.atomic():
             delete=Reagent_Operation.objects.get(id=deleteid)
             delete.using=False
+            delete.save()
+            deleteregent_id=delete.reagent #获取该操作记录的试剂id
+            delete=Reagent_Warning.objects.get(reagent=deleteregent_id) #获取对象
+            delete.numbercal()#修正库存
             delete.save()
             return JsonResponse({"status":"0","id":deleteid})
     except Exception:
@@ -161,14 +201,14 @@ def list_reagentnumber(request):
     pagenumber=request.params["pagenumber"]
     listdata = Reagent_Warning.objects.select_related('reagent') #select_related减少查询次数
     if only_showwarn=="true":
-        listdata=listdata.filter(reagent_number__lte=F('reagent__warn_number'),warn_time__lte=nowtime,reagent__using=True).order_by("lasttime")
+        listdata=listdata.filter(reagent_number__lte=F('reagent__warn_number'),warn_time__lte=nowtime,reagent__using=True).order_by("-lasttime")
     if only_showwarn=="false":
-        listdata=listdata.filter(reagent__using=True).order_by("lasttime")
+        listdata=listdata.filter(reagent__using=True).order_by("-lasttime")
     listdata=list(listdata.values("reagent__name","reagent__specifications","reagent_number","reagent__warn_number","reagent__warn_days","lastmonth_outnumber","lasttime"))
     warn_typenum=len(listdata) #提示有多少种试剂缺少
     paginator=Paginator(listdata,13)
     page=paginator.get_page(pagenumber)
-    if pagenumber=="all": #pagenumber为all时  导出所有试剂的信息
+    if pagenumber=="all": #pagenumber为all时  导出所有试剂的信息 
         listdata=listdata
     else:
         listdata=list(page.object_list)
@@ -182,7 +222,7 @@ def refresh_reagent(request):#更新所有试剂信息（需要计算的）
             for data in list:
                 modify=Reagent_Warning.objects.get(reagent_id=data.id)
                 modify.numbercal()
-                modify.cal_warn_time()
+                modify.cal_warn_time(updatetime=False)
                 modify.lastmonth_outnumbercal()
                 modify.save()
             return JsonResponse({"status":"0"})
@@ -196,6 +236,7 @@ OPERATION_HANDLERS = {
     "inbound": inbound,
     "list_operation": list_operation,
     "outbound": outbound,
+    "special_outbound":special_outbound,
     "delete_operation": delete_operation,
     "list_reagentnumber": list_reagentnumber,
     "refresh_reagent": refresh_reagent

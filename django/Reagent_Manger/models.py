@@ -5,7 +5,7 @@ import traceback
 # Create your models here.
 class Reagent_Template(models.Model): #试剂模板表
     # 试剂名称
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100,db_index=True)
     # 试剂规格 箱 盒 
     specifications = models.CharField(max_length=20)
     #试剂设置的初始库存数量
@@ -52,12 +52,7 @@ class Reagent_Operation(models.Model):#试剂出入库操作记录
     #出入库信息绑定的用户名称
     username = models.CharField(max_length=100,default="无用户")
 
-    class Meta: 
-        # 联合约束   条码 操作 试剂id 不能重复
-        unique_together = ["barcodenumber", "operation_action","reagent","using"]
-        # 联合索引  建立索引 提高查询效率
-        index_together = ["barcodenumber", "operation_action","reagent","using"]
-        index_together = ["reagent","lot","using"]
+
 
 class Reagent_Warning(models.Model): #试剂和库存有关的信息
     # 预警信息绑定的试剂模板id
@@ -70,14 +65,17 @@ class Reagent_Warning(models.Model): #试剂和库存有关的信息
     warn_time=models.DateTimeField(default=datetime.now)
     #试剂上个月的出库数量
     lastmonth_outnumber=models.IntegerField(default=0)
-    def cal_warn_time(self,*args,**kwargs): #计算预警时间
+    def cal_warn_time(self,updatetime=True,*args,**kwargs): #计算预警时间
         timedetla=timedelta(days=self.reagent.warn_days)
         self.warn_time=self.lasttime+timedetla
+        if updatetime==True:
+            self.lasttime=datetime.now()
         
     def numbercal(self,*args,**kwargs): #计算试剂数量
         outnumber=Reagent_Operation.objects.filter(using=True,reagent_id=self.reagent.id,operation_action="outbound").count()
+        special_outnumber=Reagent_Operation.objects.filter(using=True,reagent_id=self.reagent.id,operation_action="s_outbound").count()
         innumber=Reagent_Operation.objects.filter(using=True,reagent_id=self.reagent.id,operation_action="inbound").count()
-        number=innumber-outnumber+self.reagent.reagent_initnumber
+        number=innumber-outnumber-special_outnumber+self.reagent.reagent_initnumber
         self.reagent_number=number
     def lastmonth_outnumbercal(self,*args,**kwargs): #计算试剂上个月的出库数量
         lastmonth_outnumber=Reagent_Operation.objects.filter(using=True,reagent_id=self.reagent.id,operation_action="outbound",creation_time__month=datetime.now().month-1).count()
