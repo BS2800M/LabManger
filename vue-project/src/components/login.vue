@@ -16,7 +16,7 @@
 			</div>
 		</div>
 	</div>
-	<messagebox ref="to_messagebox"></messagebox>
+	<messagebox ref="messageboxRef"></messagebox>
 </template>
 
 <script setup>
@@ -28,7 +28,13 @@ const router = useRouter()
 let username=ref("")
 let password=ref("")
 let backgrounblur=ref({filter:""})
-let to_messagebox=ref()
+let messageboxRef=ref()
+function openmessagebox(a,b,c,d,e){
+  messageboxRef.value.openmessagebox(a,b,c,d),e
+}
+
+
+
 function signin(){
 	api_signin(username.value,password.value)
 	.then(data=>{
@@ -37,7 +43,7 @@ function signin(){
 		router.push("/home")
 	})
 	.catch(err=>{
-		to_messagebox.value.messagebox_warn(err)
+		openmessagebox('error',err,'close',null,null)
 	})
 
 }

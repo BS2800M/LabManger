@@ -1,8 +1,7 @@
 <template>
     <div id="background" :style="null">
         <el-input 
-          class="searchinput"
-          style="left:200px;top:10px;width:200px;" 
+          style="left:200px;top:10px;width:250px;" 
           v-model="state.inputsearchname" 
           placeholder="搜索试剂名称" 
           @input="list_template" 
@@ -10,15 +9,16 @@
         <el-button 
           id="add" 
           type="success" 
-          @click="editbox_openaddbox"
+          @click="editbox_openaddbox()"
+          style=" position:absolute;left:1000px; top:50px;"
         >增加模板</el-button>
         <el-pagination 
-          class="searchinput" 
           background  
           layout="prev, pager, next"  
           v-model:current-page="state.current_page" 
           :page-count="state.total_pages" 
           @change="list_template" 
+          style="position: absolute;left: 200px;top: 50px;"
         />
         <el-table
           :data="state.tableData"
@@ -27,7 +27,7 @@
           row-class-name="rowstyle"
           header-cell-class-name="rowstyle"
         >
-          <el-table-column prop="creation_time" label="时间" sortable min-width="100" :formatter="formatDateColumn" />
+          <el-table-column prop="team__name" label="检验小组" min-width="100" />
           <el-table-column prop="name" label="试剂名称" min-width="150" />
           <el-table-column prop="specifications" label="规格" min-width="100" />
           <el-table-column prop="warn_number" label="警告数量" min-width="100" />
@@ -35,25 +35,26 @@
           <el-table-column label="操作" min-width="100">
             <template #default="scope">
               <el-button size="small" type="primary" @click="editbox_openeditbox(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="messagebox_deleteyes(scope.row.id)">删除</el-button>
+              <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',api_delete_Template,scope.row.id,EVENT_TYPES.TEMPLATE_UPDATED)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
     </div>
-    <messagebox ref="messageboxRef"></messagebox>
+    <messagebox ref="messageboxRef"  ></messagebox>
     <template_editbox ref="editboxRef"></template_editbox>
 </template>
 <script setup>
 import { ref, onMounted, reactive, onUnmounted } from 'vue'
-import messagebox from '@/components/messagebox.vue'
+import messagebox from './messagebox.vue'
+import team_select from './team_select.vue'
 import template_editbox from './template_editbox.vue'
-import { api_list_Template } from '@/api/reagent_manger'
-import { formatDateColumn } from '@/api/dateformat.js'
+import { api_list_Template ,api_delete_Template} from '@/api/reagent_manger'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
-
 // 创建ref引用
-const messageboxRef = ref(null)
 const editboxRef = ref(null)
+const messageboxRef = ref(null)
+
+
 
 // 状态管理
 const state = reactive({
@@ -61,12 +62,13 @@ const state = reactive({
   tableData: [],         // 表格数据，初始化为空数组
   current_page: 1,       // 当前页
   total_pages: 1,        // 总页
+  inputteam:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')}
 })
 
-function messagebox_deleteyes(operation_id) {
-    messageboxRef.value.messagebox_delete_Template(operation_id)
-}
 
+function openmessagebox(a,b,c,d,e){
+  messageboxRef.value.openmessagebox(a,b,c,d,e)
+}
 function editbox_openaddbox() {
     editboxRef.value.openaddbox()
 }
@@ -76,18 +78,16 @@ function editbox_openeditbox(editdate) {
 }
 
 function list_template() {
-    api_list_Template(state.inputsearchname, state.current_page)
+    api_list_Template(state.inputsearchname, state.current_page,state.inputteam.teamid)
         .then(function(data) {
             state.tableData = data.data.list
             state.total_pages = data.data.total_pages
         })
         .catch(function(err) {
-            messageboxRef.value.messagebox_warn(err)
+          openmessagebox('error',err,'close',null,null)
             state.tableData = []
         })
 }
-
-
 
 // 生命周期钩子
 onMounted(() => {
@@ -112,7 +112,7 @@ z-index: 0;
 .el-table{
   position: absolute;
   left: 200px;
-  top: 50px;
+  top: 100px;
   background-color: rgb(44, 62, 80);
 }
 :deep(.el-table .rowstyle)
@@ -126,25 +126,8 @@ z-index: 0;
   background-color: rgb(255, 255, 255);
 }
 
-#add{
-  position: absolute;
-  left:1000px;
-  top:5px
-}
-#export{
-  position: absolute;
-  left: 850px;
-  top: 5px;
-}
-.el-pagination{
-  position: absolute;
-  left: 400px;
-  top: 10px;
-
-}
-
-:deep( .searchinput .el-input__wrapper),
-:deep( .searchinput .el-input__inner)
+:deep( .el-input .el-input__wrapper),
+:deep( .el-input .el-input__inner)
 {
   background:transparent;
   --el-input-focus-border-color:white;

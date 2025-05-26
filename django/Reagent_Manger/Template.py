@@ -1,15 +1,13 @@
 
 from django.http import JsonResponse
 from Reagent_Manger.models import Reagent_Template,Reagent_Warning,Reagent_Lot
+from Test_Manger.models import Test_Team
 import json
 from django.db import transaction
 from django.core.paginator import Paginator
 from mylogin.views import checsession
 import traceback
-
-
 from django.core.cache import cache
-from django.db.models import QuerySet
 
 def Reagent_Template_Action(request):
     if checsession(request)==1:
@@ -27,11 +25,10 @@ def Reagent_Template_Action(request):
     return JsonResponse({"status": "1", "msg": "不支持该类型操作"})
 
 def add_Template(request):
-    cache.delete("template_list")
-    cache.delete("template_page")
     try:
         with transaction.atomic():
             adddata=request.params["data"]
+            addteam=Test_Team.objects.get(id=adddata["team"]) #先获取 team对象
             adddata = Reagent_Template.objects.create(name=adddata["name"] ,
                                     specifications=adddata["specifications"] ,
                                     reagent_initnumber=adddata["reagent_initnumber"],
@@ -39,6 +36,7 @@ def add_Template(request):
                                     price=adddata["price"],
                                     location=adddata["location"],
                                     warn_days=adddata["warn_days"],
+                                    team=addteam,
                                     using=1)
             Reagent_Warning.objects.create(reagent=adddata) #同步更新库存表
             generate_lot=request.params["data"]["is_generate_lot"] 
@@ -47,6 +45,7 @@ def add_Template(request):
                                            lot="默认"+str(adddata.name)+"批号",
                                            Expiration_date="2050-1-1",
                                            using=True)
+                
             return JsonResponse({"status": "0", "addid":adddata.id})
     except Exception:
         traceback.print_exc()
@@ -55,34 +54,28 @@ def add_Template(request):
 def list_Template(request):
     searchname=request.params["searchname"]
     pagenumber=request.params["pagenumber"]
-
-    if searchname=="" and pagenumber=="1" and cache.get("template_list")!=None and cache.get("template_page")!=None:
-        return JsonResponse({"status":"0","list":cache.get("template_list"),"total_pages":cache.get("template_page"),"current_page":"1"})
-
-
-    listdata=Reagent_Template.objects.filter(using=True).order_by("-creation_time")
+    searchteam=request.params["searchteam"]
+    listdata=Reagent_Template.objects.filter(using=True).select_related("team").order_by("-creation_time")
     if searchname!="":
         listdata=listdata.filter(name__icontains=searchname)
-    if pagenumber=="all":
-        listdata=list(listdata.values())
-    else:
-        paginator=Paginator(listdata,13)
-        page=paginator.get_page(pagenumber)
-        listdata=list(page.object_list.values())
+    if searchteam!="":
+        listdata=listdata.filter(team=searchteam)
+    paginator=Paginator(listdata,13)
+    page=paginator.get_page(pagenumber)
+    if pagenumber!="all":
+        listdata=page.object_list
+    listdata=list(listdata.values("id","name","specifications","reagent_initnumber","warn_number","price","creation_time","location","team_id","team__name","warn_days"))
     
-    if searchname=="" and pagenumber=="1":
-        cache.set("template_list",listdata,60)
-        cache.set("template_page",paginator.num_pages,60)
     return JsonResponse({"status":"0","list":listdata,"total_pages":paginator.num_pages,"current_page":page.number})
 
     
 def modify_Template(request):
-    cache.delete("template_list")
-    cache.delete("template_page")
     try:
         with transaction.atomic():
             modifyid=request.params["id"]
             modifydata=request.params["data"]
+            print(modifydata)
+            modifyteam=Test_Team.objects.get(id=modifydata["team"]) #先获取 team对象
             modify = Reagent_Template.objects.get(id=modifyid)
             modify.name=modifydata["name"]
             modify.specifications=modifydata["specifications"]
@@ -91,6 +84,7 @@ def modify_Template(request):
             modify.price=modifydata["price"]
             modify.location=modifydata["location"]
             modify.warn_days=modifydata["warn_days"]
+            modify.team=modifyteam
             modify.save()
             modify=Reagent_Warning.objects.get(reagent_id=modifyid)
             modify.cal_warn_time()
@@ -114,8 +108,9 @@ def del_Template(request):
         return JsonResponse({"status":"1", "msg": "修改删除失败"})
     
 
-def list_AllTemplate(request): #用来显示全部试剂 不需要任何页码数
-    listdata=Reagent_Template.objects.filter(using=True)
+def list_AllTemplate(request): #用来显示本小组的全部试剂 不需要任何页码数
+    searchteam=request.params["searchteam"]
+    listdata=Reagent_Template.objects.filter(using=True,team=searchteam)
     listdata=listdata.order_by("id")
     listdata=list(listdata.values("id","name","location"))
     return JsonResponse({"status":"0","list":listdata})

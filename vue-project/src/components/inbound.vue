@@ -74,7 +74,9 @@ import { api_list_alltemplate, api_list_alllot, api_inbound } from '@/api/reagen
 
 // 组件引用
 const messageboxRef = ref()
-
+function openmessagebox(a,b,c,d,e){
+  messageboxRef.value.openmessagebox(a,b,c,d,e)
+}
 // 使用reactive统一管理状态
 const formData = reactive({
     edit_number: 1, // 出库数量
@@ -86,6 +88,7 @@ const formData = reactive({
     allreagentlist: [], // 包含获取的试剂id、试剂名称、地点、下拉菜单的label和绑定值
     alllotlist: [], // 包含获取的批号id、批号名称、下拉菜单的label和绑定值
     tableData: [], // 表格数据
+    team:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')}
 })
 
 const validationRules = {
@@ -94,7 +97,7 @@ const validationRules = {
 
 // 方法定义
 function list_alltemplate() {
-    api_list_alltemplate()
+    api_list_alltemplate(formData.team.teamid)
         .then(data => {
             for (let i in data.data.list) {
                 formData.allreagentlist.push({
@@ -106,7 +109,7 @@ function list_alltemplate() {
             }
         })
         .catch(err => {
-            messageboxRef.value.messagebox_warn(err)
+            openmessagebox('error',err,'close',null,null)
         })
 }
 
@@ -123,7 +126,7 @@ function list_alllot() {
             }
         })
         .catch(err => {
-            messageboxRef.value.messagebox_warn(err)
+            openmessagebox('error',err,'close',null,null)
         })
 }
 
@@ -170,7 +173,7 @@ function inbound() {
             myapi.gotoprint(data.data.list)
         })
         .catch(err => {
-            messageboxRef.value.messagebox_warn(err)
+            openmessagebox('error',err,'close',null,null)
         })
 }
 

@@ -1,25 +1,23 @@
 <template>
     <div id="background" :style="null">
         <el-input 
-            class="searchinput"
-            style="left:200px;top:10px;width:200px;" 
+            style="left:200px;top:10px;width:250px;" 
             v-model="state.inputsearchname" 
             placeholder="搜索试剂名称来搜索批号" 
             @input="list_lot" 
         />
         <el-button 
-            id="add" 
-            size="large" 
             type="success" 
             @click="editbox_openaddbox"
+            style=" position:absolute;left:1000px; top:50px;"
         >增加批号</el-button>
         <el-pagination 
-            class="searchinput" 
             background  
             layout="prev, pager, next"  
             v-model:current-page="state.current_page" 
             :page-count="state.total_pages" 
             @change="list_lot" 
+            style="position: absolute;left: 200px;top: 50px;"
         />
         <el-table
             :data="state.tableData"
@@ -35,7 +33,7 @@
             <el-table-column label="操作" min-width="100">
                 <template #default="scope">
                     <el-button size="small" type="primary" @click="editbox_openeditbox(scope.row)">编辑</el-button>
-                    <el-button size="small" type="danger" @click="messagebox_deleteyes(scope.row.id)">删除</el-button>
+                    <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',api_delete_lot,scope.row.id,EVENT_TYPES.LOT_UPDATED)">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -46,7 +44,7 @@
 <script setup>
 
 import { ref, onMounted, computed, reactive, watch, onUnmounted } from 'vue'
-import { api_list_lot } from '@/api/reagent_manger'
+import { api_list_lot,api_delete_lot } from '@/api/reagent_manger'
 import { formatDateColumn } from '@/api/dateformat.js'
 import messagebox from '@/components/messagebox.vue'
 import lot_editbox from './lot_editbox.vue'
@@ -62,21 +60,22 @@ const state = reactive({
     tableData: [],         // 表格数据，初始化为空数组
     current_page: 1,       // 当前页
     total_pages: 1,        // 总页
+    inputteam:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')}
 })
 
 function list_lot() {
-    api_list_lot(state.inputsearchname, state.current_page)
+    api_list_lot(state.inputsearchname, state.current_page,state.inputteam.teamid)
         .then(data => {
             state.tableData = data.data.list
             state.total_pages = data.data.total_pages
         })
         .catch(err => {
-            messageboxRef.value.messagebox_warn(err)
+            openmessagebox('error',err,'close',null,null)
         })
 }
 
-function messagebox_deleteyes(operation_id) {
-    messageboxRef.value.messagebox_delete_Lot(operation_id)
+function openmessagebox(a,b,c,d,e){
+  messageboxRef.value.openmessagebox(a,b,c,d),e
 }
 
 function editbox_openaddbox() {
@@ -116,7 +115,7 @@ onUnmounted(() => {
 .el-table{
     position: absolute;
     left: 200px;
-    top: 50px;
+    top: 100px;
     background-color: rgb(44, 62, 80);
 }
 :deep(.el-table .rowstyle)
@@ -131,19 +130,8 @@ onUnmounted(() => {
 }
 
 
-#add{
-    position: absolute;
-    left:1000px;
-    top:5px
-}
-.el-pagination{
-    position: absolute;
-    left: 500px;
-    top: 10px;
-}
-
-:deep( .searchinput .el-input__wrapper),
-:deep( .searchinput .el-input__inner)
+:deep( .el-input .el-input__wrapper),
+:deep( .el-input .el-input__inner)
 {
     background:transparent;
     background-color:transparent;

@@ -63,6 +63,9 @@ import messagebox from '@/components/messagebox.vue';
 import { api_outbound ,api_special_outbound,api_list_alltemplate, api_list_alllot} from '../api/reagent_manger';
 
 const to_messagebox=ref() //引入messagebox
+function openmessagebox(a,b,c,d,e){
+  messageboxRef.value.openmessagebox(a,b,c,d,e)
+}
 let barcodenumber=ref()
 const formData = reactive({
     edit_number: 1, // 出库数量
@@ -74,6 +77,7 @@ const formData = reactive({
     allreagentlist: [], // 包含获取的试剂id、试剂名称、地点、下拉菜单的label和绑定值
     alllotlist: [], // 包含获取的批号id、批号名称、下拉菜单的label和绑定值
     tableData: [], // 表格数据
+    team:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')}
 })
 const validationRules = {
     required: ['edit_reagent_seletevalue', 'edit_lot_seletevalue', 'edit_number']
@@ -99,12 +103,12 @@ function outbound(){
   
 
   .catch(err=>{
-    to_messagebox.value.messagebox_warn(err)
+    openmessagebox('error',err,'close',null,null)
                 })
 }
 
 function list_alltemplate() {
-    api_list_alltemplate()
+    api_list_alltemplate(formData.team.teamid)
         .then(data => {
             for (let i in data.data.list) {
                 formData.allreagentlist.push({

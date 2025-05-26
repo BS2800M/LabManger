@@ -42,16 +42,20 @@ def add_Lot(request):
 def list_Lot(request):
     searchname=request.params["searchname"]
     pagenumber=request.params["pagenumber"]
-    listdata=Reagent_Lot.objects.select_related('reagent').filter(using=True)
-    if searchname=="":
-        listdata=listdata.order_by("-creation_time")
-    else:
-        listdata=listdata.filter(reagent__name__icontains=searchname).order_by("-creation_time")
+    searchteam=request.params["searchteam"]
+    listdata=Reagent_Lot.objects.filter(using=True).select_related('reagent',"team").order_by("-creation_time")
+    if searchname!="":
+        listdata=listdata.filter(reagent__name__icontains=searchname)
+    if searchteam!="":
+        listdata=listdata.filter(reagent__team=searchteam)
     paginator=Paginator(listdata,13)
     page=paginator.get_page(pagenumber)
-    listdata=page.object_list
+    if pagenumber!="all":
+        listdata=page.object_list
     listdata=list(listdata.values("id","lot","reagent_id","Expiration_date","creation_time","reagent__name"))
     return JsonResponse({"status":"0","list":listdata,"total_pages":paginator.num_pages,"current_page":page.number})
+
+
 
 
 def modify_Lot(request):

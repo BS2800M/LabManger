@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     ElButton: typeof import('element-plus/es')['ElButton']
     ElDatePicker: typeof import('element-plus/es')['ElDatePicker']
+    ElDialog: typeof import('element-plus/es')['ElDialog']
     ElInput: typeof import('element-plus/es')['ElInput']
     ElInputNumber: typeof import('element-plus/es')['ElInputNumber']
     ElPagination: typeof import('element-plus/es')['ElPagination']
@@ -31,6 +32,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     Team: typeof import('./src/components/team.vue')['default']
     Team_editbox: typeof import('./src/components/team_editbox.vue')['default']
+    Team_select: typeof import('./src/components/team_select.vue')['default']
     Template: typeof import('./src/components/template.vue')['default']
     Template_editbox: typeof import('./src/components/template_editbox.vue')['default']
     Warn_reagent: typeof import('./src/components/warn_reagent.vue')['default']

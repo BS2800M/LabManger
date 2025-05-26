@@ -33,7 +33,7 @@
           <el-table-column label="操作" min-width="100">
             <template #default="scope">
               <el-button size="small" type="primary" @click="editbox_openeditbox(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="messagebox_deleteyes(scope.row.id)">删除</el-button>
+              <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',api_delete_Team,scope.row.id,EVENT_TYPES.TEAM_UPDATED)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -45,7 +45,7 @@
 import { ref, onMounted, reactive, onUnmounted } from 'vue'
 import messagebox from '@/components/messagebox.vue'
 import team_editbox from '@/components/team_editbox.vue'
-import { api_list_Team } from '@/api/test_manger.js'
+import { api_list_Team ,api_delete_Team} from '@/api/test_manger.js'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 
 // 创建ref引用
@@ -59,8 +59,8 @@ const state = reactive({
   total_pages: 1,        // 总页
 })
 
-function messagebox_deleteyes(operation_id) {
-    messageboxRef.value.messagebox_delete_Team(operation_id)
+function openmessagebox(a,b,c,d,e){
+  messageboxRef.value.openmessagebox(a,b,c,d,e)
 }
 
 function editbox_openaddbox() {
@@ -74,12 +74,11 @@ function editbox_openeditbox(editdate) {
 function list_team() {
     api_list_Team(state.inputsearchname, state.current_page)
         .then(function(data) {
-          console.log(data.data)
             state.tableData = data.data.list
             state.total_pages = data.data.total_pages
         })
         .catch(function(err) {
-            messageboxRef.value.messagebox_warn(err)
+          openmessagebox('error',err,'close',null,null)
             state.tableData = []
         })
 }
@@ -128,11 +127,8 @@ z-index: 0;
   left:1000px;
   top:5px
 }
-#export{
-  position: absolute;
-  left: 850px;
-  top: 5px;
-}
+
+
 .el-pagination{
   position: absolute;
   left: 400px;

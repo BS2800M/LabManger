@@ -41,35 +41,37 @@ def signin( request):
 
 # 登出处理
 def signout( request):
-    request_token=request.META['HTTP_TOKEN']
-    tokentable.objects.get(mytoken=request_token).delete()
+    if 'HTTP_TOKEN'  in request.META.keys():
+        request_token=request.META['HTTP_TOKEN']
+        tokentable.objects.get(mytoken=request_token).delete()
+        return JsonResponse({'ret': 0,'msg':'强制退出'})
     return JsonResponse({'ret': 0,'msg':'成功登录退出'})
 
 #检查session,并将用户名称和类型放入parmas
 
 
-def checsession(request):
-    session={}
-    session['username']  ="test"
-    session['usertype']  ="test"
-    session['userid']  = "999"
-    return session
-
-
-
-
-
-
-# def checsession(request): 
-#     if 'HTTP_TOKEN' not in request.META.keys():
-#         return 0
-#     request_token=request.META['HTTP_TOKEN']
-#     tokensearch=tokentable.objects.filter(mytoken=request_token).exists()
-#     if tokensearch==False:
-#         return 1
-#     request_token=jwt.decode(request_token,screct_key,algorithms='HS256')
+# def checsession(request):
 #     session={}
-#     session['username']  =request_token['username']
-#     session['usertype']  =request_token['usertype']
-#     session['userid']  = request_token['userid']
+#     session['username']  ="test"
+#     session['usertype']  ="test"
+#     session['userid']  = "999"
 #     return session
+
+
+
+
+
+
+def checsession(request): 
+    if 'HTTP_TOKEN' not in request.META.keys():
+        return 1
+    request_token=request.META['HTTP_TOKEN']
+    tokensearch=tokentable.objects.filter(mytoken=request_token).exists()
+    if tokensearch==False:
+        return 1
+    request_token=jwt.decode(request_token,screct_key,algorithms='HS256')
+    session={}
+    session['username']  =request_token['username']
+    session['usertype']  =request_token['usertype']
+    session['userid']  = request_token['userid']
+    return session

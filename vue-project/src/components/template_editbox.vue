@@ -25,17 +25,22 @@
       </div>
       <div id="editboxbutton">
         <el-button class="button" size="large" type="warning" :style="uiState.editbuttonhide" @click="modify_Template"  :disabled="uiState.editbox_disablebutton" >修改</el-button>
-        <el-button class="button" size="large" type="success" :style="uiState.addbuttonhide" @click=" add_Template"  :disabled="uiState.editbox_disablebutton">增加</el-button>
+        <el-button class="button" size="large" type="success" :style="uiState.addbuttonhide" @click="add_Template"  :disabled="uiState.editbox_disablebutton">增加</el-button>
         <el-button class="button" size="large" type="info" @click="closeeditbox">取消</el-button>
       </div>
   </div>
-<messagebox ref="messageboxRef"></messagebox>
+  <messagebox ref="messageboxRef"  ></messagebox>
 </template>
 <script setup>
-import { defineExpose, ref, reactive } from 'vue';
+import { defineExpose, ref, reactive ,onMounted} from 'vue';
 import { api_modify_Template, api_add_Template } from '@/api/reagent_manger.js'
 import messagebox from '@/components/messagebox.vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
+const messageboxRef=ref(null)
+function openmessagebox(a,b,c,d,e){
+  messageboxRef.value.openmessagebox(a,b,c,d,e)
+}
+
 
 // 使用reactive统一管理表单数据
 const formData = reactive({
@@ -46,15 +51,15 @@ const formData = reactive({
   price: 0,
   creation_time: '',
   location: '',
-  seleteid: null,
+  id: null,
   warn_days: 0,
-  is_generate_lot: false
+  is_generate_lot: false,
+  team:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')}
 })
-
 // 验证规则配置对象
 const validationRules = {
   // 定义必填字段数组，包含需要验证的字段名
-  required: ['reagent_initnumber', 'warn_number', 'price', 'warn_days']
+  required: ['reagent_initnumber', 'warn_number', 'price', 'warn_days','team']
 }
 
 // UI状态管理
@@ -69,14 +74,13 @@ const uiState = reactive({
   is_generate_lot: false
 })
 
-let messageboxRef = ref()
-
 defineExpose({
   openeditbox,
   closeeditbox,
   openaddbox,
 
 })
+
 // 重置表单数据
 function resetForm() {
   Object.assign(formData, {
@@ -87,9 +91,8 @@ function resetForm() {
     price: 0,
     creation_time: '',
     location: '',
-    seleteid: null,
     warn_days: 0,
-    is_generate_lot: false
+    is_generate_lot: false,
   })
 }
 
@@ -99,11 +102,11 @@ function openeditbox(editdata) {
   uiState.edittoptext = "修改试剂模板"
   uiState.addbuttonhide.display = "none"
   uiState.editbuttonhide.display = "unset"
-  formData.seleteid = editdata.id
   uiState.editbox_allowedit = true
   
   // 使用Object.assign更新表单数据
   Object.assign(formData, {
+    id:editdata.id,
     name: editdata.name,
     specifications: editdata.specifications,
     reagent_initnumber: editdata.reagent_initnumber,
@@ -111,7 +114,7 @@ function openeditbox(editdata) {
     price: editdata.price,
     creation_time: editdata.creation_time,
     location: editdata.location,
-    warn_days: editdata.warn_days
+    warn_days: editdata.warn_days,
   })
   checkinput()
 }
@@ -134,49 +137,45 @@ function openaddbox() {
   checkinput()
 }
 
-/**
- * 检查表单输入是否有效
- * 用于控制修改/增加按钮的禁用状态
- */
+
 function checkinput() {
+
   // 使用some方法检查必填字段数组中是否存在无效字段
   const hasEmptyField = validationRules.required.some(field => {
-    // 获取当前字段的值
     const value = formData[field]
-    
-    // 检查字段值是否为null或undefined
-    // 不再检查是否为0，因为0是有效值
     return value == null
   })
-  
   // 更新按钮禁用状态
   uiState.editbox_disablebutton = hasEmptyField
 }
 
 function modify_Template() {
-  const { name, specifications, reagent_initnumber, warn_number, price, location, warn_days} = formData
-  api_modify_Template(formData.seleteid, name, specifications, reagent_initnumber, warn_number, price, location, warn_days)
+  const { name, specifications, reagent_initnumber, warn_number, price, location, warn_days,team} = formData
+  api_modify_Template(formData.id, name, specifications, reagent_initnumber, warn_number, price, location, warn_days,team.teamid)
     .then(data => {
       closeeditbox()
       // 触发模板更新事件，通知父组件刷新列表
       eventBus.emit(EVENT_TYPES.TEMPLATE_UPDATED)
     })
     .catch(err => {
-      messageboxRef.value.messagebox_warn(err)
+      openmessagebox('error',err,'close',null,null)
     })
 }
 function add_Template() {
-  const { name, specifications, reagent_initnumber, warn_number, price, location, warn_days,is_generate_lot} = formData
-  api_add_Template(name, specifications, reagent_initnumber, warn_number, price, location, warn_days,is_generate_lot)
+  const { name, specifications, reagent_initnumber, warn_number, price, location, warn_days,is_generate_lot,team} = formData
+  api_add_Template(name, specifications, reagent_initnumber, warn_number, price, location, warn_days,is_generate_lot,team.teamid)
     .then(data => {
       closeeditbox()
       // 触发模板更新事件，通知父组件刷新列表
       eventBus.emit(EVENT_TYPES.TEMPLATE_UPDATED)
     })
     .catch(err => {
-      messageboxRef.value.messagebox_warn(err)
+      openmessagebox('error',err,'close',null,null)
     })
 }
+
+
+
 </script>
 
 <style scoped>

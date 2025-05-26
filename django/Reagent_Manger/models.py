@@ -1,7 +1,6 @@
 from django.db import models
 from datetime import datetime,timedelta
-from django.db import transaction
-import traceback
+from Test_Manger.models import Test_Team
 # Create your models here.
 class Reagent_Template(models.Model): #试剂模板表
     # 试剂名称
@@ -18,6 +17,8 @@ class Reagent_Template(models.Model): #试剂模板表
     creation_time=models.DateTimeField(auto_now=True)
     #试剂存放地点
     location=models.CharField(max_length=50)
+    #试剂所属小组
+    team=models.ForeignKey(Test_Team,on_delete=models.PROTECT,null=True)
     #试剂是否启用
     using=models.BooleanField(default=True)
     #预警天数
@@ -25,7 +26,7 @@ class Reagent_Template(models.Model): #试剂模板表
 
 class Reagent_Lot(models.Model): #试剂批号
     # 试剂绑定的试剂模板的id
-    reagent =models.ForeignKey(Reagent_Template,on_delete=models.PROTECT)
+    reagent = models.ForeignKey(Reagent_Template,on_delete=models.PROTECT)
     # 试剂批号
     lot = models.CharField(max_length=100)
     #创建时间
@@ -38,17 +39,17 @@ class Reagent_Lot(models.Model): #试剂批号
 
 class Reagent_Operation(models.Model):#试剂出入库操作记录
     # 出入库信息绑定的试剂模板id
-    reagent =models.ForeignKey(Reagent_Template,on_delete=models.PROTECT)
+    reagent =models.ForeignKey(Reagent_Template,on_delete=models.PROTECT,db_index=True)
     # 出入库信息绑定的试剂批号id
     lot=models.ForeignKey(Reagent_Lot,on_delete=models.PROTECT)
     #创建时间
     creation_time=models.DateTimeField(auto_now=True)
     #出入库动作
-    operation_action=models.CharField(max_length=100)
+    operation_action=models.CharField(max_length=100,db_index=True)
     #出入库信息是否有效
     using=models.BooleanField(default=True)
     #出入库唯一条码标识
-    barcodenumber=models.CharField(max_length=100,default="0")
+    barcodenumber=models.CharField(max_length=100,default="0",db_index=True)
     #出入库信息绑定的用户名称
     username = models.CharField(max_length=100,default="无用户")
 
@@ -68,7 +69,7 @@ class Reagent_Warning(models.Model): #试剂和库存有关的信息
     def cal_warn_time(self,updatetime=True,*args,**kwargs): #计算预警时间
         timedetla=timedelta(days=self.reagent.warn_days)
         self.warn_time=self.lasttime+timedetla
-        if updatetime==True:
+        if updatetime==True: #如果需要更行最后一次出库时间
             self.lasttime=datetime.now()
         
     def numbercal(self,*args,**kwargs): #计算试剂数量

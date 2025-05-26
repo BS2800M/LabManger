@@ -42,7 +42,9 @@ const formData = reactive({
   reagent_location: '',      // 所属试剂地点
   creation_time: '',         // 创建时间
   seletevalue: null,         // 选择的试剂值
-  seleteid: null             // 选中的批号id
+  id: null  ,           // 选中的批号id
+  team:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')}
+
 })
 
 // 验证规则配置对象
@@ -70,13 +72,19 @@ const allreagentlist = ref([])
 
 let messageboxRef = ref()
 
+
+function openmessagebox(a,b,c,d,e){
+  messageboxRef.value.openmessagebox(a,b,c,d,e)
+}
+
+
+
 defineExpose({
 openeditbox,
 closeeditbox,
 openaddbox,
 });
 
-onMounted(list_alltemplate)
 
 function openeditbox(editdata){
   uiState.editboxstyle1.display = "block"
@@ -84,9 +92,9 @@ function openeditbox(editdata){
   uiState.edittoptext = "修改试剂批号"
   uiState.addbuttonhide.display = "none"
   uiState.editbuttonhide.display = "unset"
-  formData.seleteid = editdata.id
+  formData.id = editdata.id
   uiState.editbox_allowedit = true
-  
+
   // 更新表单数据
   Object.assign(formData, {
     lot: editdata.lot,
@@ -99,7 +107,8 @@ function openeditbox(editdata){
   const buffer = allreagentlist.value.find((item) => item.id == formData.reagent_id)
   if (buffer == undefined) {
     uiState.editbox_allowselete = true
-  } else {
+  } 
+  else {
     formData.seletevalue = buffer.value
     uiState.editbox_allowselete = false
   }
@@ -115,6 +124,7 @@ function closeeditbox()
 
 function openaddbox(){
   resetForm()
+  list_alltemplate()
   formData.creation_time = "创建后自动添加"
   uiState.editboxstyle1.display = "block"
   uiState.blockstyle.display = "block"
@@ -126,7 +136,8 @@ function openaddbox(){
 }
 
 function checkinput(){
-  // 如果选择了试剂，更新相关字段
+  console.log(formData)
+  // 如果选择了试剂，更新formdata中的选择的试剂对应的id
   if (formData.seletevalue != null) {
     formData.reagent_id = allreagentlist.value[formData.seletevalue].id
     formData.reagent_location = allreagentlist.value[formData.seletevalue].location
@@ -142,13 +153,13 @@ function checkinput(){
 
 function modify_lot(){
   const { reagent_id, lot, Expiration_date } = formData
-  api_modify_lot(formData.seleteid, reagent_id, lot, Expiration_date)
+  api_modify_lot(formData.id, reagent_id, lot, Expiration_date)
     .then(data => {
       closeeditbox()
       eventBus.emit(EVENT_TYPES.LOT_UPDATED)
     })
     .catch(err => {
-      messageboxRef.value.messagebox_warn(err)
+      openmessagebox('error',err,'close',null,null)
     })
 }
 
@@ -159,13 +170,14 @@ function add_lot(){
     eventBus.emit(EVENT_TYPES.LOT_UPDATED)
  } )
   .catch(err=>{
-    messageboxRef.value.messagebox_warn(err)
+    openmessagebox('error',err,'close',null,null)
                 })
 }
 
 function list_alltemplate(){
-  api_list_alltemplate()
+  api_list_alltemplate(formData.team.teamid)
   .then(data=>{
+            allreagentlist.value=[]
             let i=""
             for (i in data.data.list){
               allreagentlist.value.push({
@@ -177,7 +189,7 @@ function list_alltemplate(){
             }
         } )
   .catch(err=>{
-    messageboxRef.value.messagebox_warn(err)
+    openmessagebox('error',err,'close',null,null)
                 })
 }
 
@@ -189,7 +201,7 @@ function resetForm() {
     reagent_location: '',
     creation_time: '',
     seletevalue: null,
-    seleteid: null
+    id: null
   })
 }
 

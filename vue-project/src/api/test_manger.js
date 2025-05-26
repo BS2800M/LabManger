@@ -44,3 +44,9 @@ export let api_add_Team=(name,phone,long_info)=>{
             }
             })
 }
+
+export let api_list_ALLTeam=()=>{
+      return myrequest.post('/Test_Manger/Test_Team/',{
+            "action":"list_ALLTeam",
+                        })
+}

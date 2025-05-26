@@ -9,11 +9,12 @@ import { myrequest } from "./request"
 
 
 
-export let api_list_Template=(searchname,pagenumber)=>{
+export let api_list_Template=(searchname,pagenumber,searchteam)=>{
       return myrequest.get('/Reagent_Manger/Reagent_template/',{
       "action":"list_Template", 
       "searchname":searchname,
-      "pagenumber":pagenumber
+      "pagenumber":pagenumber,
+      "searchteam":searchteam
                   })
 }
 
@@ -24,7 +25,7 @@ export let api_delete_Template=(deleteid)=>{
                   })
 }
 
-export let api_modify_Template=(id,name,specifications,reagent_initnumber,warn_number,price,location,warn_days)=>{
+export let api_modify_Template=(id,name,specifications,reagent_initnumber,warn_number,price,location,warn_days,team)=>{
       return myrequest.put('/Reagent_Manger/Reagent_template/',{
       "action":"modify_Template", 
       "id":id,
@@ -34,12 +35,13 @@ export let api_modify_Template=(id,name,specifications,reagent_initnumber,warn_n
             "warn_number":warn_number,            
             "price":price,                   
             "location":location,
-            "warn_days":warn_days
+            "warn_days":warn_days,
+            "team":team
                   }
             })
 }
 
-export let api_add_Template=(name,specifications,reagent_initnumber,warn_number,price,location,warn_days,is_generate_lot)=>{
+export let api_add_Template=(name,specifications,reagent_initnumber,warn_number,price,location,warn_days,is_generate_lot,team)=>{
       return myrequest.post('/Reagent_Manger/Reagent_template/',{
       "action":"add_Template", 
       "data":{"name":name ,       
@@ -49,24 +51,27 @@ export let api_add_Template=(name,specifications,reagent_initnumber,warn_number,
             "price":price,                   
             "location":location,
             "warn_days":warn_days,
-            "is_generate_lot":is_generate_lot
+            "is_generate_lot":is_generate_lot,
+            "team":team
                   }
             })
 }
 
 
 
-export let api_list_lot=(searchname,pagenumber)=>{
+export let api_list_lot=(searchname,pagenumber,searchteam)=>{
       return myrequest.get('/Reagent_Manger/Reagent_Lot/',{
       "action":"list_Lot", 
       "searchname":searchname,
-      "pagenumber":pagenumber
+      "pagenumber":pagenumber,
+      "searchteam":searchteam
                   })
 }
 
-export let api_list_alltemplate=()=>{
+export let api_list_alltemplate=(team)=>{
       return myrequest.get('/Reagent_Manger/Reagent_template/',{
       "action":"list_AllTemplate", 
+      "searchteam":team
                   })
 }
 
@@ -138,14 +143,15 @@ export let api_special_outbound=(outnumber,outreagentid,outlotid)=>{
 
 
 
-export let api_list_operation=(searchname_operation,searchlater_operation,searchearlier_operation,pagenumber,barcodenumber)=>{
+export let api_list_operation=(searchname_operation,searchlater_operation,searchearlier_operation,pagenumber,barcodenumber,searchteam)=>{
       return myrequest.get('/Reagent_Manger/Reagent_Operation/',{
                         "action":"list_operation",     
                         "searchname_operation":searchname_operation,
                         "searchlater_operation":searchlater_operation,
                         "searchearlier_operation":searchearlier_operation,
                         "pagenumber":pagenumber,
-                        "barcodenumber":barcodenumber
+                        "barcodenumber":barcodenumber,
+                        "searchteam":searchteam
             })
       }
 
@@ -156,11 +162,12 @@ export let api_delete_operation=(deleteid)=>{
             })
       }
 
-export let api_list_reagentnumber=(only_showwarn,pagenumber)=>{
+export let api_list_reagentnumber=(only_showwarn,pagenumber,searchteam)=>{
       return myrequest.get('/Reagent_Manger/Reagent_Operation/',{
             "action":"list_reagentnumber",  
             "only_showwarn":only_showwarn,
-            "pagenumber":pagenumber
+            "pagenumber":pagenumber,
+            "searchteam":searchteam,
             })
       }
 

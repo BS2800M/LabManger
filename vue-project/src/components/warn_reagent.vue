@@ -1,30 +1,33 @@
 <template>
     <div id="background" :style="null">   
       <el-switch 
+      class="switch"
       v-model="state.only_showwarn" 
-      class="switch" size="large" 
-      active-text="只显示警告" 
+      size="large" 
+      active-text="显示警告" 
       inactive-text="显示所有" 
-      inline-prompt 
+      inline-prompt  
       @change="list_reagentnumber"/>
         <el-pagination 
-          class="searchinput" 
           background  
           layout="prev, pager, next"  
           v-model:current-page="state.current_page" 
           :page-count="state.total_pages" 
           @change="list_reagentnumber" 
+          style="position: absolute;left: 200px;top: 50px;"
         />
         <el-button 
           id="export"
           type="primary" 
           @click="exportToExcel"
+          style="position: absolute;left: 900px;top: 50px;"
           >
           导出盘库表</el-button>
           <el-button 
           id="cal"
           type="primary" 
           @click="refresh_reagent"
+          style="position: absolute;left: 1000px;top: 50px;"
           >
           更新信息</el-button>
         <el-table
@@ -62,11 +65,12 @@ const state = reactive({
   current_page: 1,       // 当前页
   total_pages: 1,        // 总页
   only_showwarn: false,  // 是否只显示警告
+  inputteam:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')}
 })
 
 
 function list_reagentnumber() {
-    api_list_reagentnumber(state.only_showwarn,state.current_page)
+    api_list_reagentnumber(state.only_showwarn,state.current_page,state.inputteam.teamid)
         .then(function(data) {
             state.tableData = data.data.list
             state.total_pages = data.data.total_pages
@@ -75,9 +79,8 @@ function list_reagentnumber() {
 }
 
 async  function exportToExcel() {
-    let exportData=await api_list_reagentnumber(false,"all")
+    let exportData=await api_list_reagentnumber(false,"all",state.inputteam.teamid)
     exportData=exportData.data.list
-    messageboxRef.value.messagebox_waitng("正在导出数据")
     // 准备导出数据
     exportData = exportData.map(item => ({
         '试剂名称': item.reagent__name,
@@ -106,15 +109,12 @@ async  function exportToExcel() {
     XLSX.utils.book_append_sheet(wb, ws, '盘库表')
     // 导出文件
     XLSX.writeFile(wb, `盘库表${new Date().toLocaleDateString()}.xlsx`)
-    messageboxRef.value.closemessagebox()
   }
 
 function refresh_reagent(){
   api_refresh_reagent(state.only_showwarn,state.current_page)
   .then(function(data){
-    messageboxRef.value.messagebox_waitng("正在更正库存")
     list_reagentnumber()
-    messageboxRef.value.closemessagebox()
   })
 }
 
@@ -142,7 +142,7 @@ z-index: 0;
 .el-table{
   position: absolute;
   left: 200px;
-  top: 50px;
+  top: 100px;
   background-color: rgb(44, 62, 80);
 }
 :deep(.el-table .rowstyle)
@@ -174,15 +174,14 @@ z-index: 0;
   top: 10px;
 }
 .switch{
-  position: absolute; 
   left: 250px;
   top: 10px;
   --el-switch-on-color: #76ca00;
   --el-switch-off-color: #cba006;
 
 }
-:deep( .searchinput .el-input__wrapper),
-:deep( .searchinput .el-input__inner)
+:deep( .el-input .el-input__wrapper),
+:deep( .el-input .el-input__inner)
 {
   background:transparent;
   --el-input-focus-border-color:white;

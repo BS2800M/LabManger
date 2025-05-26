@@ -1,3 +1,3 @@
 cd C:\Users\mypc\Downloads\httpd-2.4.63-250207-win64-VS17\Apache24\bin
-abs -n 5000 -c 100 "http://127.0.0.1:8000/api/Reagent_Manger/Reagent_template/?action=list_Template&searchname=&pagenumber=1"
-abs -n 5000 -c 100 "http://192.168.1.95:8000/api/Reagent_Manger/Reagent_template/?action=list_Template&searchname=&pagenumber=1"
+abs -n 500 -c 100 "http://127.0.0.1:8000/api/Reagent_Manger/Reagent_template/?action=list_Template&searchname=&pagenumber=1&searchteam="
+abs -n 500 -c 100 "http://127.0.0.1:8000/api/Reagent_Manger/Reagent_Operation/?action=list_operation&searchname_operation=&searchlater_operation=2025-04-14&searchearlier_operation=2025-05-15&pagenumber=1&barcodenumber="

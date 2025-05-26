@@ -9,7 +9,6 @@ from mylogin.views import checsession
 from django.db.models import Max
 import traceback
 from django.db import connections
-
 from django.db.models.functions import Now  # 添加这行导入
 from django.db.models.expressions import Value
 
@@ -73,37 +72,31 @@ def inbound(request):
 
 
 
-
-
 def list_operation(request):
     listname=request.params["searchname_operation"]
     search_later=request.params["searchlater_operation"]
     search_earlier=request.params["searchearlier_operation"]
     pagenumber=request.params["pagenumber"]
     barcodenumber=request.params["barcodenumber"]
-    try:
-        # 构建基础查询条件
-        query = Reagent_Operation.objects.filter(using=True, creation_time__range=(search_later,search_earlier))
-        query=query.select_related("reagent","lot")
-        # 如果 listname 不为空，添加试剂名称的过滤条件
-        if listname:
-            query = query.filter(reagent__name__icontains=listname)
-        if barcodenumber:
-            query = query.filter(barcodenumber__icontains=barcodenumber)
-        # 按创建时间倒序排序
-        listdata = query.order_by("-creation_time")
-        paginator=Paginator(listdata,13)
-        page=paginator.get_page(pagenumber)
-        #按照指定页码查找
-        if pagenumber=="all":
-            listdata=list(listdata.values("id","reagent__name","lot__lot","creation_time","operation_action","barcodenumber","username"))
-        else:
-            listdata=list(page.object_list.values("id","reagent__name","lot__lot","creation_time","operation_action","barcodenumber","username"))
+    searchteam=request.params["searchteam"]
+    # 构建基础查询条件
+    listdata = Reagent_Operation.objects.filter(using=True, creation_time__range=(search_later,search_earlier)).order_by("-creation_time")
+    listdata=listdata.select_related("reagent","lot")
+    # 如果 listname 不为空，添加试剂名称的过滤条件
+    if listname!="":
+        listdata = listdata.filter(reagent__name__icontains=listname)
+    if barcodenumber!="":
+        listdata = listdata.filter(barcodenumber__icontains=barcodenumber)
+    if searchteam!="":
+        listdata=listdata.filter(reagent__team=searchteam)
+    paginator=Paginator(listdata,13)
+    page=paginator.get_page(pagenumber)
+    if pagenumber!="all":
+        listdata=page.object_list
+    listdata=list(listdata.values("id","reagent__name","lot__lot","creation_time","operation_action","barcodenumber","username"))
+    return JsonResponse({"status":"0","list":listdata,"total_pages":paginator.num_pages,"current_page":page.number})
 
-        return JsonResponse({"status":"0","list":listdata,"total_pages":paginator.num_pages,"current_page":page.number})
-    except Exception:
-        traceback.print_exc()
-        return JsonResponse({"status":"1","msg":"搜索失败"})
+
 
 
 
@@ -178,7 +171,6 @@ def special_outbound(request):
             traceback.print_exc()
             return JsonResponse({"status":"1","msg":"操作失败"})
 
-
 def delete_operation(request):
     deleteid=request.params["id"]
     try:
@@ -199,22 +191,21 @@ def list_reagentnumber(request):
     only_showwarn=request.params["only_showwarn"]
     nowtime=datetime.now()
     pagenumber=request.params["pagenumber"]
-    listdata = Reagent_Warning.objects.select_related('reagent') #select_related减少查询次数
+    searchteam=request.params["searchteam"]
+    listdata = Reagent_Warning.objects.select_related('reagent').order_by("-lasttime") #select_related减少查询次数
+    if searchteam!="":
+        listdata=listdata.filter(reagent__team=searchteam)
     if only_showwarn=="true":
-        listdata=listdata.filter(reagent_number__lte=F('reagent__warn_number'),warn_time__lte=nowtime,reagent__using=True).order_by("-lasttime")
+        listdata=listdata.filter(reagent_number__lte=F('reagent__warn_number'),warn_time__lte=nowtime,reagent__using=True)
     if only_showwarn=="false":
-        listdata=listdata.filter(reagent__using=True).order_by("-lasttime")
-    listdata=list(listdata.values("reagent__name","reagent__specifications","reagent_number","reagent__warn_number","reagent__warn_days","lastmonth_outnumber","lasttime"))
-    warn_typenum=len(listdata) #提示有多少种试剂缺少
+        listdata=listdata.filter(reagent__using=True)
     paginator=Paginator(listdata,13)
     page=paginator.get_page(pagenumber)
-    if pagenumber=="all": #pagenumber为all时  导出所有试剂的信息 
-        listdata=listdata
-    else:
-        listdata=list(page.object_list)
+    if pagenumber!="all": 
+        listdata=page.object_list
+    listdata=list(listdata.values("reagent__name","reagent__specifications","reagent_number","reagent__warn_number","reagent__warn_days","lastmonth_outnumber","lasttime"))
+    warn_typenum=len(listdata) #提示有多少种试剂缺少
     return JsonResponse({"status":"0","list":listdata,"total_pages":paginator.num_pages,"current_page":page.number,"warn_typenum":warn_typenum})
-
-
 def refresh_reagent(request):#更新所有试剂信息（需要计算的）    
     try:
         with transaction.atomic():

@@ -3,23 +3,22 @@
     <div id="background" :style="null">
         <div id="search">
             <el-input 
-                class="searchinput" 
-                style="width: 240px" 
+                style="left:200px;top:10px;width:250px;" 
                 v-model="state.inputsearchname" 
                 placeholder="试剂名称" 
                 @input="list_operation" 
+                
             />
             <el-input 
-                class="searchinput" 
-                style="width: 240px" 
+                style="left:210px;top:10px;width:250px;" 
                 v-model="state.barcodenumber" 
                 placeholder="条码号" 
                 @input="list_operation" 
             />
             <el-config-provider :locale="zhCn">
                 <el-date-picker 
-                    class="searchinput" 
-                    v-model="state.search_starttime" 
+                    v-model="state.search_starttime" \
+                    style="left:220px;top:10px;width:150px;" 
                     type="date"
                     placeholder="选择开始日期" 
                     size="default" 
@@ -29,8 +28,8 @@
             </el-config-provider>
             <el-config-provider :locale="zhCn">
                 <el-date-picker 
-                    class="searchinput" 
                     v-model="state.search_endtime" 
+                    style="left:230px;top:10px;width:150px;" 
                     type="date"
                     placeholder="选择结束日期" 
                     size="default" 
@@ -39,18 +38,18 @@
                 />
             </el-config-provider>
             <el-pagination 
-                class="searchinput" 
                 background 
                 layout="prev, pager, next"  
                 v-model:current-page="state.current_page" 
                 :page-count="state.total_pages" 
                 @change="list_operation" 
+                style= " position:absolute;left:200px;top:50px;"
             />
             <el-button 
                 id="export"
                 type="primary" 
                 @click="exportToExcel"
-                style="margin-left: 10px;"
+                style="position:absolute;left:1000px;top:50px;"
             >
                 导出记录
             </el-button>
@@ -71,7 +70,7 @@
             <el-table-column label="操作" min-width="150">
                 <template #default="scope">
                     <el-button size="small" type="primary" @click="barcodeprint(scope.row)">补打条码</el-button>
-                    <el-button size="small" type="danger" @click="messagebox_deleteyes(scope.row.id)">删除</el-button>
+                    <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',api_delete_operation,scope.row.id,EVENT_TYPES.OPERATION_UPDATED)">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -97,18 +96,18 @@
     search_endtime: getnowtime(),    // 搜索结束时间
     current_page: 1,       // 当前页
     total_pages: 1,        // 总页
-    barcodenumber: ''     // 条码号
+    barcodenumber: '' ,    // 条码号
+    inputteam:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')}
   })
   // 创建ref引用
   const messageboxRef = ref(null)
   let tableData=ref(null)
 
-  function messagebox_deleteyes(operation_id) {
-    messageboxRef.value.messagebox_delete_operation(operation_id)
+
+
+  function openmessagebox(a,b,c,d,e){
+  messageboxRef.value.openmessagebox(a,b,c,d,e)
 }
-
-
-
 
 onMounted(() => {
     list_operation()
@@ -119,7 +118,7 @@ onUnmounted(() => {
   eventBus.off(EVENT_TYPES.OPERATION_UPDATED)
 })
   function list_operation(){
-    api_list_operation(state.inputsearchname,state.search_starttime,shift_nextday(state.search_endtime),state.current_page,state.barcodenumber) //注意 这里的结束日期要包括这一天 所以传入结束日期是现在的时间往后推一天
+    api_list_operation(state.inputsearchname,state.search_starttime,shift_nextday(state.search_endtime),state.current_page,state.barcodenumber,state.inputteam.teamid) //注意 这里的结束日期要包括这一天 所以传入结束日期是现在的时间往后推一天
     .then(data=>{
       tableData.value=data.data.list
       state.total_pages=data.data.total_pages
@@ -127,7 +126,7 @@ onUnmounted(() => {
 
  } )
   .catch(err=>{
-    messageboxRef.value.messagebox_warn(err)
+    openmessagebox('error',err,'close',null,null)
                 })
 }
   function barcodeprint(data){
@@ -137,9 +136,8 @@ onUnmounted(() => {
   }      
 
   async  function exportToExcel() {
-    let exportData=await api_list_operation(state.inputsearchname,state.search_starttime,shift_nextday(state.search_endtime),"all",state.barcodenumber)
+    let exportData=await api_list_operation(state.inputsearchname,state.search_starttime,shift_nextday(state.search_endtime),"all",state.barcodenumber,state.inputteam.teamid)
     exportData=exportData.data.list
-    messageboxRef.value.messagebox_waitng("正在导出数据")
     // 准备导出数据
     exportData = exportData.map(item => ({
         '时间': formatDateColumn(null, null, item.creation_time),
@@ -165,7 +163,6 @@ onUnmounted(() => {
     XLSX.utils.book_append_sheet(wb, ws, '操作记录')
     // 导出文件
     XLSX.writeFile(wb, `操作记录${new Date().toLocaleDateString()}.xlsx`)
-    messageboxRef.value.closemessagebox()
   }
 
 </script>
@@ -195,31 +192,18 @@ z-index: 0;
   color: rgb(44, 62, 80);
   background-color: rgb(255, 255, 255);
 }
-#search{
-position: absolute;
-top: 10px;
-left:210px;
-}
-.el-pagination{
-  position: absolute;
-  left:210px;
-  top: 50px;
-}
-#export{
-  position: absolute;
-  left: 800px;
-  top: 50px;
-}
-:deep( .searchinput .el-input__wrapper),
-:deep( .searchinput .el-input__inner)
+
+
+:deep( .el-input .el-input__wrapper),
+:deep( .el-input .el-input__inner)
 {
   background-color: rgb(44, 62, 80);
   --el-input-focus-border-color:white;
   color: white;
 }
 
-:deep( .searchinput .el-input__wrapper),
-:deep( .searchinput .el-input__inner)
+:deep( .el-input .el-input__wrapper),
+:deep( .el-input .el-input__inner)
 {
   background-color:transparent;
   --el-input-focus-border-color:white;
