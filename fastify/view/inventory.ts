@@ -4,7 +4,8 @@ import {
     InventoryQuery,
     InventoryWhere,
     TransformedInventoryShow,
-    InventoryAudit
+    InventoryAudit,
+    InventoryUpdateList
 } from '../types/inventory.js'
 
 async function inventory_show(request: FastifyRequest, reply: any) {
@@ -119,6 +120,84 @@ async function inventory_show(request: FastifyRequest, reply: any) {
     return reply.status(200).send({ status: 0, msg: "成功", data: transformed_show, total: total, page: page, pagesize: pagesize, totalpages: Math.ceil(total / pagesize) })
 }
 
+
+async function inventory_update_list(list:InventoryUpdateList[]){
+    let returnmsg:string="" //返回信息
+    const where_list:any[]=await Promise.all(list.map(async (item:InventoryUpdateList)=>{ //构建查询条件
+        return {
+            reagentid:item.reagentid,
+            lotid:item.lotid,
+            using:true
+        }
+    }))
+
+    let inventory_list:any[]=await prisma.inventory.findMany({ //查询库存
+        where:{
+            OR:where_list
+        },
+        include:{
+            reagent:{
+                select:{
+                    name:true,
+                    warn_number:true,
+                }
+            }
+        }
+    })
+
+
+    for(let i=inventory_list.length-1;i>=0;i--){ //过滤掉库存不足的库存  从后往前遍历，避免删除元素时影响索引
+        if(inventory_list[i].inventory_number+list[i].number<0){
+            returnmsg+=inventory_list[i].reagent.name+":库存不足\n"
+            inventory_list.splice(i,1)
+            list.splice(i,1)
+        }
+    }
+
+    await prisma.$transaction(async (tx) => { //并行更新库存
+    const update_all=inventory_list.map(async (item:any,index:number)=>{
+        const update_result= await tx.inventory.update({ //更新库存
+            where:{id:item.id},
+            data:{
+                inventory_number:item.inventory_number+list[index].number,
+                last_outbound_time:new Date(),
+            }          
+        })
+        if(item.inventory_number+list[index].number<=item.reagent.warn_number){ //库存达到警告值时 返回信息提示
+            returnmsg+=inventory_list[index].reagent.name+":库存达到警告值\n"
+        }
+        else{
+            returnmsg+=inventory_list[index].reagent.name+":库存更新成功\n"
+        }
+        return update_result
+    })
+    await Promise.all(update_all)
+    })
+return {returnmsg,list}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 async function inventory_update(reagentid:number,lotid:number,update_number:number) {
     let result:string=""
     const inventory_old:any = await prisma.inventory.findFirst({ //查询对应库存的条目
@@ -160,6 +239,18 @@ async function inventory_update(reagentid:number,lotid:number,update_number:numb
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 async function inventory_audit(request: FastifyRequest, reply: any) { 
     const {reagentid,lotid}:InventoryAudit=request.query as InventoryAudit
     const where:any={using:true}
@@ -181,14 +272,16 @@ async function inventory_audit(request: FastifyRequest, reply: any) {
                 lotid:item.lotid,
                 operation_action:{
                     in:['outbound','special_outbound']
-                }
+                },
+                using:true
             }
         })
         const inbound_number:number=await prisma.operation.count({ //查询入库数量
             where:{
                 reagentid:item.reagentid,
                 lotid:item.lotid,
-                operation_action:'inbound'
+                operation_action:'inbound',
+                using:true
             }
         })
         let now=new Date()
@@ -220,10 +313,10 @@ async function inventory_audit(request: FastifyRequest, reply: any) {
                 lastweek_outbound_number:lastweek_outbound_number
             }
         })
-        return {status:0,msg:"成功"}
     }
+    return {status:0,msg:"成功"}
 }
 
 
 
-export {inventory_show,inventory_update,inventory_audit}
+export {inventory_show,inventory_update,inventory_audit,inventory_update_list}

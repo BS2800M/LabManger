@@ -4,10 +4,12 @@ export interface OutboundRequestBody {
 }
 
 export interface SpecialOutboundRequestBody {
-    reagentid: number;
-    lotid: number;
-    number: number;
-    userid: number;
+    outboundlist: Array<{
+        reagentid: number;
+        lotid: number;
+        number: number;
+        userid: number;
+    }>;
 }
 
 export interface OperationShowRequestQuery {

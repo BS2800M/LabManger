@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import prisma from '../prisma/script.js'
-import { inventory_update } from './inventory.js'
+import { inventory_update, inventory_update_list } from './inventory.js'
 import { 
     InboundRequestBody,
     OutboundRequestBody,
@@ -37,12 +37,11 @@ async function inbound(request: FastifyRequest, reply: any) {
             })
             nowid=nowid+1 //更新当前id
         }
-        await inventory_update(item.reagentid,item.lotid,item.number) //更新每种试剂库存
     }
+    const {returnmsg,list}=await inventory_update_list(inboundlist) //更新库存
     await prisma.operation.createMany({ //批量创建操作记录
         data:addlist
     })
-
     const include={
         reagent:{
             select:{
@@ -80,7 +79,7 @@ async function inbound(request: FastifyRequest, reply: any) {
             userid:item.userid,
         }
     })
-    return{status:0,msg:"入库成功",data:transformed_show}
+    return{status:0,msg:returnmsg,data:transformed_show}
 }
 
 async function outbound(request: FastifyRequest, reply: any) {
@@ -99,16 +98,7 @@ async function outbound(request: FastifyRequest, reply: any) {
         const search:any=await prisma.operation.findFirst({ //查询条码对应的操作记录
             where:{barcodenumber:barcodenumber}
         })
-        const inventory_update_result=await inventory_update(search.reagentid,search.lotid,-1) //更新库存
-        if(inventory_update_result.includes("库存不足")){
-            return reply.status(400).send({status:1,msg:"库存不足"})
-        }
-        if(inventory_update_result.includes("库存达到警告值")){
-            returnmsg=inventory_update_result+"\n"
-        }
-        if(inventory_update_result.includes("出库成功")){
-            returnmsg=inventory_update_result+"\n"
-        }
+        const {returnmsg,list}=await inventory_update_list([{reagentid:search.reagentid,lotid:search.lotid,number:-1,userid:userid}]) //更新库存
         await prisma.operation.create({ //创建出库记录
             data:{
                 reagentid:search.reagentid,
@@ -126,23 +116,15 @@ async function outbound(request: FastifyRequest, reply: any) {
 }
 
 async function special_outbound(request: FastifyRequest, reply: any) {
-    const {outboundlist}:any=request.body as any
-    let returnmsg:string=""
-    let addlist:any[]=[]
+    let {outboundlist}:SpecialOutboundRequestBody=request.body as SpecialOutboundRequestBody
+    for(const item of outboundlist){
+        item.number=item.number*(-1) //负数代表出库 减少库存
+    }
 
-    for (const item of outboundlist){
-        const inventory_update_result=await inventory_update(item.reagentid,item.lotid,-item.number) //更新库存
-        if(inventory_update_result.includes("库存不足")){
-            returnmsg=returnmsg+inventory_update_result+"\n"
-            return{status:1,msg:returnmsg}
-        }
-        if(inventory_update_result.includes("库存达到警告值")){
-            returnmsg=returnmsg+inventory_update_result+"\n"
-        }
-        if(inventory_update_result.includes("出库成功")){
-            returnmsg=returnmsg+inventory_update_result+"\n"
-        }
-        for(let i=0;i<item.number;i++){
+    const {returnmsg,list}=await inventory_update_list(outboundlist) //更新库存 返回信息提示和过滤后的更新列表
+    let addlist:any[]=[]
+    for(const item of list){
+        for(let i=0;i<-(item.number);i++){ //出库数量为负数 所以需要取反
             addlist.push({
                 reagentid:item.reagentid,
                 lotid:item.lotid,
@@ -152,11 +134,10 @@ async function special_outbound(request: FastifyRequest, reply: any) {
                 userid:item.userid,
             })
         }
-        await prisma.operation.createMany({ //批量创建操作记录
-            data:addlist
-        })
     }
-
+    await prisma.operation.createMany({ //批量创建操作记录
+        data:addlist
+    })
     return{status:0,msg:returnmsg}
 }
 
@@ -235,8 +216,12 @@ async function operation_del(request: FastifyRequest, reply: any) {
             using:false
         }
     })
-    await inventory_update(del.reagentid,del.lotid,-1) //更新库存
-
+    if (del.operation_action=="inbound"){ //如果删除的是入库
+   await inventory_update(del.reagentid,del.lotid,-1) //更新库存
+    }
+    if (del.operation_action=="outbound" || del.operation_action=="special_outbound"){ //如果删除的是出库
+    await inventory_update(del.reagentid,del.lotid,1) //更新库存
+    }
     return{status:0,msg:"成功",data:del}
 }
 

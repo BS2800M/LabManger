@@ -36,3 +36,9 @@ export interface InventoryAudit {
     reagentid:number,
     lotid:number
 }
+export interface InventoryUpdateList {
+    reagentid: number;
+    lotid: number;
+    number: number;
+    userid: number;
+}
