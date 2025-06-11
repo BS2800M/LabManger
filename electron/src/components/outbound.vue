@@ -184,7 +184,20 @@ formData.editbox_disablebutton = hasEmptyField
 function select_reagentchange(){ //当选择的试剂发生改变时
     if (formData.reagent_selectvalue != null) {
         formData.reagentid = formData.allreagentlist[formData.reagent_selectvalue].id
-        show_alllot()
+        api_lot_showall({reagentid:formData.reagentid})
+        .then(data => {
+            formData.alllotlist = []
+            for (let i in data.data.data) {
+                formData.alllotlist.push({
+                    label: data.data.data[i].name,
+                    value: i,
+                    id: data.data.data[i].id,
+                })
+            }
+        })
+        .catch(err => {
+            openmessagebox('error',err,'close',null,null)
+        })
         checkinput()
         formData.lot_selectvalue = null
 }

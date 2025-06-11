@@ -8859,6 +8859,7 @@ export namespace Prisma {
 
   export type inventoryWhereUniqueInput = Prisma.AtLeast<{
     id?: number
+    reagentid_lotid_using?: inventoryReagentidLotidUsingCompoundUniqueInput
     AND?: inventoryWhereInput | inventoryWhereInput[]
     OR?: inventoryWhereInput[]
     NOT?: inventoryWhereInput | inventoryWhereInput[]
@@ -8870,7 +8871,7 @@ export namespace Prisma {
     using?: BoolFilter<"inventory"> | boolean
     reagent?: XOR<ReagentScalarRelationFilter, reagentWhereInput>
     lot?: XOR<LotScalarRelationFilter, lotWhereInput>
-  }, "id" | "id">
+  }, "id" | "id" | "reagentid_lotid_using">
 
   export type inventoryOrderByWithAggregationInput = {
     id?: SortOrder
@@ -9698,6 +9699,12 @@ export namespace Prisma {
     reagentid?: SortOrder
     lotid?: SortOrder
     userid?: SortOrder
+  }
+
+  export type inventoryReagentidLotidUsingCompoundUniqueInput = {
+    reagentid: number
+    lotid: number
+    using: boolean
   }
 
   export type inventoryCountOrderByAggregateInput = {

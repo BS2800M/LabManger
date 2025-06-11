@@ -35,6 +35,8 @@ model reagent {
   lot               lot[] //外键 批次
   operation         operation[] //外键 操作
   inventory         inventory[] //外键 库存
+
+  @@index([teamid, using])
 }
 
 model lot {
@@ -47,6 +49,8 @@ model lot {
   using           Boolean     @default(true) //是否使用
   operation       operation[] //外键 操作
   inventory       inventory[] //外键 库存
+
+  @@index([reagentid, using])
 }
 
 model operation {
@@ -61,6 +65,9 @@ model operation {
   barcodenumber    String //条码号
   user             user     @relation(fields: [userid], references: [id]) //外键 用户
   userid           Int //用户id
+
+  @@index([reagentid, lotid, using])
+  @@index([creation_time])
 }
 
 model inventory {
@@ -73,6 +80,8 @@ model inventory {
   last_outbound_time       DateTime //最后一次出库时间 
   lastweek_outbound_number Int //上周出库数量
   using                    Boolean  @default(true) //是否使用
+
+  @@unique([reagentid, lotid, using])
 }
 
 model user {

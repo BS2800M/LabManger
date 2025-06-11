@@ -40,5 +40,5 @@ export interface InventoryUpdateList {
     reagentid: number;
     lotid: number;
     number: number;
-    userid: number;
+    userid?: number;
 }

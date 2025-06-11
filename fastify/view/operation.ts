@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import prisma from '../prisma/script.js'
-import { inventory_update, inventory_update_list } from './inventory.js'
+import {inventory_update_list } from './inventory.js'
 import { 
     InboundRequestBody,
     OutboundRequestBody,
@@ -38,6 +38,7 @@ async function inbound(request: FastifyRequest, reply: any) {
             nowid=nowid+1 //更新当前id
         }
     }
+    console.log(addlist)
     const {returnmsg,list}=await inventory_update_list(inboundlist) //更新库存
     await prisma.operation.createMany({ //批量创建操作记录
         data:addlist
@@ -217,10 +218,10 @@ async function operation_del(request: FastifyRequest, reply: any) {
         }
     })
     if (del.operation_action=="inbound"){ //如果删除的是入库
-   await inventory_update(del.reagentid,del.lotid,-1) //更新库存
+   await inventory_update_list([{reagentid:del.reagentid,lotid:del.lotid,number:1}]) //更新库存
     }
     if (del.operation_action=="outbound" || del.operation_action=="special_outbound"){ //如果删除的是出库
-    await inventory_update(del.reagentid,del.lotid,1) //更新库存
+    await inventory_update_list([{reagentid:del.reagentid,lotid:del.lotid,number:-1}]) //更新库存
     }
     return{status:0,msg:"成功",data:del}
 }
