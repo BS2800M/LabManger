@@ -16,6 +16,7 @@ dist
 dist-ssr
 coverage
 *.local
+db.sqlite3
 data.db
 electron-dist
 /fastify/prisma/migrations
