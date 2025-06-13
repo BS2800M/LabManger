@@ -52,14 +52,12 @@ const formData = reactive({
   id: null,
   warn_days: 0,
   generate_lot: false,
-  teamid:localStorage.getItem('t_teamid'),
-  team:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')},
   using:true
 })
 // 验证规则配置对象
 const validationRules = {
   // 定义必填字段数组，包含需要验证的字段名
-  required: ['name', 'specifications', 'storage_condition', 'warn_number', 'price', 'warn_days','team']
+  required: ['name', 'specifications', 'storage_condition', 'warn_number', 'price', 'warn_days']
 }
 
 // UI状态管理

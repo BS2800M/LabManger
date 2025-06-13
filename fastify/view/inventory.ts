@@ -9,7 +9,8 @@ import {
 } from '../types/inventory.js'
 
 async function inventory_show(request: FastifyRequest, reply: any) {
-    const {teamid,page,pagesize,only_warn}:InventoryQuery=request.query as InventoryQuery
+    const {page,pagesize,only_warn}:InventoryQuery=request.query as InventoryQuery
+    const teamid = request.teamid
     if(only_warn){ //只显示需要提醒的库存
         // 先获取所有库存数据，过滤出预警库存，然后分页
         const allInventory = await prisma.inventory.findMany({
@@ -144,36 +145,42 @@ async function inventory_update_list(list:InventoryUpdateList[]){
             }
         }
     })
-
-
-    for(let i=inventory_list.length-1;i>=0;i--){ //过滤掉库存不足的库存  从后往前遍历，避免删除元素时影响索引
-        if(inventory_list[i].inventory_number+list[i].number<0){
-            returnmsg+=inventory_list[i].reagent.name+":库存不足\n"
-            inventory_list.splice(i,1)
-            list.splice(i,1)
+    list=list.filter((item:InventoryUpdateList,index:number)=>{
+        item.inventory_id=inventory_list[index].id 
+        item.inventory_number=inventory_list[index].inventory_number as number
+        item.warn_number=inventory_list[index].reagent.warn_number
+        item.reagentname=inventory_list[index].reagent.name
+        if(item.inventory_number+item.number<0){
+            returnmsg+=inventory_list[index].reagent.name+":库存不足\n"
+            return false
         }
-    }
+        return true
+    })
+
 
     await prisma.$transaction(async (tx) => { //并行更新库存
-    const update_all=inventory_list.map(async (item:any,index:number)=>{
+    const update_all=list.map(async (item:any,index:number)=>{
         const update_result= await tx.inventory.update({ //更新库存
-            where:{id:item.id},
+            where:{id:item.inventory_id},
             data:{
-                inventory_number:item.inventory_number+list[index].number,
+                inventory_number: {
+                    increment: item.number
+                },
                 last_outbound_time:new Date(),
             }          
         })
-        if(item.inventory_number+list[index].number<=item.reagent.warn_number){ //库存达到警告值时 返回信息提示
-            returnmsg+=inventory_list[index].reagent.name+":库存达到警告值\n"
+        if(item.inventory_number+item.number<=item.warn_number){ //库存达到警告值时 返回信息提示
+            returnmsg+=item.reagentname+":库存达到警告值\n"
         }
         else{
-            returnmsg+=inventory_list[index].reagent.name+":库存更新成功\n"
+            returnmsg+=item.reagentname+":库存更新成功\n"
         }
         return update_result
     })
     await Promise.all(update_all)
     })
 return {returnmsg,list}
+
 }
 
 

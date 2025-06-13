@@ -38,8 +38,12 @@ async function lot_add(request: FastifyRequest, reply: any) {
 
 async function lot_show(request: FastifyRequest, reply: any) {
     const { reagentname, page, pagesize }:LotShowRequestQuery = request.query as LotShowRequestQuery
+    const teamid = request.teamid
     const where:LotSearchParams = {
         using:true,
+        reagent:{
+            teamid:teamid
+        }
     }
     if(reagentname!==""){
         where.reagent={name:{contains:reagentname}}
@@ -89,6 +93,10 @@ async function lot_del(request: FastifyRequest, reply: any) {
     const del = await prisma.lot.update({
         where: { id },
         data: { using: false }
+    })
+    await prisma.inventory.updateMany({  //删除对应的库存表
+        where:{lotid:id},
+        data:{using:false}
     })
     return {status:0,msg:"成功",data:del}
 }

@@ -4,6 +4,7 @@
 generator client {
   provider = "prisma-client-js"
   output   = "./cilent/"
+  
 }
 
 datasource db {
@@ -21,6 +22,7 @@ model team {
   phone String //电话
   note String //备注
   reagent reagent[] //外键 试剂
+  user user[] //外键 用户
 }
 
 model reagent {
@@ -71,6 +73,7 @@ model operation{
 
   @@index([reagentid, lotid, using])
   @@index([creation_time])
+  @@index([barcodenumber])
 }
 
 model inventory {
@@ -79,10 +82,12 @@ model inventory {
   reagentid Int //试剂id
   lot lot @relation(fields: [lotid], references: [id]) //外键 批次
   lotid Int //批次id
-  inventory_number Int //库存数量
+  inventory_number Int //实际库存数量
   last_outbound_time DateTime //最后一次出库时间 
   lastweek_outbound_number Int //上周出库数量
   using Boolean @default(true) //是否使用
+  inventory_correction Int @default(0) //库存修正数量 正数表示+，负数表示-
+
 
   @@unique([reagentid, lotid, using])
 }
@@ -93,6 +98,8 @@ model user{
   password String //密码的sha256
   using Boolean @default(true) //是否使
   permission String //权限
+  team team @relation(fields: [teamid], references: [id]) //外键 团队
+  teamid Int //团队id
   operation operation[] //外键 操作
 
 }

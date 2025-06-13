@@ -1,5 +1,4 @@
 export interface InventoryQuery {
-    teamid: number;
     page: number;
     pagesize: number;
     only_warn: boolean;
@@ -41,4 +40,8 @@ export interface InventoryUpdateList {
     lotid: number;
     number: number;
     userid?: number;
+    inventory_id?:number;
+    inventory_number?:number;
+    warn_number?:number;
+    reagentname?:string;
 }

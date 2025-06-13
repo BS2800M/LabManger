@@ -1325,10 +1325,12 @@ export namespace Prisma {
 
   export type TeamCountOutputType = {
     reagent: number
+    user: number
   }
 
   export type TeamCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     reagent?: boolean | TeamCountOutputTypeCountReagentArgs
+    user?: boolean | TeamCountOutputTypeCountUserArgs
   }
 
   // Custom InputTypes
@@ -1347,6 +1349,13 @@ export namespace Prisma {
    */
   export type TeamCountOutputTypeCountReagentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: reagentWhereInput
+  }
+
+  /**
+   * TeamCountOutputType without action
+   */
+  export type TeamCountOutputTypeCountUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: userWhereInput
   }
 
 
@@ -1673,6 +1682,7 @@ export namespace Prisma {
     phone?: boolean
     note?: boolean
     reagent?: boolean | team$reagentArgs<ExtArgs>
+    user?: boolean | team$userArgs<ExtArgs>
     _count?: boolean | TeamCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["team"]>
 
@@ -1703,6 +1713,7 @@ export namespace Prisma {
   export type teamOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "using" | "phone" | "note", ExtArgs["result"]["team"]>
   export type teamInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     reagent?: boolean | team$reagentArgs<ExtArgs>
+    user?: boolean | team$userArgs<ExtArgs>
     _count?: boolean | TeamCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type teamIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -1712,6 +1723,7 @@ export namespace Prisma {
     name: "team"
     objects: {
       reagent: Prisma.$reagentPayload<ExtArgs>[]
+      user: Prisma.$userPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -2114,6 +2126,7 @@ export namespace Prisma {
   export interface Prisma__teamClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     reagent<T extends team$reagentArgs<ExtArgs> = {}>(args?: Subset<T, team$reagentArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$reagentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    user<T extends team$userArgs<ExtArgs> = {}>(args?: Subset<T, team$userArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$userPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2555,6 +2568,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ReagentScalarFieldEnum | ReagentScalarFieldEnum[]
+  }
+
+  /**
+   * team.user
+   */
+  export type team$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the user
+     */
+    select?: userSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the user
+     */
+    omit?: userOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: userInclude<ExtArgs> | null
+    where?: userWhereInput
+    orderBy?: userOrderByWithRelationInput | userOrderByWithRelationInput[]
+    cursor?: userWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
   /**
@@ -6173,6 +6210,7 @@ export namespace Prisma {
     lotid: number | null
     inventory_number: number | null
     lastweek_outbound_number: number | null
+    inventory_correction: number | null
   }
 
   export type InventorySumAggregateOutputType = {
@@ -6181,6 +6219,7 @@ export namespace Prisma {
     lotid: number | null
     inventory_number: number | null
     lastweek_outbound_number: number | null
+    inventory_correction: number | null
   }
 
   export type InventoryMinAggregateOutputType = {
@@ -6191,6 +6230,7 @@ export namespace Prisma {
     last_outbound_time: Date | null
     lastweek_outbound_number: number | null
     using: boolean | null
+    inventory_correction: number | null
   }
 
   export type InventoryMaxAggregateOutputType = {
@@ -6201,6 +6241,7 @@ export namespace Prisma {
     last_outbound_time: Date | null
     lastweek_outbound_number: number | null
     using: boolean | null
+    inventory_correction: number | null
   }
 
   export type InventoryCountAggregateOutputType = {
@@ -6211,6 +6252,7 @@ export namespace Prisma {
     last_outbound_time: number
     lastweek_outbound_number: number
     using: number
+    inventory_correction: number
     _all: number
   }
 
@@ -6221,6 +6263,7 @@ export namespace Prisma {
     lotid?: true
     inventory_number?: true
     lastweek_outbound_number?: true
+    inventory_correction?: true
   }
 
   export type InventorySumAggregateInputType = {
@@ -6229,6 +6272,7 @@ export namespace Prisma {
     lotid?: true
     inventory_number?: true
     lastweek_outbound_number?: true
+    inventory_correction?: true
   }
 
   export type InventoryMinAggregateInputType = {
@@ -6239,6 +6283,7 @@ export namespace Prisma {
     last_outbound_time?: true
     lastweek_outbound_number?: true
     using?: true
+    inventory_correction?: true
   }
 
   export type InventoryMaxAggregateInputType = {
@@ -6249,6 +6294,7 @@ export namespace Prisma {
     last_outbound_time?: true
     lastweek_outbound_number?: true
     using?: true
+    inventory_correction?: true
   }
 
   export type InventoryCountAggregateInputType = {
@@ -6259,6 +6305,7 @@ export namespace Prisma {
     last_outbound_time?: true
     lastweek_outbound_number?: true
     using?: true
+    inventory_correction?: true
     _all?: true
   }
 
@@ -6356,6 +6403,7 @@ export namespace Prisma {
     last_outbound_time: Date
     lastweek_outbound_number: number
     using: boolean
+    inventory_correction: number
     _count: InventoryCountAggregateOutputType | null
     _avg: InventoryAvgAggregateOutputType | null
     _sum: InventorySumAggregateOutputType | null
@@ -6385,6 +6433,7 @@ export namespace Prisma {
     last_outbound_time?: boolean
     lastweek_outbound_number?: boolean
     using?: boolean
+    inventory_correction?: boolean
     reagent?: boolean | reagentDefaultArgs<ExtArgs>
     lot?: boolean | lotDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["inventory"]>
@@ -6397,6 +6446,7 @@ export namespace Prisma {
     last_outbound_time?: boolean
     lastweek_outbound_number?: boolean
     using?: boolean
+    inventory_correction?: boolean
     reagent?: boolean | reagentDefaultArgs<ExtArgs>
     lot?: boolean | lotDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["inventory"]>
@@ -6409,6 +6459,7 @@ export namespace Prisma {
     last_outbound_time?: boolean
     lastweek_outbound_number?: boolean
     using?: boolean
+    inventory_correction?: boolean
     reagent?: boolean | reagentDefaultArgs<ExtArgs>
     lot?: boolean | lotDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["inventory"]>
@@ -6421,9 +6472,10 @@ export namespace Prisma {
     last_outbound_time?: boolean
     lastweek_outbound_number?: boolean
     using?: boolean
+    inventory_correction?: boolean
   }
 
-  export type inventoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "reagentid" | "lotid" | "inventory_number" | "last_outbound_time" | "lastweek_outbound_number" | "using", ExtArgs["result"]["inventory"]>
+  export type inventoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "reagentid" | "lotid" | "inventory_number" | "last_outbound_time" | "lastweek_outbound_number" | "using" | "inventory_correction", ExtArgs["result"]["inventory"]>
   export type inventoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     reagent?: boolean | reagentDefaultArgs<ExtArgs>
     lot?: boolean | lotDefaultArgs<ExtArgs>
@@ -6451,6 +6503,7 @@ export namespace Prisma {
       last_outbound_time: Date
       lastweek_outbound_number: number
       using: boolean
+      inventory_correction: number
     }, ExtArgs["result"]["inventory"]>
     composites: {}
   }
@@ -6883,6 +6936,7 @@ export namespace Prisma {
     readonly last_outbound_time: FieldRef<"inventory", 'DateTime'>
     readonly lastweek_outbound_number: FieldRef<"inventory", 'Int'>
     readonly using: FieldRef<"inventory", 'Boolean'>
+    readonly inventory_correction: FieldRef<"inventory", 'Int'>
   }
     
 
@@ -7309,10 +7363,12 @@ export namespace Prisma {
 
   export type UserAvgAggregateOutputType = {
     id: number | null
+    teamid: number | null
   }
 
   export type UserSumAggregateOutputType = {
     id: number | null
+    teamid: number | null
   }
 
   export type UserMinAggregateOutputType = {
@@ -7321,6 +7377,7 @@ export namespace Prisma {
     password: string | null
     using: boolean | null
     permission: string | null
+    teamid: number | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -7329,6 +7386,7 @@ export namespace Prisma {
     password: string | null
     using: boolean | null
     permission: string | null
+    teamid: number | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -7337,16 +7395,19 @@ export namespace Prisma {
     password: number
     using: number
     permission: number
+    teamid: number
     _all: number
   }
 
 
   export type UserAvgAggregateInputType = {
     id?: true
+    teamid?: true
   }
 
   export type UserSumAggregateInputType = {
     id?: true
+    teamid?: true
   }
 
   export type UserMinAggregateInputType = {
@@ -7355,6 +7416,7 @@ export namespace Prisma {
     password?: true
     using?: true
     permission?: true
+    teamid?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -7363,6 +7425,7 @@ export namespace Prisma {
     password?: true
     using?: true
     permission?: true
+    teamid?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -7371,6 +7434,7 @@ export namespace Prisma {
     password?: true
     using?: true
     permission?: true
+    teamid?: true
     _all?: true
   }
 
@@ -7466,6 +7530,7 @@ export namespace Prisma {
     password: string
     using: boolean
     permission: string
+    teamid: number
     _count: UserCountAggregateOutputType | null
     _avg: UserAvgAggregateOutputType | null
     _sum: UserSumAggregateOutputType | null
@@ -7493,6 +7558,8 @@ export namespace Prisma {
     password?: boolean
     using?: boolean
     permission?: boolean
+    teamid?: boolean
+    team?: boolean | teamDefaultArgs<ExtArgs>
     operation?: boolean | user$operationArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
@@ -7503,6 +7570,8 @@ export namespace Prisma {
     password?: boolean
     using?: boolean
     permission?: boolean
+    teamid?: boolean
+    team?: boolean | teamDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type userSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7511,6 +7580,8 @@ export namespace Prisma {
     password?: boolean
     using?: boolean
     permission?: boolean
+    teamid?: boolean
+    team?: boolean | teamDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type userSelectScalar = {
@@ -7519,19 +7590,26 @@ export namespace Prisma {
     password?: boolean
     using?: boolean
     permission?: boolean
+    teamid?: boolean
   }
 
-  export type userOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "using" | "permission", ExtArgs["result"]["user"]>
+  export type userOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "using" | "permission" | "teamid", ExtArgs["result"]["user"]>
   export type userInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    team?: boolean | teamDefaultArgs<ExtArgs>
     operation?: boolean | user$operationArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type userIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type userIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type userIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    team?: boolean | teamDefaultArgs<ExtArgs>
+  }
+  export type userIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    team?: boolean | teamDefaultArgs<ExtArgs>
+  }
 
   export type $userPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "user"
     objects: {
+      team: Prisma.$teamPayload<ExtArgs>
       operation: Prisma.$operationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -7540,6 +7618,7 @@ export namespace Prisma {
       password: string
       using: boolean
       permission: string
+      teamid: number
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -7934,6 +8013,7 @@ export namespace Prisma {
    */
   export interface Prisma__userClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    team<T extends teamDefaultArgs<ExtArgs> = {}>(args?: Subset<T, teamDefaultArgs<ExtArgs>>): Prisma__teamClient<$Result.GetResult<Prisma.$teamPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     operation<T extends user$operationArgs<ExtArgs> = {}>(args?: Subset<T, user$operationArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$operationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -7969,6 +8049,7 @@ export namespace Prisma {
     readonly password: FieldRef<"user", 'String'>
     readonly using: FieldRef<"user", 'Boolean'>
     readonly permission: FieldRef<"user", 'String'>
+    readonly teamid: FieldRef<"user", 'Int'>
   }
     
 
@@ -8216,6 +8297,10 @@ export namespace Prisma {
      * The data used to create many users.
      */
     data: userCreateManyInput | userCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: userIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -8286,6 +8371,10 @@ export namespace Prisma {
      * Limit how many users to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: userIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -8468,7 +8557,8 @@ export namespace Prisma {
     inventory_number: 'inventory_number',
     last_outbound_time: 'last_outbound_time',
     lastweek_outbound_number: 'lastweek_outbound_number',
-    using: 'using'
+    using: 'using',
+    inventory_correction: 'inventory_correction'
   };
 
   export type InventoryScalarFieldEnum = (typeof InventoryScalarFieldEnum)[keyof typeof InventoryScalarFieldEnum]
@@ -8479,7 +8569,8 @@ export namespace Prisma {
     username: 'username',
     password: 'password',
     using: 'using',
-    permission: 'permission'
+    permission: 'permission',
+    teamid: 'teamid'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -8546,6 +8637,7 @@ export namespace Prisma {
     phone?: StringFilter<"team"> | string
     note?: StringFilter<"team"> | string
     reagent?: ReagentListRelationFilter
+    user?: UserListRelationFilter
   }
 
   export type teamOrderByWithRelationInput = {
@@ -8555,6 +8647,7 @@ export namespace Prisma {
     phone?: SortOrder
     note?: SortOrder
     reagent?: reagentOrderByRelationAggregateInput
+    user?: userOrderByRelationAggregateInput
   }
 
   export type teamWhereUniqueInput = Prisma.AtLeast<{
@@ -8567,6 +8660,7 @@ export namespace Prisma {
     phone?: StringFilter<"team"> | string
     note?: StringFilter<"team"> | string
     reagent?: ReagentListRelationFilter
+    user?: UserListRelationFilter
   }, "id" | "id">
 
   export type teamOrderByWithAggregationInput = {
@@ -8841,6 +8935,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFilter<"inventory"> | Date | string
     lastweek_outbound_number?: IntFilter<"inventory"> | number
     using?: BoolFilter<"inventory"> | boolean
+    inventory_correction?: IntFilter<"inventory"> | number
     reagent?: XOR<ReagentScalarRelationFilter, reagentWhereInput>
     lot?: XOR<LotScalarRelationFilter, lotWhereInput>
   }
@@ -8853,6 +8948,7 @@ export namespace Prisma {
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
     using?: SortOrder
+    inventory_correction?: SortOrder
     reagent?: reagentOrderByWithRelationInput
     lot?: lotOrderByWithRelationInput
   }
@@ -8869,6 +8965,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFilter<"inventory"> | Date | string
     lastweek_outbound_number?: IntFilter<"inventory"> | number
     using?: BoolFilter<"inventory"> | boolean
+    inventory_correction?: IntFilter<"inventory"> | number
     reagent?: XOR<ReagentScalarRelationFilter, reagentWhereInput>
     lot?: XOR<LotScalarRelationFilter, lotWhereInput>
   }, "id" | "id" | "reagentid_lotid_using">
@@ -8881,6 +8978,7 @@ export namespace Prisma {
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
     using?: SortOrder
+    inventory_correction?: SortOrder
     _count?: inventoryCountOrderByAggregateInput
     _avg?: inventoryAvgOrderByAggregateInput
     _max?: inventoryMaxOrderByAggregateInput
@@ -8899,6 +8997,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeWithAggregatesFilter<"inventory"> | Date | string
     lastweek_outbound_number?: IntWithAggregatesFilter<"inventory"> | number
     using?: BoolWithAggregatesFilter<"inventory"> | boolean
+    inventory_correction?: IntWithAggregatesFilter<"inventory"> | number
   }
 
   export type userWhereInput = {
@@ -8910,6 +9009,8 @@ export namespace Prisma {
     password?: StringFilter<"user"> | string
     using?: BoolFilter<"user"> | boolean
     permission?: StringFilter<"user"> | string
+    teamid?: IntFilter<"user"> | number
+    team?: XOR<TeamScalarRelationFilter, teamWhereInput>
     operation?: OperationListRelationFilter
   }
 
@@ -8919,6 +9020,8 @@ export namespace Prisma {
     password?: SortOrder
     using?: SortOrder
     permission?: SortOrder
+    teamid?: SortOrder
+    team?: teamOrderByWithRelationInput
     operation?: operationOrderByRelationAggregateInput
   }
 
@@ -8931,6 +9034,8 @@ export namespace Prisma {
     password?: StringFilter<"user"> | string
     using?: BoolFilter<"user"> | boolean
     permission?: StringFilter<"user"> | string
+    teamid?: IntFilter<"user"> | number
+    team?: XOR<TeamScalarRelationFilter, teamWhereInput>
     operation?: OperationListRelationFilter
   }, "id" | "id">
 
@@ -8940,6 +9045,7 @@ export namespace Prisma {
     password?: SortOrder
     using?: SortOrder
     permission?: SortOrder
+    teamid?: SortOrder
     _count?: userCountOrderByAggregateInput
     _avg?: userAvgOrderByAggregateInput
     _max?: userMaxOrderByAggregateInput
@@ -8956,6 +9062,7 @@ export namespace Prisma {
     password?: StringWithAggregatesFilter<"user"> | string
     using?: BoolWithAggregatesFilter<"user"> | boolean
     permission?: StringWithAggregatesFilter<"user"> | string
+    teamid?: IntWithAggregatesFilter<"user"> | number
   }
 
   export type teamCreateInput = {
@@ -8964,6 +9071,7 @@ export namespace Prisma {
     phone: string
     note: string
     reagent?: reagentCreateNestedManyWithoutTeamInput
+    user?: userCreateNestedManyWithoutTeamInput
   }
 
   export type teamUncheckedCreateInput = {
@@ -8973,6 +9081,7 @@ export namespace Prisma {
     phone: string
     note: string
     reagent?: reagentUncheckedCreateNestedManyWithoutTeamInput
+    user?: userUncheckedCreateNestedManyWithoutTeamInput
   }
 
   export type teamUpdateInput = {
@@ -8981,6 +9090,7 @@ export namespace Prisma {
     phone?: StringFieldUpdateOperationsInput | string
     note?: StringFieldUpdateOperationsInput | string
     reagent?: reagentUpdateManyWithoutTeamNestedInput
+    user?: userUpdateManyWithoutTeamNestedInput
   }
 
   export type teamUncheckedUpdateInput = {
@@ -8990,6 +9100,7 @@ export namespace Prisma {
     phone?: StringFieldUpdateOperationsInput | string
     note?: StringFieldUpdateOperationsInput | string
     reagent?: reagentUncheckedUpdateManyWithoutTeamNestedInput
+    user?: userUncheckedUpdateManyWithoutTeamNestedInput
   }
 
   export type teamCreateManyInput = {
@@ -9257,6 +9368,7 @@ export namespace Prisma {
     last_outbound_time: Date | string
     lastweek_outbound_number: number
     using?: boolean
+    inventory_correction?: number
     reagent: reagentCreateNestedOneWithoutInventoryInput
     lot: lotCreateNestedOneWithoutInventoryInput
   }
@@ -9269,6 +9381,7 @@ export namespace Prisma {
     last_outbound_time: Date | string
     lastweek_outbound_number: number
     using?: boolean
+    inventory_correction?: number
   }
 
   export type inventoryUpdateInput = {
@@ -9276,6 +9389,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
     reagent?: reagentUpdateOneRequiredWithoutInventoryNestedInput
     lot?: lotUpdateOneRequiredWithoutInventoryNestedInput
   }
@@ -9288,6 +9402,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
   export type inventoryCreateManyInput = {
@@ -9298,6 +9413,7 @@ export namespace Prisma {
     last_outbound_time: Date | string
     lastweek_outbound_number: number
     using?: boolean
+    inventory_correction?: number
   }
 
   export type inventoryUpdateManyMutationInput = {
@@ -9305,6 +9421,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
   export type inventoryUncheckedUpdateManyInput = {
@@ -9315,6 +9432,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
   export type userCreateInput = {
@@ -9322,6 +9440,7 @@ export namespace Prisma {
     password: string
     using?: boolean
     permission: string
+    team: teamCreateNestedOneWithoutUserInput
     operation?: operationCreateNestedManyWithoutUserInput
   }
 
@@ -9331,6 +9450,7 @@ export namespace Prisma {
     password: string
     using?: boolean
     permission: string
+    teamid: number
     operation?: operationUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -9339,6 +9459,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     permission?: StringFieldUpdateOperationsInput | string
+    team?: teamUpdateOneRequiredWithoutUserNestedInput
     operation?: operationUpdateManyWithoutUserNestedInput
   }
 
@@ -9348,6 +9469,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     permission?: StringFieldUpdateOperationsInput | string
+    teamid?: IntFieldUpdateOperationsInput | number
     operation?: operationUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -9357,6 +9479,7 @@ export namespace Prisma {
     password: string
     using?: boolean
     permission: string
+    teamid: number
   }
 
   export type userUpdateManyMutationInput = {
@@ -9372,6 +9495,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     permission?: StringFieldUpdateOperationsInput | string
+    teamid?: IntFieldUpdateOperationsInput | number
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -9410,7 +9534,17 @@ export namespace Prisma {
     none?: reagentWhereInput
   }
 
+  export type UserListRelationFilter = {
+    every?: userWhereInput
+    some?: userWhereInput
+    none?: userWhereInput
+  }
+
   export type reagentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type userOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -9715,6 +9849,7 @@ export namespace Prisma {
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
     using?: SortOrder
+    inventory_correction?: SortOrder
   }
 
   export type inventoryAvgOrderByAggregateInput = {
@@ -9723,6 +9858,7 @@ export namespace Prisma {
     lotid?: SortOrder
     inventory_number?: SortOrder
     lastweek_outbound_number?: SortOrder
+    inventory_correction?: SortOrder
   }
 
   export type inventoryMaxOrderByAggregateInput = {
@@ -9733,6 +9869,7 @@ export namespace Prisma {
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
     using?: SortOrder
+    inventory_correction?: SortOrder
   }
 
   export type inventoryMinOrderByAggregateInput = {
@@ -9743,6 +9880,7 @@ export namespace Prisma {
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
     using?: SortOrder
+    inventory_correction?: SortOrder
   }
 
   export type inventorySumOrderByAggregateInput = {
@@ -9751,6 +9889,7 @@ export namespace Prisma {
     lotid?: SortOrder
     inventory_number?: SortOrder
     lastweek_outbound_number?: SortOrder
+    inventory_correction?: SortOrder
   }
 
   export type userCountOrderByAggregateInput = {
@@ -9759,10 +9898,12 @@ export namespace Prisma {
     password?: SortOrder
     using?: SortOrder
     permission?: SortOrder
+    teamid?: SortOrder
   }
 
   export type userAvgOrderByAggregateInput = {
     id?: SortOrder
+    teamid?: SortOrder
   }
 
   export type userMaxOrderByAggregateInput = {
@@ -9771,6 +9912,7 @@ export namespace Prisma {
     password?: SortOrder
     using?: SortOrder
     permission?: SortOrder
+    teamid?: SortOrder
   }
 
   export type userMinOrderByAggregateInput = {
@@ -9779,10 +9921,12 @@ export namespace Prisma {
     password?: SortOrder
     using?: SortOrder
     permission?: SortOrder
+    teamid?: SortOrder
   }
 
   export type userSumOrderByAggregateInput = {
     id?: SortOrder
+    teamid?: SortOrder
   }
 
   export type reagentCreateNestedManyWithoutTeamInput = {
@@ -9792,11 +9936,25 @@ export namespace Prisma {
     connect?: reagentWhereUniqueInput | reagentWhereUniqueInput[]
   }
 
+  export type userCreateNestedManyWithoutTeamInput = {
+    create?: XOR<userCreateWithoutTeamInput, userUncheckedCreateWithoutTeamInput> | userCreateWithoutTeamInput[] | userUncheckedCreateWithoutTeamInput[]
+    connectOrCreate?: userCreateOrConnectWithoutTeamInput | userCreateOrConnectWithoutTeamInput[]
+    createMany?: userCreateManyTeamInputEnvelope
+    connect?: userWhereUniqueInput | userWhereUniqueInput[]
+  }
+
   export type reagentUncheckedCreateNestedManyWithoutTeamInput = {
     create?: XOR<reagentCreateWithoutTeamInput, reagentUncheckedCreateWithoutTeamInput> | reagentCreateWithoutTeamInput[] | reagentUncheckedCreateWithoutTeamInput[]
     connectOrCreate?: reagentCreateOrConnectWithoutTeamInput | reagentCreateOrConnectWithoutTeamInput[]
     createMany?: reagentCreateManyTeamInputEnvelope
     connect?: reagentWhereUniqueInput | reagentWhereUniqueInput[]
+  }
+
+  export type userUncheckedCreateNestedManyWithoutTeamInput = {
+    create?: XOR<userCreateWithoutTeamInput, userUncheckedCreateWithoutTeamInput> | userCreateWithoutTeamInput[] | userUncheckedCreateWithoutTeamInput[]
+    connectOrCreate?: userCreateOrConnectWithoutTeamInput | userCreateOrConnectWithoutTeamInput[]
+    createMany?: userCreateManyTeamInputEnvelope
+    connect?: userWhereUniqueInput | userWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -9821,6 +9979,20 @@ export namespace Prisma {
     deleteMany?: reagentScalarWhereInput | reagentScalarWhereInput[]
   }
 
+  export type userUpdateManyWithoutTeamNestedInput = {
+    create?: XOR<userCreateWithoutTeamInput, userUncheckedCreateWithoutTeamInput> | userCreateWithoutTeamInput[] | userUncheckedCreateWithoutTeamInput[]
+    connectOrCreate?: userCreateOrConnectWithoutTeamInput | userCreateOrConnectWithoutTeamInput[]
+    upsert?: userUpsertWithWhereUniqueWithoutTeamInput | userUpsertWithWhereUniqueWithoutTeamInput[]
+    createMany?: userCreateManyTeamInputEnvelope
+    set?: userWhereUniqueInput | userWhereUniqueInput[]
+    disconnect?: userWhereUniqueInput | userWhereUniqueInput[]
+    delete?: userWhereUniqueInput | userWhereUniqueInput[]
+    connect?: userWhereUniqueInput | userWhereUniqueInput[]
+    update?: userUpdateWithWhereUniqueWithoutTeamInput | userUpdateWithWhereUniqueWithoutTeamInput[]
+    updateMany?: userUpdateManyWithWhereWithoutTeamInput | userUpdateManyWithWhereWithoutTeamInput[]
+    deleteMany?: userScalarWhereInput | userScalarWhereInput[]
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -9841,6 +10013,20 @@ export namespace Prisma {
     update?: reagentUpdateWithWhereUniqueWithoutTeamInput | reagentUpdateWithWhereUniqueWithoutTeamInput[]
     updateMany?: reagentUpdateManyWithWhereWithoutTeamInput | reagentUpdateManyWithWhereWithoutTeamInput[]
     deleteMany?: reagentScalarWhereInput | reagentScalarWhereInput[]
+  }
+
+  export type userUncheckedUpdateManyWithoutTeamNestedInput = {
+    create?: XOR<userCreateWithoutTeamInput, userUncheckedCreateWithoutTeamInput> | userCreateWithoutTeamInput[] | userUncheckedCreateWithoutTeamInput[]
+    connectOrCreate?: userCreateOrConnectWithoutTeamInput | userCreateOrConnectWithoutTeamInput[]
+    upsert?: userUpsertWithWhereUniqueWithoutTeamInput | userUpsertWithWhereUniqueWithoutTeamInput[]
+    createMany?: userCreateManyTeamInputEnvelope
+    set?: userWhereUniqueInput | userWhereUniqueInput[]
+    disconnect?: userWhereUniqueInput | userWhereUniqueInput[]
+    delete?: userWhereUniqueInput | userWhereUniqueInput[]
+    connect?: userWhereUniqueInput | userWhereUniqueInput[]
+    update?: userUpdateWithWhereUniqueWithoutTeamInput | userUpdateWithWhereUniqueWithoutTeamInput[]
+    updateMany?: userUpdateManyWithWhereWithoutTeamInput | userUpdateManyWithWhereWithoutTeamInput[]
+    deleteMany?: userScalarWhereInput | userScalarWhereInput[]
   }
 
   export type teamCreateNestedOneWithoutReagentInput = {
@@ -10155,6 +10341,12 @@ export namespace Prisma {
     update?: XOR<XOR<lotUpdateToOneWithWhereWithoutInventoryInput, lotUpdateWithoutInventoryInput>, lotUncheckedUpdateWithoutInventoryInput>
   }
 
+  export type teamCreateNestedOneWithoutUserInput = {
+    create?: XOR<teamCreateWithoutUserInput, teamUncheckedCreateWithoutUserInput>
+    connectOrCreate?: teamCreateOrConnectWithoutUserInput
+    connect?: teamWhereUniqueInput
+  }
+
   export type operationCreateNestedManyWithoutUserInput = {
     create?: XOR<operationCreateWithoutUserInput, operationUncheckedCreateWithoutUserInput> | operationCreateWithoutUserInput[] | operationUncheckedCreateWithoutUserInput[]
     connectOrCreate?: operationCreateOrConnectWithoutUserInput | operationCreateOrConnectWithoutUserInput[]
@@ -10167,6 +10359,14 @@ export namespace Prisma {
     connectOrCreate?: operationCreateOrConnectWithoutUserInput | operationCreateOrConnectWithoutUserInput[]
     createMany?: operationCreateManyUserInputEnvelope
     connect?: operationWhereUniqueInput | operationWhereUniqueInput[]
+  }
+
+  export type teamUpdateOneRequiredWithoutUserNestedInput = {
+    create?: XOR<teamCreateWithoutUserInput, teamUncheckedCreateWithoutUserInput>
+    connectOrCreate?: teamCreateOrConnectWithoutUserInput
+    upsert?: teamUpsertWithoutUserInput
+    connect?: teamWhereUniqueInput
+    update?: XOR<XOR<teamUpdateToOneWithWhereWithoutUserInput, teamUpdateWithoutUserInput>, teamUncheckedUpdateWithoutUserInput>
   }
 
   export type operationUpdateManyWithoutUserNestedInput = {
@@ -10342,6 +10542,32 @@ export namespace Prisma {
     data: reagentCreateManyTeamInput | reagentCreateManyTeamInput[]
   }
 
+  export type userCreateWithoutTeamInput = {
+    username: string
+    password: string
+    using?: boolean
+    permission: string
+    operation?: operationCreateNestedManyWithoutUserInput
+  }
+
+  export type userUncheckedCreateWithoutTeamInput = {
+    id?: number
+    username: string
+    password: string
+    using?: boolean
+    permission: string
+    operation?: operationUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type userCreateOrConnectWithoutTeamInput = {
+    where: userWhereUniqueInput
+    create: XOR<userCreateWithoutTeamInput, userUncheckedCreateWithoutTeamInput>
+  }
+
+  export type userCreateManyTeamInputEnvelope = {
+    data: userCreateManyTeamInput | userCreateManyTeamInput[]
+  }
+
   export type reagentUpsertWithWhereUniqueWithoutTeamInput = {
     where: reagentWhereUniqueInput
     update: XOR<reagentUpdateWithoutTeamInput, reagentUncheckedUpdateWithoutTeamInput>
@@ -10374,11 +10600,40 @@ export namespace Prisma {
     warn_days?: IntFilter<"reagent"> | number
   }
 
+  export type userUpsertWithWhereUniqueWithoutTeamInput = {
+    where: userWhereUniqueInput
+    update: XOR<userUpdateWithoutTeamInput, userUncheckedUpdateWithoutTeamInput>
+    create: XOR<userCreateWithoutTeamInput, userUncheckedCreateWithoutTeamInput>
+  }
+
+  export type userUpdateWithWhereUniqueWithoutTeamInput = {
+    where: userWhereUniqueInput
+    data: XOR<userUpdateWithoutTeamInput, userUncheckedUpdateWithoutTeamInput>
+  }
+
+  export type userUpdateManyWithWhereWithoutTeamInput = {
+    where: userScalarWhereInput
+    data: XOR<userUpdateManyMutationInput, userUncheckedUpdateManyWithoutTeamInput>
+  }
+
+  export type userScalarWhereInput = {
+    AND?: userScalarWhereInput | userScalarWhereInput[]
+    OR?: userScalarWhereInput[]
+    NOT?: userScalarWhereInput | userScalarWhereInput[]
+    id?: IntFilter<"user"> | number
+    username?: StringFilter<"user"> | string
+    password?: StringFilter<"user"> | string
+    using?: BoolFilter<"user"> | boolean
+    permission?: StringFilter<"user"> | string
+    teamid?: IntFilter<"user"> | number
+  }
+
   export type teamCreateWithoutReagentInput = {
     name: string
     using?: boolean
     phone: string
     note: string
+    user?: userCreateNestedManyWithoutTeamInput
   }
 
   export type teamUncheckedCreateWithoutReagentInput = {
@@ -10387,6 +10642,7 @@ export namespace Prisma {
     using?: boolean
     phone: string
     note: string
+    user?: userUncheckedCreateNestedManyWithoutTeamInput
   }
 
   export type teamCreateOrConnectWithoutReagentInput = {
@@ -10455,6 +10711,7 @@ export namespace Prisma {
     last_outbound_time: Date | string
     lastweek_outbound_number: number
     using?: boolean
+    inventory_correction?: number
     lot: lotCreateNestedOneWithoutInventoryInput
   }
 
@@ -10465,6 +10722,7 @@ export namespace Prisma {
     last_outbound_time: Date | string
     lastweek_outbound_number: number
     using?: boolean
+    inventory_correction?: number
   }
 
   export type inventoryCreateOrConnectWithoutReagentInput = {
@@ -10492,6 +10750,7 @@ export namespace Prisma {
     using?: BoolFieldUpdateOperationsInput | boolean
     phone?: StringFieldUpdateOperationsInput | string
     note?: StringFieldUpdateOperationsInput | string
+    user?: userUpdateManyWithoutTeamNestedInput
   }
 
   export type teamUncheckedUpdateWithoutReagentInput = {
@@ -10500,6 +10759,7 @@ export namespace Prisma {
     using?: BoolFieldUpdateOperationsInput | boolean
     phone?: StringFieldUpdateOperationsInput | string
     note?: StringFieldUpdateOperationsInput | string
+    user?: userUncheckedUpdateManyWithoutTeamNestedInput
   }
 
   export type lotUpsertWithWhereUniqueWithoutReagentInput = {
@@ -10587,6 +10847,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFilter<"inventory"> | Date | string
     lastweek_outbound_number?: IntFilter<"inventory"> | number
     using?: BoolFilter<"inventory"> | boolean
+    inventory_correction?: IntFilter<"inventory"> | number
   }
 
   export type reagentCreateWithoutLotInput = {
@@ -10656,6 +10917,7 @@ export namespace Prisma {
     last_outbound_time: Date | string
     lastweek_outbound_number: number
     using?: boolean
+    inventory_correction?: number
     reagent: reagentCreateNestedOneWithoutInventoryInput
   }
 
@@ -10666,6 +10928,7 @@ export namespace Prisma {
     last_outbound_time: Date | string
     lastweek_outbound_number: number
     using?: boolean
+    inventory_correction?: number
   }
 
   export type inventoryCreateOrConnectWithoutLotInput = {
@@ -10812,6 +11075,7 @@ export namespace Prisma {
     password: string
     using?: boolean
     permission: string
+    team: teamCreateNestedOneWithoutUserInput
   }
 
   export type userUncheckedCreateWithoutOperationInput = {
@@ -10820,6 +11084,7 @@ export namespace Prisma {
     password: string
     using?: boolean
     permission: string
+    teamid: number
   }
 
   export type userCreateOrConnectWithoutOperationInput = {
@@ -10913,6 +11178,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     permission?: StringFieldUpdateOperationsInput | string
+    team?: teamUpdateOneRequiredWithoutUserNestedInput
   }
 
   export type userUncheckedUpdateWithoutOperationInput = {
@@ -10921,6 +11187,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     permission?: StringFieldUpdateOperationsInput | string
+    teamid?: IntFieldUpdateOperationsInput | number
   }
 
   export type reagentCreateWithoutInventoryInput = {
@@ -11051,6 +11318,28 @@ export namespace Prisma {
     operation?: operationUncheckedUpdateManyWithoutLotNestedInput
   }
 
+  export type teamCreateWithoutUserInput = {
+    name: string
+    using?: boolean
+    phone: string
+    note: string
+    reagent?: reagentCreateNestedManyWithoutTeamInput
+  }
+
+  export type teamUncheckedCreateWithoutUserInput = {
+    id?: number
+    name: string
+    using?: boolean
+    phone: string
+    note: string
+    reagent?: reagentUncheckedCreateNestedManyWithoutTeamInput
+  }
+
+  export type teamCreateOrConnectWithoutUserInput = {
+    where: teamWhereUniqueInput
+    create: XOR<teamCreateWithoutUserInput, teamUncheckedCreateWithoutUserInput>
+  }
+
   export type operationCreateWithoutUserInput = {
     operation_action: string
     creation_time?: Date | string
@@ -11079,6 +11368,34 @@ export namespace Prisma {
     data: operationCreateManyUserInput | operationCreateManyUserInput[]
   }
 
+  export type teamUpsertWithoutUserInput = {
+    update: XOR<teamUpdateWithoutUserInput, teamUncheckedUpdateWithoutUserInput>
+    create: XOR<teamCreateWithoutUserInput, teamUncheckedCreateWithoutUserInput>
+    where?: teamWhereInput
+  }
+
+  export type teamUpdateToOneWithWhereWithoutUserInput = {
+    where?: teamWhereInput
+    data: XOR<teamUpdateWithoutUserInput, teamUncheckedUpdateWithoutUserInput>
+  }
+
+  export type teamUpdateWithoutUserInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    using?: BoolFieldUpdateOperationsInput | boolean
+    phone?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
+    reagent?: reagentUpdateManyWithoutTeamNestedInput
+  }
+
+  export type teamUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    using?: BoolFieldUpdateOperationsInput | boolean
+    phone?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
+    reagent?: reagentUncheckedUpdateManyWithoutTeamNestedInput
+  }
+
   export type operationUpsertWithWhereUniqueWithoutUserInput = {
     where: operationWhereUniqueInput
     update: XOR<operationUpdateWithoutUserInput, operationUncheckedUpdateWithoutUserInput>
@@ -11105,6 +11422,14 @@ export namespace Prisma {
     storage_condition: string
     using?: boolean
     warn_days: number
+  }
+
+  export type userCreateManyTeamInput = {
+    id?: number
+    username: string
+    password: string
+    using?: boolean
+    permission: string
   }
 
   export type reagentUpdateWithoutTeamInput = {
@@ -11148,6 +11473,31 @@ export namespace Prisma {
     warn_days?: IntFieldUpdateOperationsInput | number
   }
 
+  export type userUpdateWithoutTeamInput = {
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    using?: BoolFieldUpdateOperationsInput | boolean
+    permission?: StringFieldUpdateOperationsInput | string
+    operation?: operationUpdateManyWithoutUserNestedInput
+  }
+
+  export type userUncheckedUpdateWithoutTeamInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    using?: BoolFieldUpdateOperationsInput | boolean
+    permission?: StringFieldUpdateOperationsInput | string
+    operation?: operationUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type userUncheckedUpdateManyWithoutTeamInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    using?: BoolFieldUpdateOperationsInput | boolean
+    permission?: StringFieldUpdateOperationsInput | string
+  }
+
   export type lotCreateManyReagentInput = {
     id?: number
     name: string
@@ -11173,6 +11523,7 @@ export namespace Prisma {
     last_outbound_time: Date | string
     lastweek_outbound_number: number
     using?: boolean
+    inventory_correction?: number
   }
 
   export type lotUpdateWithoutReagentInput = {
@@ -11236,6 +11587,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
     lot?: lotUpdateOneRequiredWithoutInventoryNestedInput
   }
 
@@ -11246,6 +11598,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
   export type inventoryUncheckedUpdateManyWithoutReagentInput = {
@@ -11255,6 +11608,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
   export type operationCreateManyLotInput = {
@@ -11274,6 +11628,7 @@ export namespace Prisma {
     last_outbound_time: Date | string
     lastweek_outbound_number: number
     using?: boolean
+    inventory_correction?: number
   }
 
   export type operationUpdateWithoutLotInput = {
@@ -11310,6 +11665,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
     reagent?: reagentUpdateOneRequiredWithoutInventoryNestedInput
   }
 
@@ -11320,6 +11676,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
   export type inventoryUncheckedUpdateManyWithoutLotInput = {
@@ -11329,6 +11686,7 @@ export namespace Prisma {
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
+    inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
   export type operationCreateManyUserInput = {

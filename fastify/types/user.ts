@@ -1,7 +1,8 @@
 interface UserAddRequestBody{
     username:string,
     password:string,
-    permission:string
+    permission:string,
+    teamid:number
 }
 
 interface UserDelRequestBody{

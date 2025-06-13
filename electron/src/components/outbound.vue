@@ -108,8 +108,6 @@ const formData = reactive({
     allreagentlist: [], // 包含获取的试剂id、试剂名称、地点、下拉菜单的label和绑定值
     alllotlist: [], // 包含获取的批号id、批号名称、下拉菜单的label和绑定值
     tableData: [], // 表格数据  
-    teamid:localStorage.getItem('t_teamid'),
-    userid:localStorage.getItem('userid'),
 })
 const validationRules = {
     required: ['reagent_selectvalue', 'lot_selectvalue', 'number']
@@ -117,31 +115,26 @@ const validationRules = {
 function operation_outbound(){
   api_operation_outbound(formData)
   .then(data=>{
-    if (formData.barcodenumber==""){
-        ElMessage({
-          message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-          h('span', null, "请输入试剂条码号！")]),
-        })
-    }
-    else{
         formData.barcodenumber=""
+        const warningKeyWord=["库存不足","已经出库","条码不存在","已经出库"]
         ElMessage({
+          type: warningKeyWord.some(item => data.data.msg.includes(item)) ? "warning" : "success",
           message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
           h('span', null, data.data.msg)]),
         })
-    }
-
   })
   .catch(err=>{
     ElMessage({
+        type: "error",
           message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-          h('span', null, err.response.data.msg)]),
+          h('span', null, err)]),
         })
+
                 })
 }
 
 function show_allreagent() {
-    api_reagent_showall(formData.teamid)
+    api_reagent_showall()
         .then(data => {
             for (let i in data.data.data) {
                 formData.allreagentlist.push({
@@ -157,7 +150,7 @@ function show_allreagent() {
 }
 
 function show_alllot() {
-    api_lot_showall(formData.reagentid)
+    api_lot_showall(formData)
         .then(data => {
             formData.alllotlist = [] // 每次触发时清空数组
             for (let i in data.data.data) {
@@ -184,20 +177,7 @@ formData.editbox_disablebutton = hasEmptyField
 function select_reagentchange(){ //当选择的试剂发生改变时
     if (formData.reagent_selectvalue != null) {
         formData.reagentid = formData.allreagentlist[formData.reagent_selectvalue].id
-        api_lot_showall({reagentid:formData.reagentid})
-        .then(data => {
-            formData.alllotlist = []
-            for (let i in data.data.data) {
-                formData.alllotlist.push({
-                    label: data.data.data[i].name,
-                    value: i,
-                    id: data.data.data[i].id,
-                })
-            }
-        })
-        .catch(err => {
-            openmessagebox('error',err,'close',null,null)
-        })
+        show_alllot()
         checkinput()
         formData.lot_selectvalue = null
 }
@@ -217,7 +197,6 @@ function ready_operation_special_outbound(){
     lotid:formData.lotid,
     lot:formData.alllotlist[formData.lot_selectvalue].label,
     number:formData.number,
-    userid:formData.userid
   })  
 }
 
@@ -226,6 +205,7 @@ function operation_special_outbound(){
   .then(data=>{
     formData.tableData = []
     ElMessage({
+      type: data.data.msg.includes("库存不足") ? "warning" : "success",
       message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
       h('span', null, data.data.msg)]),
     })

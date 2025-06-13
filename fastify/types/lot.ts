@@ -6,10 +6,11 @@ export interface LotShowRequestQuery {
 
 export interface LotSearchParams {
     using: boolean;
-    reagent?: {
-        name: {
+    reagent: {
+        name?: {
             contains: string;
         };
+        teamid?: number;
     };
 }
 

@@ -10,7 +10,6 @@ export let api_operation_inbound=(inboundlist)=>{
 export let api_operation_outbound=(body)=>{
           return myrequest.post('/operation/outbound/',{
                 barcodenumber:body.barcodenumber,
-                userid:body.userid,
                 })
           }
 
@@ -25,7 +24,6 @@ return myrequest.post('/operation/special_outbound/',{
 
 export let api_operation_show=(body)=>{
 return myrequest.get('/operation/show/',{
-    teamid:body.teamid,
     reagentname:body.reagentname,
     searchlater:body.searchlater,
     searchearlier:body.searchearlier,
