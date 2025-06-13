@@ -60,9 +60,7 @@ const state = reactive({
   tableData: [],         // 表格数据，初始化为空数组
   page: 1,       // 当前页
   totalpages: 1,        // 总页
-  inputteam:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')},
   pagesize:13,
-  teamid:localStorage.getItem('t_teamid')
 })
 
 

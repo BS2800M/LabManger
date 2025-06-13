@@ -50,7 +50,6 @@ const formData = reactive({
   creation_time: '',         // 创建时间
   seletevalue: null,         // 选择的试剂值
   id: null  ,           // 选中的批号id
-  teamid:localStorage.getItem('t_teamid'),//小组id
   using:true,
   reagentid:null,
   reagentname:''
@@ -186,7 +185,7 @@ function add_lot(){
 }
 
 function list_allreagent(){
-  api_reagent_showall(formData.team)
+  api_reagent_showall()
   .then(data=>{
             allreagentlist.value=[]
             let i=""

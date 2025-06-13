@@ -1,5 +1,4 @@
 export interface ReagentShowRequestQuery {
-    teamid: number;
     name: string;
     page: number;
     pagesize: number;
@@ -19,7 +18,6 @@ export interface ReagentUpdateRequestBody {
     warn_number: number;
     price: number;
     storage_condition: string;
-    teamid: number;
     warn_days: number;
     using: boolean;
 }
@@ -28,9 +26,7 @@ export interface ReagentDelRequestBody {
     id: number;
 }
 
-export interface ReagentShowAllRequestQuery {
-    teamid: number;
-}
+
 
 export interface ReagentAddRequestBody {
     name: string;
@@ -38,7 +34,6 @@ export interface ReagentAddRequestBody {
     warn_number: number;
     price: number;
     storage_condition: string;
-    teamid: number;
     warn_days: number;
     using: boolean;
     generate_lot: boolean;

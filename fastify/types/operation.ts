@@ -1,6 +1,5 @@
 export interface OutboundRequestBody {
     barcodenumber: string;
-    userid: number;
 }
 
 export interface SpecialOutboundRequestBody {
@@ -8,12 +7,10 @@ export interface SpecialOutboundRequestBody {
         reagentid: number;
         lotid: number;
         number: number;
-        userid: number;
     }>;
 }
 
 export interface OperationShowRequestQuery {
-    teamid: number;
     reagentname: string;
     searchlater: string;
     searchearlier: string;
@@ -61,6 +58,5 @@ export interface InboundRequestBody {
         reagentid: number;
         lotid: number;
         number: number;
-        userid: number;
     }>;
 } 

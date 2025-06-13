@@ -97,8 +97,6 @@
     searchearlier: getnowtime(),    // 搜索结束时间
     page: 1,       // 当前页
     totalpages: 1,        // 总页
-    teamid:localStorage.getItem('t_teamid'),
-    userid:localStorage.getItem('userid'),
     pagesize:13
   })
   // 创建ref引用

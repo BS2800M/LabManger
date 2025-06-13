@@ -65,7 +65,6 @@ const state = reactive({
   page: 1,       // 当前页
   totalpages: 1,        // 总页
   only_warn: false,  // 是否只显示警告
-  teamid:localStorage.getItem('t_teamid'),
   pagesize:13
 })
 

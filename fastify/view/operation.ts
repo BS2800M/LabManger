@@ -12,6 +12,7 @@ import {
 
 async function inbound(request: FastifyRequest, reply: any) {
     const {inboundlist}:InboundRequestBody=request.body as InboundRequestBody
+    const userid = request.userid
     let addlist:any[]=[]
     let addid:any=await prisma.operation.aggregate({ //获取当前操作记录的最大id
         _max:{
@@ -33,12 +34,11 @@ async function inbound(request: FastifyRequest, reply: any) {
                 operation_action:"inbound",
                 using:true,
                 barcodenumber:(nowid+1000000).toString(),
-                userid:item.userid,
+                userid:userid,
             })
             nowid=nowid+1 //更新当前id
         }
     }
-    console.log(addlist)
     const {returnmsg,list}=await inventory_update_list(inboundlist) //更新库存
     await prisma.operation.createMany({ //批量创建操作记录
         data:addlist
@@ -84,16 +84,17 @@ async function inbound(request: FastifyRequest, reply: any) {
 }
 
 async function outbound(request: FastifyRequest, reply: any) {
-    const {barcodenumber,userid}:OutboundRequestBody=request.body as OutboundRequestBody
+    const {barcodenumber}:OutboundRequestBody=request.body as OutboundRequestBody
+    const userid = request.userid
     let returnmsg:string=""
     let result:number=await prisma.operation.count({ //查询条码是否存在
         where:{barcodenumber:barcodenumber},
     })
     if(result==0){
-        return reply.status(400).send({status:1,msg:"条码不存在"})
+        return reply.status(200).send({status:1,msg:"条码不存在"})
     }
     if(result>1){
-        return reply.status(400).send({status:1,msg:"已经出库"})
+        return reply.status(200).send({status:1,msg:"已经出库"})
     }
     if(result==1){
         const search:any=await prisma.operation.findFirst({ //查询条码对应的操作记录
@@ -118,6 +119,7 @@ async function outbound(request: FastifyRequest, reply: any) {
 
 async function special_outbound(request: FastifyRequest, reply: any) {
     let {outboundlist}:SpecialOutboundRequestBody=request.body as SpecialOutboundRequestBody
+    const userid = request.userid
     for(const item of outboundlist){
         item.number=item.number*(-1) //负数代表出库 减少库存
     }
@@ -132,7 +134,7 @@ async function special_outbound(request: FastifyRequest, reply: any) {
                 operation_action:"special_outbound",
                 using:true,
                 barcodenumber:"unknown",
-                userid:item.userid,
+                userid:userid,
             })
         }
     }
@@ -144,7 +146,8 @@ async function special_outbound(request: FastifyRequest, reply: any) {
 
 
 async function operation_show(request: FastifyRequest, reply: any) {
-    const {teamid,reagentname,searchlater,searchearlier,barcodenumber,pagesize,page}:OperationShowRequestQuery=request.query as OperationShowRequestQuery
+    const {reagentname,searchlater,searchearlier,barcodenumber,pagesize,page}:OperationShowRequestQuery=request.query as OperationShowRequestQuery
+    const teamid = request.teamid
     const where:OperationShowSearchParams = {
         using:true,
         reagent:{
@@ -207,7 +210,6 @@ async function operation_show(request: FastifyRequest, reply: any) {
     })
     return{status:0,msg:"成功",data:transformed_show,total:total,page:page,pagesize:pagesize,totalpages:Math.ceil(total/pagesize)}
 }
-
 
 async function operation_del(request: FastifyRequest, reply: any) {
     const {id}:OperationDelRequestBody=request.body as OperationDelRequestBody

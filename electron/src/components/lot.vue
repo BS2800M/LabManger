@@ -61,7 +61,6 @@ const state = reactive({
     page: 1,       // 当前页
     totalpages: 1,        // 总页
     pagesize:13,    // 每页显示数量
-    teamid:localStorage.getItem('t_teamid')
 })
 
 function lot_show() {

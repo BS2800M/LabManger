@@ -165,7 +165,8 @@ exports.Prisma.InventoryScalarFieldEnum = {
   inventory_number: 'inventory_number',
   last_outbound_time: 'last_outbound_time',
   lastweek_outbound_number: 'lastweek_outbound_number',
-  using: 'using'
+  using: 'using',
+  inventory_correction: 'inventory_correction'
 };
 
 exports.Prisma.UserScalarFieldEnum = {
@@ -173,7 +174,8 @@ exports.Prisma.UserScalarFieldEnum = {
   username: 'username',
   password: 'password',
   using: 'using',
-  permission: 'permission'
+  permission: 'permission',
+  teamid: 'teamid'
 };
 
 exports.Prisma.SortOrder = {

@@ -3,7 +3,6 @@ import { myrequest } from "./request"
 
 export let api_reagent_show=(params)=>{
     return myrequest.get('/reagent/show/',{
-        teamid:params.teamid,
         name:params.name,
         page:params.page,
         pagesize:params.pagesize
@@ -24,7 +23,6 @@ export let api_reagent_update=(body)=>{
         warn_number:body.warn_number,
         price:body.price,
         storage_condition:body.storage_condition,
-        teamid:body.teamid,
         warn_days:body.warn_days,
         using:body.using,   
     })
@@ -38,15 +36,13 @@ export let api_reagent_add=(body)=>{
         warn_number:body.warn_number,
         price:body.price,
         storage_condition:body.storage_condition,
-        teamid:body.teamid,
         warn_days:body.warn_days,
         using:body.using,
         generate_lot:body.generate_lot
     })
 }
 
-export let api_reagent_showall=(teamid)=>{
+export let api_reagent_showall=()=>{
     return myrequest.get('/reagent/showall/',{
-    teamid:teamid
                 })
 }

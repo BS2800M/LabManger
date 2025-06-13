@@ -9,14 +9,15 @@ import crypto from 'crypto'
 
 
 async function user_add(request: FastifyRequest, reply: any) {
-    const {username,password,permission}:UserAddRequestBody = request.body as UserAddRequestBody
+    const {username,password,permission,teamid}:UserAddRequestBody = request.body as UserAddRequestBody
     const password_sha256 = crypto.createHash('sha256').update(password).digest('hex')
     const user = await prisma.user.create({
         data:{
             username,
             password:password_sha256,
             permission,
-            using:true
+            using:true,
+            teamid:teamid
         }
     })
     return {

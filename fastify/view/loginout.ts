@@ -26,14 +26,13 @@ async function login(request: FastifyRequest, reply: any) {
     const token = jwt.sign({
         userid:user.id,
         username:user.username,
-        permission:user.permission
+        permission:user.permission,
+        teamid:user.teamid
     },'labmanger',{expiresIn:'5000h'})
     return {
         status:0,
         msg:"登录成功",
         token:token,
-        userid:user.id,
-        username:user.username
     }
 }
 async function logout(request: FastifyRequest, reply: any) {

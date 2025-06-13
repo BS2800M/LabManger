@@ -75,6 +75,7 @@ import { api_operation_inbound } from '@/api/operation'
 import { api_reagent_showall } from '@/api/reagent'
 import { api_lot_showall } from '@/api/lot'
 import { ElMessage } from 'element-plus'
+import 'element-plus/dist/index.css'
 import { h } from 'vue'
 // 组件引用
 const messageboxRef = ref()
@@ -92,9 +93,6 @@ const formData = reactive({
     allreagentlist: [], // 包含获取的试剂id、试剂名称、地点、下拉菜单的label和绑定值
     alllotlist: [], // 包含获取的批号id、批号名称、下拉菜单的label和绑定值
     tableData: [], // 表格数据
-    team:{teamid:localStorage.getItem('t_teamid'),selectid:localStorage.getItem('t_selectid')},
-    teamid:localStorage.getItem('t_teamid'),
-    userid:localStorage.getItem('userid')
 })
 
 const validationRules = {
@@ -103,7 +101,7 @@ const validationRules = {
 
 // 方法定义
 function list_allreagent() {
-    api_reagent_showall(formData.teamid)
+    api_reagent_showall()
         .then(data => {
             for (let i in data.data.data) {
                 formData.allreagentlist.push({
@@ -164,7 +162,7 @@ function select_reagentchange(){ //当选择的试剂发生改变时
         })
         checkinput()
         formData.lot_selectvalue = null
-}
+    }
 }
 
 function select_lotchange(){//当选择的批号发生改变时
@@ -182,7 +180,7 @@ function ready_inbound() {
         lotid: formData.lotid,
         lot: formData.alllotlist[formData.lot_selectvalue].label,
         number: formData.number,
-        userid:formData.userid
+
     })
 }
 
@@ -191,6 +189,7 @@ function inbound() {
         .then(data => {   
             formData.tableData = []
     ElMessage({
+        type: data.data.msg.includes("库存不足") ? "warning" : "success",
         message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
         h('span', null, data.data.msg)]),
         })

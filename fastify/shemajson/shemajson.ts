@@ -57,14 +57,11 @@ const reagent_add_schema = {
             specifications:{type:'string'},
             warn_number:{type:'number'},
             price:{type:'number'},
-            teamid:{type:'number'},
             warn_days:{type:'number'},
             storage_condition:{type:'string'},
             using:{type:'boolean'},
-
-
         },
-        required:['name','specifications','warn_number','price','teamid','warn_days','storage_condition','using']
+        required:['name','specifications','warn_number','price','warn_days','storage_condition','using']
     }
 }
 
@@ -72,12 +69,11 @@ const reagent_show_schema = {
     querystring:{
         type:'object',
         properties:{
-            teamid:{type:'number'},
             name:{type:'string'},
             page:{type:'number'},
             pagesize:{type:'number'}
         },
-        required:['teamid','page','pagesize']
+        required:['name','page','pagesize']
     }
 }
 
@@ -91,13 +87,11 @@ const reagent_update_schema = {
             warn_number:{type:'number'},
             price:{type:'number'},
             storage_condition:{type:'string'},
-            teamid:{type:'number'},
             warn_days:{type:'number'},
-
             using:{type:'boolean'},
 
         },
-        required:['id','name','specifications','warn_number','price','storage_condition','teamid','warn_days','using']
+        required:['id','name','specifications','warn_number','price','storage_condition','warn_days','using']
     }
 }
 
@@ -115,7 +109,6 @@ const reagent_showall_schema = {
     querystring:{
         type:'object',
         properties:{
-            teamid:{type:'number'}
         }
     }
 }
@@ -196,9 +189,8 @@ const inbound_schema = {
                         reagentid: { type: 'number' },
                         lotid: { type: 'number' },
                         number: { type: 'number' },
-                        userid: { type: 'number' },
                     },
-                    required: ['reagentid', 'lotid', 'number', 'userid']
+                    required: ['reagentid', 'lotid', 'number']
                 } 
             },
         },
@@ -210,9 +202,8 @@ const outbound_schema = {
         type: 'object',
         properties: {
             barcodenumber: { type: 'string' },
-            userid: { type: 'number' },
         },
-        required: ['barcodenumber', 'userid']
+        required: ['barcodenumber']
     }
 };
 const special_outbound_schema = {
@@ -227,9 +218,8 @@ const special_outbound_schema = {
                         reagentid: { type: 'number' },
                         lotid: { type: 'number' },
                         number: { type: 'number' },
-                        userid: { type: 'number' },
                     },
-                    required: ['reagentid', 'lotid', 'number', 'userid']
+                    required: ['reagentid', 'lotid', 'number']
                 }
             }
         },
@@ -240,7 +230,6 @@ const operation_show_schema = {
     querystring: {
         type: 'object',
         properties: {
-            teamid: { type: 'number' },
             reagentname: { type: 'string' },
             searchlater: { type: 'string' },
             searchearlier: { type: 'string' },
@@ -248,7 +237,7 @@ const operation_show_schema = {
             barcodenumber: { type: 'string' },
             pagesize: { type: 'number' },
         },
-        required: ['teamid', 'reagentname', 'searchlater', 'searchearlier', 'page', 'barcodenumber', 'pagesize']
+        required: [ 'reagentname', 'searchlater', 'searchearlier', 'page', 'barcodenumber', 'pagesize']
     }
 };
 
@@ -274,12 +263,11 @@ const inventory_show_schema = {
     querystring: {
         type: 'object',
         properties: {
-            teamid: { type: 'number' },
             page: { type: 'number' },
             pagesize: { type: 'number' },
             only_warn: { type: 'boolean' },
         },
-        required: ['teamid', 'page', 'pagesize']
+        required: [ 'page', 'pagesize']
     }
 }
 
@@ -290,7 +278,9 @@ const user_add_schema = {
             username:{type:'string'},
             password:{type:'string'},
             permission:{type:'string'},
+            teamid:{type:'number'},
         },
+        required:['username','password','permission','teamid']
     }
 }
 const user_del_schema = {
