@@ -4,6 +4,7 @@
 <div id="Sidebar">
   <p id="title1">Lab Manger</p>
   <p id="title2">实验室管理系统 <br />欢迎,{{ username }}</p>
+  <p id="title3">{{ teamname }}</p>
   <div id="silde">
     <ul>
       <li><RouterLink to="/home"><button>主页<svg class="icon"><use xlink:href="#icon-shouye"></use></svg></button></RouterLink>   </li>
@@ -31,7 +32,8 @@
 <script setup>
 import { RouterLink } from 'vue-router';
 import { ref } from 'vue';
-const username = ref(localStorage.username)
+const username = ref(localStorage.username) 
+const teamname = ref(localStorage.teamname)
 </script>
 <style scoped >
 
@@ -47,6 +49,12 @@ const username = ref(localStorage.username)
     color: white;
     margin: 0;
     top: 40px;
+  }
+  #title3{
+    position: absolute;
+    color: white;
+    margin: 0;
+    top: 80px;
   }
   #Sidebar{
     position: absolute;

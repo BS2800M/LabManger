@@ -1,4 +1,4 @@
-import { PrismaClient } from '../generated/prisma/index.js';
+import { PrismaClient } from './cilent/index.js';
 const prisma = new PrismaClient();
 async function main() {
     // ... you will write your Prisma Client queries here

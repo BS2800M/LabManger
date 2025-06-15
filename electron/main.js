@@ -69,8 +69,8 @@ function createWindow () {
   ipcMain.on('print', () =>{ printWindow.webContents.print(printOptions)}) //监听 printwindow渲染好的条码发送到主进程
 
   printWindow.loadFile('./dist/index.html', {hash: 'print'})
-  mainWindow.loadFile('./dist/index.html') 
-  // mainWindow.loadURL('http://localhost:3000') 
+  // mainWindow.loadFile('./dist/index.html') 
+  mainWindow.loadURL('http://localhost:3000') 
   // mainWindow.loadURL('http://localhost:3000') 
   // printWindow.loadURL('http://localhost:3000/#/print')  
   // // 打开开发工具

@@ -1,0 +1,50 @@
+import prisma from '../prisma/script.js';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+async function login(request, reply) {
+    const { username, password } = request.query;
+    const user = await prisma.user.findFirst({
+        where: {
+            username: username,
+            password: crypto.createHash('sha256').update(password).digest('hex'),
+            using: true
+        },
+        include: {
+            team: {
+                select: {
+                    name: true
+                }
+            }
+        }
+    });
+    if (!user) {
+        return reply.status(400).send({ status: 1, msg: "用户或密码错误" });
+    }
+    const token = jwt.sign({
+        userid: user.id,
+        username: user.username,
+        permission: user.permission,
+        teamid: user.teamid
+    }, 'labmanger', { expiresIn: '5000h' });
+    return {
+        status: 0,
+        msg: "登录成功",
+        token: token,
+        username: user.username,
+        teamname: user.team.name
+    };
+}
+async function logout(request, reply) {
+    const { username } = request.query;
+    const user = await prisma.user.findFirst({
+        where: {
+            username: username,
+            using: true
+        }
+    });
+    return {
+        status: 0,
+        msg: "登出成功"
+    };
+}
+export { login, logout };

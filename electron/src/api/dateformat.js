@@ -21,7 +21,12 @@ export const format_iso_YYYYMMDDHHmm=(isoString)=>{ // 格式化日期时间 从
 
 export const format_YYYYMMDDHHmm_iso=(date)=>{ // 格式化日期时间 从YYYY-MM-DD HH:mm:ss 转换为 iso
   // 将本地时间转换为UTC时间
-  return dayjs(date).utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+  if(date===null ){
+    return ""
+  }
+  else{
+    return dayjs(date).utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+  }
 }
 
 

@@ -46,7 +46,7 @@ async function lot_show(request: FastifyRequest, reply: any) {
         }
     }
     if(reagentname!==""){
-        where.reagent={name:{contains:reagentname}}
+        where.reagent.name={contains:reagentname}
     }
 
     

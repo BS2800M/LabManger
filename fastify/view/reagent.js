@@ -1,99 +1,62 @@
 import prisma from '../prisma/script.js';
-const reagent_add_schema = {
-    body: {
-        type: 'object',
-        properties: {
-            name: { type: 'string' },
-            specifications: { type: 'string' },
-            warn_number: { type: 'number' },
-            price: { type: 'number' },
-            teamid: { type: 'number' },
-            warn_days: { type: 'number' },
-            storage_condition: { type: 'string' },
-            using: { type: 'boolean' },
-        },
-        required: ['name', 'specifications', 'warn_number', 'price', 'teamid', 'warn_days', 'storage_condition', 'using']
-    }
-};
-const reagent_show_schema = {
-    querystring: {
-        type: 'object',
-        properties: {
-            teamid: { type: 'number' },
-            name: { type: 'string' },
-            page: { type: 'number' },
-            pagesize: { type: 'number' }
-        },
-        required: ['teamid', 'page', 'pagesize']
-    }
-};
-const reagent_update_schema = {
-    body: {
-        type: 'object',
-        properties: {
-            id: { type: 'number' },
-            name: { type: 'string' },
-            specifications: { type: 'string' },
-            warn_number: { type: 'number' },
-            price: { type: 'number' },
-            storage_condition: { type: 'string' },
-            teamid: { type: 'number' },
-            warn_days: { type: 'number' },
-            using: { type: 'boolean' },
-        },
-        required: ['id', 'name', 'specifications', 'warn_number', 'price', 'storage_condition', 'teamid', 'warn_days', 'using']
-    }
-};
-const reagent_del_schema = {
-    body: {
-        type: 'object',
-        properties: {
-            id: { type: 'number' }
-        },
-        required: ['id']
-    }
-};
-const reagent_showall_schema = {
-    querystring: {
-        type: 'object',
-        properties: {
-            teamid: { type: 'number' }
-        }
-    }
-};
-export { reagent_add_schema, reagent_show_schema, reagent_update_schema, reagent_del_schema, reagent_showall_schema };
-
-
 async function reagent_add(request, reply) {
-    const { name, specifications, warn_number, price, storage_condition, teamid, warn_days, using, generate_lot } = request.body;
+    const { name, specifications, warn_number, price, storage_condition, warn_days, using, generate_lot } = request.body;
+    const teamid = request.teamid;
     const add = await prisma.reagent.create({
-        data: { name, specifications, warn_number, price, storage_condition, teamid, warn_days, using }
+        data: {
+            name,
+            specifications,
+            warn_number,
+            price,
+            storage_condition,
+            teamid,
+            warn_days,
+            using
+        }
     });
     if (generate_lot) {
         const addlot = await prisma.lot.create({
-            data: { name: "默认" + add.name + "批号", expiration_date: "2030-06-06T11:26:38.805Z", using: true, reagentid: add.id }
+            data: {
+                name: "默认" + add.name + "批号",
+                expiration_date: "2030-06-06T11:26:38.805Z",
+                using: true,
+                reagentid: add.id
+            }
+        });
+        const addinventory = await prisma.inventory.create({
+            data: {
+                reagentid: add.id,
+                lotid: addlot.id,
+                inventory_number: 0,
+                last_outbound_time: new Date(),
+                lastweek_outbound_number: 0,
+                using: true,
+            }
         });
     }
     return { status: 0, msg: "成功", data: add };
 }
 async function reagent_show(request, reply) {
-    const { teamid, name, page, pagesize } = request.query;
+    const { name, page, pagesize } = request.query;
+    const teamid = request.teamid;
     const where = {
         using: true,
     };
     if (name !== "") {
         where.name = { contains: name };
     }
+    const total = await prisma.reagent.count({ where });
     const show = await prisma.reagent.findMany({
         where: where,
         skip: (page - 1) * pagesize,
         take: pagesize,
         orderBy: { id: 'desc' }
     });
-    return { status: 0, msg: "成功", data: show, total: show.length, page: page, pagesize: pagesize };
+    return { status: 0, msg: "成功", data: show, total: total, page: page, pagesize: pagesize, totalpages: Math.ceil(total / pagesize) };
 }
 async function reagent_update(request, reply) {
-    const { id, name, specifications, warn_number, price, storage_condition, teamid, warn_days, using } = request.body;
+    const { id, name, specifications, warn_number, price, storage_condition, warn_days, using } = request.body;
+    const teamid = request.teamid;
     const update = await prisma.reagent.update({
         where: { id },
         data: { name, specifications, warn_number, price, storage_condition, teamid, warn_days, using }
@@ -109,9 +72,9 @@ async function reagent_del(request, reply) {
     return { status: 0, msg: "成功", data: del };
 }
 async function reagent_showall(request, reply) {
-    const { teamid } = request.query;
+    const teamid = request.teamid;
     const showall = await prisma.reagent.findMany({
-        where: { teamid: teamid },
+        where: { teamid: teamid, using: true },
         select: {
             id: true,
             name: true,

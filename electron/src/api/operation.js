@@ -38,3 +38,8 @@ return myrequest.put('/operation/del/',{
     id:deleteid
     })
 }
+
+export let api_operation_show_exportToExcel=(body)=>{
+return myrequest.get('/operation/show_exportToExcel/',{
+    })
+}

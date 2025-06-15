@@ -241,6 +241,13 @@ const operation_show_schema = {
     }
 };
 
+const operation_show_exportToExcel_schema = {
+    querystring:{
+        type:'object',
+        properties:{
+        }
+    }
+}
 
 
 const operation_del_schema = {
@@ -328,4 +335,5 @@ export{team_add_schema,team_show_schema,team_update_schema,team_del_schema,
     inbound_schema,outbound_schema,special_outbound_schema,operation_show_schema,operation_del_schema,inventory_show_schema,
     user_add_schema,user_del_schema,
     loginout_login_schema,loginout_logout_schema,
-    inventory_audit_schema}
+    inventory_audit_schema,
+    operation_show_exportToExcel_schema}

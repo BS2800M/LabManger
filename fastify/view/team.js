@@ -1,49 +1,4 @@
 import prisma from '../prisma/script.js';
-//规定json数据验证
-const team_add_schema = {
-    body: {
-        type: 'object',
-        properties: {
-            name: { type: 'string' },
-            phone: { type: 'string' },
-            note: { type: 'string' },
-            using: { type: 'boolean' }
-        },
-        required: ['name', 'phone', 'using']
-    }
-};
-const team_show_schema = {
-    querystring: {
-        type: 'object',
-        properties: {
-            name: { type: 'string' },
-            page: { type: 'number' },
-            pagesize: { type: 'number' }
-        },
-        required: ['name', 'page', 'pagesize']
-    }
-};
-const team_update_schema = {
-    body: {
-        type: 'object',
-        properties: {
-            id: { type: 'number' },
-            name: { type: 'string' },
-            phone: { type: 'string' },
-            note: { type: 'string' },
-            using: { type: 'boolean' }
-        },
-        required: ['id', 'name', 'phone', 'using']
-    }
-};
-const team_del_schema = {
-    body: {
-        type: 'object',
-        properties: {
-            id: { type: 'number' }
-        },
-    }
-};
 async function team_add(request, reply) {
     const { name, phone, note } = request.body;
     const add = await prisma.team.create({
@@ -58,17 +13,17 @@ async function team_add(request, reply) {
 }
 async function team_show(request, reply) {
     let { name, page, pagesize } = request.query;
-    const skip = (page - 1) * pagesize;
     // 构建查询条件
     const where = { using: true };
     if (name !== "") {
         where.name = { contains: name };
     }
     // 获取总数
+    const total = await prisma.team.count({ where });
     // 获取分页数据
     const show = await prisma.team.findMany({
         where,
-        skip,
+        skip: (page - 1) * pagesize,
         take: pagesize,
         orderBy: { id: 'desc' }
     });
@@ -76,9 +31,10 @@ async function team_show(request, reply) {
         status: 0,
         msg: "成功",
         data: show,
-        total: show.length,
+        total: total, // 使用 count 查询的结果
         page: page,
-        pagesize: pagesize
+        pagesize: pagesize,
+        totalpages: Math.ceil(total / pagesize) // 使用总数计算总页数
     };
 }
 async function team_update(request, reply) {
@@ -107,4 +63,3 @@ async function team_del(request, reply) {
     return { status: 0, msg: "成功", data: del };
 }
 export { team_add, team_show, team_update, team_del };
-export { team_add_schema, team_show_schema, team_update_schema, team_del_schema };

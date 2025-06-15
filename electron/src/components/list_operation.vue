@@ -17,7 +17,7 @@
             />
             <el-config-provider :locale="zhCn">
                 <el-date-picker 
-                    v-model="state.searchlater" \
+                    v-model="state.searchlater_show" 
                     style="left:220px;top:10px;width:150px;" 
                     type="date"
                     placeholder="选择开始日期" 
@@ -28,7 +28,7 @@
             </el-config-provider>
             <el-config-provider :locale="zhCn">
                 <el-date-picker 
-                    v-model="state.searchearlier" 
+                    v-model="state.searchearlier_show" 
                     style="left:230px;top:10px;width:150px;" 
                     type="date"
                     placeholder="选择结束日期" 
@@ -51,7 +51,15 @@
                 @click="exportToExcel"
                 style="position:absolute;left:1000px;top:50px;"
             >
-                导出记录
+                导出记录(列表版)
+            </el-button>
+            <el-button 
+                id="export"
+                type="primary" 
+                @click="exportToExcel_info"
+                style="position:absolute;left:800px;top:50px;"
+            >
+                导出记录(信息版)
             </el-button>
         </div>
         <el-table
@@ -88,16 +96,22 @@
   import {formatDateColumn,getnowtime,getnowtime_previousmonth} from '@/api/dateformat.js'
   import * as XLSX from 'xlsx'
   import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
+  import {format_YYYYMMDDHHmm_iso} from '@/api/dateformat.js'
+  import {exportToExcel_info } from '@/api/exportToExcel_info.js'
 
   // 状态管理
   const state = reactive({
     reagentname: '',    // 输入搜索名称
     barcodenumber: '' ,    // 条码号
-    searchlater: getnowtime_previousmonth(),  // 搜索开始时间
-    searchearlier: getnowtime(),    // 搜索结束时间
+    searchlater: "",  // 搜索开始时间(iso)
+    searchearlier: "",    // 搜索结束时间(iso)
     page: 1,       // 当前页
     totalpages: 1,        // 总页
-    pagesize:13
+    pagesize:13,
+    searchlater_show:getnowtime_previousmonth(),
+    searchearlier_show:getnowtime()
+    
+
   })
   // 创建ref引用
   const messageboxRef = ref(null)
@@ -117,13 +131,9 @@ onMounted(() => {
 onUnmounted(() => {
   eventBus.off(EVENT_TYPES.OPERATION_UPDATED)
 })
-  function operation_show(){
-    if(state.searchlater==null){
-      state.searchlater=""
-    }
-    if(state.searchearlier==null){
-        state.searchearlier=""
-      }
+function operation_show(){
+    state.searchlater=format_YYYYMMDDHHmm_iso(state.searchlater_show)
+    state.searchearlier=format_YYYYMMDDHHmm_iso(state.searchearlier_show)
     api_operation_show(state) 
     .then(data=>{
       tableData.value=data.data.data
@@ -142,7 +152,8 @@ onUnmounted(() => {
   }      
 
   async  function exportToExcel() {
-    state.pagesize=1000000 // 设置为最大值
+    state.pagesize=9000000 // 设置为最大值
+
     let exportData=await api_operation_show(state)
     exportData=exportData.data.data
     state.pagesize=10 // 恢复默认值
@@ -155,7 +166,6 @@ onUnmounted(() => {
         '用户': item.username,
         '条码号': item.barcodenumber
     }))
-
     // 创建工作簿
     const ws = XLSX.utils.json_to_sheet(exportData)
     // 设置列宽

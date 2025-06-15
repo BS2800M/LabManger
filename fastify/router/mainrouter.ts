@@ -56,6 +56,7 @@ async function operation_router(fastify:AuthFastifyInstance,options:any){
     fastify.post('/special_outbound/',{schema:shemajson.special_outbound_schema},operation.special_outbound)
     fastify.get('/show/',{schema:shemajson.operation_show_schema},operation.operation_show)
     fastify.put('/del/',{schema:shemajson.operation_del_schema},operation.operation_del)
+    fastify.get('/show_exportToExcel/',{schema:shemajson.operation_show_exportToExcel_schema},operation.operation_show_exportToExcel)
 }
 
 async function inventory_router(fastify:AuthFastifyInstance,options:any){

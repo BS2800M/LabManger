@@ -154,12 +154,16 @@ async function operation_show(request: FastifyRequest, reply: any) {
             teamid:teamid,
         }
     }
-    if (searchlater!=""){ //如果搜索时间范围不为空，则设置时间范围
-        where.creation_time={gte:searchlater}
-    }   
-    if (searchearlier!=""){
-        where.creation_time={lte:searchearlier}
+    if (searchlater != "" || searchearlier != "") {
+        where.creation_time = {};
+        if (searchlater!=""){ //如果搜索时间范围不为空，则设置时间范围
+            where.creation_time.gte=searchlater
+        }   
+        if (searchearlier!=""){
+            where.creation_time.lte=searchearlier
+        }
     }
+
     if (barcodenumber!=""){ //如果条码不为空，则设置条码
         where.barcodenumber={contains:barcodenumber}
     }
@@ -228,7 +232,163 @@ async function operation_del(request: FastifyRequest, reply: any) {
     return{status:0,msg:"成功",data:del}
 }
 
-export {inbound,outbound,special_outbound,operation_show,operation_del}
+async function operation_show_exportToExcel(request: FastifyRequest, reply: any) { //为导出专门格式表格的接口 
+const teamid=request.teamid
+const operationlist=await prisma.operation.findMany({ //查询操作记录
+    where:{
+        reagent:{
+            teamid:teamid,
+        },
+        using:true
+    },
+    orderBy:{
+        creation_time:"asc"
+    },
+    select:{
+        creation_time:true,
+        operation_action:true,
+        user:{
+            select:{
+                username:true
+            }
+        },
+        reagent:{
+            select:{
+                id:true,
+                name:true,
+                storage_condition:true,
+                specifications:true,
+
+            }
+        },
+        lot:{
+            select:{
+                id:true,
+                name:true,
+                expiration_date:true,
+            }
+        },
+    }
+})
+
+let merged_list:any[]=[] //合并操作记录 时间相差少的记录合并在一起
+
+for(let i=0;i<operationlist.length;i++){
+    const current:any=operationlist[i]
+    
+    if (merged_list.length===0){
+        // 第一个元素直接添加，设置count为1
+        if (current.operation_action=="inbound"){
+            current.inbound_number = 1
+        }else if (current.operation_action=="outbound" || current.operation_action=="special_outbound"){
+            current.outbound_number = 1
+        }
+        merged_list.push(current)
+    }else{
+        const lastItem = merged_list[merged_list.length - 1]
+        const timeDiff = Math.abs(new Date(current.creation_time).getTime() - new Date(lastItem.creation_time).getTime())
+        const fiveSeconds = 5 * 1000 // 5秒的毫秒数.
+        
+        if (timeDiff < fiveSeconds && current.reagent.id==lastItem.reagent.id && current.lot.id==lastItem.lot.id) {
+            // 时间差少于5秒并且是同一试剂 同一个批号，增加count计数
+            if (current.operation_action=="inbound"){
+                lastItem.inbound_number = (lastItem.inbound_number || 0) + 1
+            }
+            if (current.operation_action=="outbound" || current.operation_action=="special_outbound"){
+                lastItem.outbound_number = (lastItem.outbound_number || 0) + 1
+            }
+        } else {
+            // 时间差大于等于5秒，添加新元素
+            if (current.operation_action=="inbound"){
+                current.inbound_number = 1
+            }
+            if (current.operation_action=="outbound" || current.operation_action=="special_outbound"){
+                current.outbound_number = 1
+            }
+            merged_list.push(current)
+        }
+    }
+}
+let transformed_list:any[]=merged_list.map((item,index)=>{ //将查询结果转换为Transformed_Show类型
+    return{
+        creation_time:item.creation_time,
+        operation_action:item.operation_action,
+        reagentname:item.reagent.name,
+        lotname:item.lot.name,
+        lotexpiration_date:item.lot.expiration_date,
+        inbound_number:item.inbound_number||0,
+        outbound_number:item.outbound_number||0,
+        inventory_number:item.inbound_number-item.outbound_number||0,
+        reagentid:item.reagent.id,
+        lotid:item.lot.id,
+        storage_condition:item.reagent.storage_condition,
+        username:item.user.username,
+        specifications:item.reagent.specifications,
+        }
+})
+
+   transformed_list=transformed_list.map((item,index)=>{ //计算累计库存数量
+    item.inventory_number=0
+    for(let i=0;i<=index;i++){
+        if(transformed_list[i].reagentid==item.reagentid && transformed_list[i].lotid==item.lotid){
+            item.inventory_number+=transformed_list[i].inbound_number-transformed_list[i].outbound_number
+        }
+    }
+    return item
+})
+
+let result_list:any[]=[] //整合 每种试剂的操作记录放到一个列表里里并且去重
+
+// 使用Map来去重，key为reagentid
+let reagentMap = new Map()
+
+for (let i=0;i<transformed_list.length;i++){
+    const currentItem = transformed_list[i]
+    const reagentId = currentItem.reagentid
+    
+    if (!reagentMap.has(reagentId)) {
+        // 如果这个试剂ID还没有，创建新的试剂记录
+        reagentMap.set(reagentId, {
+            reagentid: currentItem.reagentid,
+            reagentname: currentItem.reagentname,
+            storage_condition: currentItem.storage_condition,
+            operationlist: []
+        })
+    }
+    
+    // 获取当前试剂的操作列表
+    const currentReagent = reagentMap.get(reagentId)
+    
+    // 检查这个操作记录是否已经存在（通过时间、批号、入库数量、出库数量来判断）
+    const operationExists = currentReagent.operationlist.some((op: any) => 
+        op.creation_time === currentItem.creation_time &&
+        op.lotid === currentItem.lotid &&
+        op.inbound_number === currentItem.inbound_number &&
+        op.outbound_number === currentItem.outbound_number
+    )
+    
+    if (!operationExists) {
+        // 如果操作记录不存在，添加它
+        currentReagent.operationlist.push({
+            creation_time: currentItem.creation_time,
+            lotid: currentItem.lotid,
+            lotname: currentItem.lotname,
+            lotexpiration_date: currentItem.lotexpiration_date,
+            inventory_number: currentItem.inventory_number,
+            inbound_number: currentItem.inbound_number,
+            outbound_number: currentItem.outbound_number,
+            username: currentItem.username,
+            specifications: currentItem.specifications,
+        })
+    }
+}
+
+// 将Map转换为数组
+result_list = Array.from(reagentMap.values())
+return {status:0, msg:"成功", data:result_list}
+
+}
+export {inbound,outbound,special_outbound,operation_show,operation_del,operation_show_exportToExcel}
 
 
 

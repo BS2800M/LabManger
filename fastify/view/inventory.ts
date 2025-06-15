@@ -158,9 +158,9 @@ async function inventory_update_list(list:InventoryUpdateList[]){
     })
 
 
-    await prisma.$transaction(async (tx) => { //并行更新库存
-    const update_all=list.map(async (item:any,index:number)=>{
-        const update_result= await tx.inventory.update({ //更新库存
+    await prisma.$transaction(async (tx) => {  //提交事务
+    const update_all=list.map(async (item:any,index:number)=>{ //并行更新库存
+        await tx.inventory.update({ //更新库存
             where:{id:item.inventory_id},
             data:{
                 inventory_number: {
@@ -175,7 +175,6 @@ async function inventory_update_list(list:InventoryUpdateList[]){
         else{
             returnmsg+=item.reagentname+":库存更新成功\n"
         }
-        return update_result
     })
     await Promise.all(update_all)
     })
@@ -186,70 +185,78 @@ return {returnmsg,list}
 
 
 
-async function inventory_audit(request: FastifyRequest, reply: any) { 
-    const {reagentid,lotid}:InventoryAudit=request.query as InventoryAudit
-    const where:any={using:true}
-    if(reagentid!=-1 || lotid!=-1){
-        where.reagent={
-            id:reagentid
+
+
+
+
+async function inventory_audit_list() { 
+    const inventory_needaudit=await prisma.inventory.findMany({ //查询需要审核的库存
+        where:{
+            using:true
+        },
+        select:{
+            reagentid:true,
+            lotid:true,
+            id:true
         }
-        where.lot={
-            id:lotid
-        }
-    }
-    const inventory_needaudit = await prisma.inventory.findMany({ //查询库存
-        where:where
     })
-    for(const item of inventory_needaudit){ 
-        const outbound_number:number=await prisma.operation.count({ //查询出库数量
-            where:{
-                reagentid:item.reagentid,
-                lotid:item.lotid,
-                operation_action:{
-                    in:['outbound','special_outbound']
-                },
-                using:true
-            }
-        })
-        const inbound_number:number=await prisma.operation.count({ //查询入库数量
-            where:{
-                reagentid:item.reagentid,
-                lotid:item.lotid,
-                operation_action:'inbound',
-                using:true
-            }
-        })
-        let now=new Date()
-        let today=now.getDay()
-        let today_to_lastmonday=today === 0 ? 6: today-1 //今天到这周一的天数
-        let lastmonday = new Date(now)
-        lastmonday.setDate(now.getDate()-today_to_lastmonday-7) //计算上周一
-        lastmonday.setHours(0,0,0,1)
-        let lastsunday=new Date(now)
-        lastsunday.setDate(now.getDate()-today_to_lastmonday-1) //计算上周日
-        lastsunday.setHours(23,59,59,999)
-        const lastweek_outbound_number=await prisma.operation.count({ //查询上周出库数量
-            where:{
-                reagentid:item.reagentid,
-                lotid:item.lotid,
-                operation_action:{
-                    in:['outbound','special_outbound']
-                },
-                creation_time:{
-                    gte:lastmonday,
-                    lte:lastsunday
-                }
-            }
-        })
-        const inventory_update=await prisma.inventory.update({ //更新库存信息
-            where:{id:item.id},
-            data:{
-                inventory_number:inbound_number-outbound_number,
-                lastweek_outbound_number:lastweek_outbound_number
-            }
-        })
+    let now=new Date()
+    let today=now.getDay()
+    let today_to_lastmonday=today === 0 ? 6: today-1 //今天到这周一的天数
+    let lastmonday = new Date(now)
+    lastmonday.setDate(now.getDate()-today_to_lastmonday-6) //计算上周一
+    lastmonday.setHours(0,0,0,1)
+    let lastsunday=new Date(now)
+    lastsunday.setDate(now.getDate()-today_to_lastmonday-1) //计算上周日
+    lastsunday.setHours(23,59,59,999)
+
+
+
+
+await prisma.$transaction(async (tx) => { //提交事务
+const update_all=inventory_needaudit.map(async (item:any)=>{ //并行更新
+const outbound_number=await prisma.operation.count({ //查询出库数量
+    where:{
+        reagentid:item.reagentid,
+        lotid:item.lotid,
+        operation_action:{in:['outbound','special_outbound']},
+        using:true
     }
-    return {status:0,msg:"成功"}
+})
+const inbound_number=await prisma.operation.count({ //查询入库数量
+    where:{
+        reagentid:item.reagentid,
+        lotid:item.lotid,
+        operation_action:'inbound',
+        using:true
+    }
+})
+const lastweek_outbound_number=await prisma.operation.count({ //查询上周出库数量
+    where:{
+        reagentid:item.reagentid,
+        lotid:item.lotid,
+        operation_action:{in:['outbound','special_outbound']},
+        creation_time:{gte:lastmonday,lte:lastsunday}
+    }
+})
+    await tx.inventory.update({ //更新信息
+    where:{id:item.id},
+    data:{
+        inventory_number:inbound_number-outbound_number,
+        lastweek_outbound_number:lastweek_outbound_number
+    }
+})
+})
+await Promise.all(update_all)
+})
+
 }
 
-export {inventory_show,inventory_audit,inventory_update_list}
+
+async function inventory_audit(request: FastifyRequest, reply: any) { 
+    await inventory_audit_list()
+    return reply.status(200).send({status:0,msg:"成功"})
+}
+
+
+export {inventory_show,inventory_update_list,inventory_audit,inventory_audit_list}

@@ -18,6 +18,13 @@ async function login(request: FastifyRequest, reply: any) {
             username:username,
             password:crypto.createHash('sha256').update(password).digest('hex'),
             using:true
+        },
+        include:{
+            team:{
+                select:{
+                    name:true
+                }
+            }
         }
     })
     if(!user){
@@ -33,6 +40,8 @@ async function login(request: FastifyRequest, reply: any) {
         status:0,
         msg:"登录成功",
         token:token,
+        username:user.username,
+        teamname:user.team.name
     }
 }
 async function logout(request: FastifyRequest, reply: any) {

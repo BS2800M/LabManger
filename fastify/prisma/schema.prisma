@@ -42,6 +42,7 @@ model reagent {
   inventory inventory[] //外键 库存
 
   @@index([teamid, using])
+  @@index([name, using])
 }
 
 model lot {
@@ -73,7 +74,8 @@ model operation{
 
   @@index([reagentid, lotid, using])
   @@index([creation_time])
-  @@index([barcodenumber])
+  @@index([barcodenumber,using])
+  @@index([operation_action,using])
 }
 
 model inventory {
@@ -96,7 +98,7 @@ model user{
   id Int @id @default(autoincrement()) @unique //id
   username String //用户名
   password String //密码的sha256
-  using Boolean @default(true) //是否使
+  using Boolean @default(true) //是否使用
   permission String //权限
   team team @relation(fields: [teamid], references: [id]) //外键 团队
   teamid Int //团队id
