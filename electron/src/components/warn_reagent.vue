@@ -68,13 +68,20 @@ const state = reactive({
   pagesize:13
 })
 
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
+}
 
-function list_reagentnumber() {
+
+async function list_reagentnumber() {
     api_inventory_show(state)
         .then(function(data) {
             state.tableData = data.data.data
             state.totalpages = data.data.totalpages
 
+        })
+        .catch(function(err){
+          openmessagebox('error',err.response.data.msg,null)
         })
 }
 
@@ -115,7 +122,7 @@ async  function exportToExcel() {
     XLSX.writeFile(wb, `盘库表${new Date().toLocaleDateString()}.xlsx`)
   }
 
-  function inventory_audit(){
+  async function inventory_audit(){
     state.reagentid=-1
     state.lotid=-1
   api_inventory_audit(state).then(function(data){

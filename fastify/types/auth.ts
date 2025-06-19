@@ -4,7 +4,7 @@ declare module 'fastify' {
         teamid: number
         userid: number
         username: string    
-        permission: string
+        role: string
     }
 }
 
@@ -12,7 +12,7 @@ declare module 'fastify' {
 export interface JWTPayload {
     userid: number
     username: string
-    permission: string
+    role: string
     teamid: number
 }
 

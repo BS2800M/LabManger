@@ -33,7 +33,7 @@
           <el-table-column label="操作" min-width="100">
             <template #default="scope">
               <el-button size="small" type="primary" @click="editbox_openeditbox(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',api_team_del,scope.row.id,EVENT_TYPES.TEAM_UPDATED)">删除</el-button>
+              <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',()=>team_del(scope.row.id))">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -62,8 +62,8 @@ const state = reactive({
   total_pages: 1,        // 总页
 })
 
-function openmessagebox(a,b,c,d,e){
-  messageboxRef.value.openmessagebox(a,b,c,d,e)
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
 }
 
 function editbox_openaddbox() {
@@ -74,7 +74,7 @@ function editbox_openeditbox(editdate) {
     editboxRef.value.openeditbox(editdate)  
 }
 
-function team_show() {
+async function team_show() {
     api_team_show(state)
         .then(function(data) {
             state.tableData = data.data.data
@@ -83,12 +83,20 @@ function team_show() {
             state.totalpages = data.data.totalpages
         })
         .catch(function(err) {
-          openmessagebox('error',err,'close',null,null)
+          openmessagebox('error',err.response.data.msg,null)
             state.tableData = []
         })
 }
 
-
+async function team_del(id){
+  api_team_del(id).then(data=>{
+    eventBus.emit(EVENT_TYPES.TEAM_UPDATED)
+    messageboxRef.value.closemessagebox()
+    })
+  .catch(function(err){
+    openmessagebox('error',err.response.data.msg,null)
+  })
+}
 
 // 生命周期钩子
 onMounted(() => {

@@ -6,6 +6,7 @@ import home from '@/components/home.vue'
 import print from '@/components/print.vue'
 import loginout from '../components/loginout.vue'
 import team from '@/components/team.vue'
+import user from '@/components/user.vue'
 // import reagent_template from '@/components/reagent_template.vue'
 // import lot from '@/components/lot.vue'
 // import inbound from '@/components/inbound.vue'
@@ -63,6 +64,10 @@ const router=createRouter({
         {
             path:'/team',
             components:{main:team,bar:homebar}
+        },
+        {
+            path:'/user',
+            components:{main:user,bar:homebar}
         },
         {
             path:'/print',

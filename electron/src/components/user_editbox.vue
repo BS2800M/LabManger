@@ -2,63 +2,44 @@
 <div id="editbox" :style="uiState.editboxstyle1" >
       <div id="topbg"><p>{{uiState.edittoptext}}</p> </div>
       <div id="content1">
-        <p>试剂名称</p>  
-        <el-input v-model="formData.name" style="width: 300px" placeholder="输入试剂的名称"  />
-        <p>试剂规格</p>  
-        <el-input v-model="formData.specifications" style="width: 300px" placeholder="如：盒 箱 瓶"  />
-        <p>试剂的储存环境</p>  
-        <el-input v-model="formData.storge_condition" style="width: 300px" placeholder="如：常温 冷藏 冷冻"  />
-        <p>生成初始批号</p>
-        <el-switch v-model="formData.generate_lot" :disabled="uiState.editbox_allowedit" size="large" @change="checkinput" />
+        <p>用户名</p>  
+        <el-input v-model="formData.username" style="width: 300px" placeholder="用户名"  />
+        <p>密码</p>  
+        <el-input v-model="formData.password" style="width: 300px" placeholder="密码" />
       </div>
       <div id="content2">
-        <p>预警数量</p>  
-        <el-input-number v-model="formData.warn_number" :min="0" :max="9999" placeholder="0" @change="checkinput" />
-        <p>预警天数</p>  
-        <el-input-number v-model="formData.warn_days" :min="0" :max="9999" placeholder="0" @change="checkinput" />
-        <p>价格</p>  
-        <el-input-number v-model="formData.price" :min="0" :max="99999999" placeholder="0" @change="checkinput"/>
-        <p>创建时间</p>  
-        <el-input disabled v-model="formData.creation_time" style="width: 300px" placeholder="系统自动生成" />
+        <p>角色</p>  
+        <role_select v-model="formData.role" style="width: 300px" placeholder="角色" />
+        <p>团队</p>  
+        <team_select v-model="formData.teamid" style="width: 300px" placeholder="团队" />
       </div>
       <div id="editboxbutton">
-        <el-button class="button" size="large" type="warning" :style="uiState.editbuttonhide" @click="reagent_update"  :disabled="uiState.editbox_disablebutton" >修改</el-button>
-        <el-button class="button" size="large" type="success" :style="uiState.addbuttonhide" @click="reagent_add"  :disabled="uiState.editbox_disablebutton">增加</el-button>
+        <el-button class="button" size="large" type="warning" :style="uiState.editbuttonhide" @click="user_update"  :disabled="uiState.editbox_disablebutton" >修改</el-button>
+        <el-button class="button" size="large" type="success" :style="uiState.addbuttonhide" @click="user_add"  :disabled="uiState.editbox_disablebutton">增加</el-button>
         <el-button class="button" size="large" type="info" @click="closeeditbox">取消</el-button>
       </div>
   </div>
-  <messagebox ref="messageboxRef"  ></messagebox>
+<messagebox ref="messageboxRef"></messagebox>
 </template>
 <script setup>
 import { defineExpose, ref, reactive } from 'vue';
-import { api_reagent_update, api_reagent_add } from '@/api/reagent'
+import { api_user_add,api_user_update } from '@/api/user.js'
 import messagebox from '@/components/messagebox.vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
-import { format_iso_YYYYMMDDHHmm } from '@/api/dateformat'
-const messageboxRef=ref(null)
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
-
-
+import team_select from '@/components/team_select.vue'
+import role_select from '@/components/role_select.vue'
 // 使用reactive统一管理表单数据
 const formData = reactive({
-  name: '',
-  specifications: '',
-  storage_condition: '',
-  warn_number: 0,
-  price: 0,
-  creation_time: '',
-  id: null,
-  warn_days: 0,
-  generate_lot: false,
-  using:true
+  id:null,
+  username: '',
+  role:'user',
+  teamid:null,
+  using:true,
+  password:''
 })
-// 验证规则配置对象
-const validationRules = {
-  // 定义必填字段数组，包含需要验证的字段名
-  required: ['name', 'specifications', 'storage_condition', 'warn_number', 'price', 'warn_days']
-}
+
+
+
 
 // UI状态管理
 const uiState = reactive({
@@ -68,9 +49,13 @@ const uiState = reactive({
   addbuttonhide: { display: 'none' },
   editbox_allowedit: true,
   editbox_disablebutton: true,
-  blockstyle: { display: 'none' },
-  generate_lot: false
+  blockstyle: { display: 'none' },  
 })
+
+let messageboxRef = ref()
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
+}
 
 defineExpose({
   openeditbox,
@@ -78,39 +63,34 @@ defineExpose({
   openaddbox,
 
 })
-
 // 重置表单数据
 function resetForm() {
   Object.assign(formData, {
-    name: '',
-    specifications: '',
-    storage_condition: '',
-    warn_number: 0,
-    price: 0,
-    creation_time: '',
-    warn_days: 0,
-    generate_lot: false,
+    username: '',
+    role:'user',
+    teamid:1,
+    using:true,
+    password:''
   })
 }
 
 function openeditbox(editdata) {
   uiState.editboxstyle1.display = "block"
   uiState.blockstyle.display = "block"
-  uiState.edittoptext = "修改试剂模板"
+  uiState.edittoptext = "修改用户"
   uiState.addbuttonhide.display = "none"
   uiState.editbuttonhide.display = "unset"
+
   uiState.editbox_allowedit = true
   
   // 使用Object.assign更新表单数据
   Object.assign(formData, {
     id:editdata.id,
-    name: editdata.name,
-    specifications: editdata.specifications,
-    storge_condition: editdata.storge_condition,
-    warn_number: editdata.warn_number,
-    price: editdata.price,
-    creation_time: format_iso_YYYYMMDDHHmm(editdata.creation_time),
-    warn_days: editdata.warn_days,
+    username: editdata.username,
+    role: editdata.role,
+    teamid: editdata.teamid,
+    password: ''
+
   })
   checkinput()
 }
@@ -123,53 +103,59 @@ function closeeditbox() {
 
 function openaddbox() {
   resetForm()
-  formData.creation_time = "创建后自动添加"
   uiState.editboxstyle1.display = "block"
   uiState.blockstyle.display = "block"
   uiState.editbuttonhide.display = "none"
   uiState.addbuttonhide.display = "unset"
-  uiState.edittoptext = "增加试剂模板"
+  uiState.edittoptext = "增加用户"
   uiState.editbox_allowedit = false
   checkinput()
 }
 
-
+/**
+ * 检查表单输入是否有效
+ * 用于控制修改/增加按钮的禁用状态
+ */
 function checkinput() {
-
   // 使用some方法检查必填字段数组中是否存在无效字段
+  var validationRules = {
+    required: ['username', 'role', 'teamid']
+  }
   const hasEmptyField = validationRules.required.some(field => {
+    // 获取当前字段的值
     const value = formData[field]
+    
+    // 检查字段值是否为null或undefined
+    // 不再检查是否为0，因为0是有效值
     return value == null
   })
-  // 更新按钮禁用状态   
+  
+  // 更新按钮禁用状态
   uiState.editbox_disablebutton = hasEmptyField
 }
 
-function reagent_update() {
-  api_reagent_update(formData)
+function user_update() {
+  api_user_update(formData)
     .then(data => {
       closeeditbox()
       // 触发模板更新事件，通知父组件刷新列表
-      eventBus.emit(EVENT_TYPES.TEMPLATE_UPDATED)
+      eventBus.emit(EVENT_TYPES.USER_UPDATED)
     })
     .catch(err => {
       openmessagebox('error',err.response.data.msg,null)
     })
 }
-function reagent_add() {
-  api_reagent_add(formData)
+function user_add() {
+  api_user_add(formData)
     .then(data => {
       closeeditbox()
       // 触发模板更新事件，通知父组件刷新列表
-      eventBus.emit(EVENT_TYPES.TEMPLATE_UPDATED)
+      eventBus.emit(EVENT_TYPES.USER_UPDATED)
     })
     .catch(err => {
       openmessagebox('error',err.response.data.msg,null)
     })
 }
-
-
-
 </script>
 
 <style scoped>

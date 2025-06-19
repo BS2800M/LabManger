@@ -81,8 +81,8 @@ const allreagentlist = ref([])
 let messageboxRef = ref()
 
 
-function openmessagebox(a,b,c,d,e){
-  messageboxRef.value.openmessagebox(a,b,c,d,e)
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
 }
 
 
@@ -168,7 +168,7 @@ function modify_lot(){
       eventBus.emit(EVENT_TYPES.LOT_UPDATED)
     })
     .catch(err => {
-      openmessagebox('error',err,'close',null,null)
+      openmessagebox('error',err.response.data.msg,null)
     })
 }
 
@@ -180,7 +180,7 @@ function add_lot(){
     eventBus.emit(EVENT_TYPES.LOT_UPDATED)
  } )
   .catch(err=>{
-    openmessagebox('error',err,'close',null,null)
+    openmessagebox('error',err.response.data.msg,null)
                 })
 }
 
@@ -198,7 +198,7 @@ function list_allreagent(){
             }
         } )
   .catch(err=>{
-    openmessagebox('error',err,'close',null,null)
+    openmessagebox('error',err.response.data.msg,null)
                 })
 }
 

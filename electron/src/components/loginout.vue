@@ -7,8 +7,8 @@ import { ref ,onMounted} from 'vue';
 import messagebox from '@/components/messagebox.vue';
 import { useRouter } from 'vue-router'
 
-function openmessagebox(a,b,c,d,e){
-  messageboxRef.value.openmessagebox(a,b,c,d),e
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
 }
 let  messageboxRef=ref()
 const router=useRouter()
@@ -19,7 +19,7 @@ function logout(){
     router.push("/login")
  } )
   .catch(err=>{
-    openmessagebox('error',err,'close',null,null)
+    openmessagebox('error',err.response.data.msg,null)
                 })
 }
 onMounted(logout)

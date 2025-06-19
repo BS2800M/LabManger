@@ -94,8 +94,8 @@ import { api_lot_showall } from '@/api/lot'
 
 
 const messageboxRef=ref() //引入messagebox
-function openmessagebox(a,b,c,d,e){
-  messageboxRef.value.openmessagebox(a,b,c,d,e)
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
 }
 const formData = reactive({
     barcodenumber:'',
@@ -211,7 +211,7 @@ function operation_special_outbound(){
     })
   })
   .catch(err=>{
-    openmessagebox('error',err,'close',null,null)
+    openmessagebox('error',err.response.data.msg,null)
   })
 }
 

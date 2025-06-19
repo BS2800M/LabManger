@@ -9,4 +9,5 @@ export const EVENT_TYPES = {
   LOT_UPDATED: 'lot-updated',             // 试剂批号更新事件
   OPERATION_UPDATED: 'operation-updated', // 出入库信息更新事件
   TEAM_UPDATED: 'team-updated',           // 团队信息更新事件
+  USER_UPDATED: 'user-updated',           // 用户信息更新事件
 } 

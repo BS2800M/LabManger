@@ -7376,7 +7376,7 @@ export namespace Prisma {
     username: string | null
     password: string | null
     using: boolean | null
-    permission: string | null
+    role: string | null
     teamid: number | null
   }
 
@@ -7385,7 +7385,7 @@ export namespace Prisma {
     username: string | null
     password: string | null
     using: boolean | null
-    permission: string | null
+    role: string | null
     teamid: number | null
   }
 
@@ -7394,7 +7394,7 @@ export namespace Prisma {
     username: number
     password: number
     using: number
-    permission: number
+    role: number
     teamid: number
     _all: number
   }
@@ -7415,7 +7415,7 @@ export namespace Prisma {
     username?: true
     password?: true
     using?: true
-    permission?: true
+    role?: true
     teamid?: true
   }
 
@@ -7424,7 +7424,7 @@ export namespace Prisma {
     username?: true
     password?: true
     using?: true
-    permission?: true
+    role?: true
     teamid?: true
   }
 
@@ -7433,7 +7433,7 @@ export namespace Prisma {
     username?: true
     password?: true
     using?: true
-    permission?: true
+    role?: true
     teamid?: true
     _all?: true
   }
@@ -7529,7 +7529,7 @@ export namespace Prisma {
     username: string
     password: string
     using: boolean
-    permission: string
+    role: string
     teamid: number
     _count: UserCountAggregateOutputType | null
     _avg: UserAvgAggregateOutputType | null
@@ -7557,7 +7557,7 @@ export namespace Prisma {
     username?: boolean
     password?: boolean
     using?: boolean
-    permission?: boolean
+    role?: boolean
     teamid?: boolean
     team?: boolean | teamDefaultArgs<ExtArgs>
     operation?: boolean | user$operationArgs<ExtArgs>
@@ -7569,7 +7569,7 @@ export namespace Prisma {
     username?: boolean
     password?: boolean
     using?: boolean
-    permission?: boolean
+    role?: boolean
     teamid?: boolean
     team?: boolean | teamDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
@@ -7579,7 +7579,7 @@ export namespace Prisma {
     username?: boolean
     password?: boolean
     using?: boolean
-    permission?: boolean
+    role?: boolean
     teamid?: boolean
     team?: boolean | teamDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
@@ -7589,11 +7589,11 @@ export namespace Prisma {
     username?: boolean
     password?: boolean
     using?: boolean
-    permission?: boolean
+    role?: boolean
     teamid?: boolean
   }
 
-  export type userOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "using" | "permission" | "teamid", ExtArgs["result"]["user"]>
+  export type userOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "using" | "role" | "teamid", ExtArgs["result"]["user"]>
   export type userInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     team?: boolean | teamDefaultArgs<ExtArgs>
     operation?: boolean | user$operationArgs<ExtArgs>
@@ -7617,7 +7617,7 @@ export namespace Prisma {
       username: string
       password: string
       using: boolean
-      permission: string
+      role: string
       teamid: number
     }, ExtArgs["result"]["user"]>
     composites: {}
@@ -8048,7 +8048,7 @@ export namespace Prisma {
     readonly username: FieldRef<"user", 'String'>
     readonly password: FieldRef<"user", 'String'>
     readonly using: FieldRef<"user", 'Boolean'>
-    readonly permission: FieldRef<"user", 'String'>
+    readonly role: FieldRef<"user", 'String'>
     readonly teamid: FieldRef<"user", 'Int'>
   }
     
@@ -8569,7 +8569,7 @@ export namespace Prisma {
     username: 'username',
     password: 'password',
     using: 'using',
-    permission: 'permission',
+    role: 'role',
     teamid: 'teamid'
   };
 
@@ -9008,7 +9008,7 @@ export namespace Prisma {
     username?: StringFilter<"user"> | string
     password?: StringFilter<"user"> | string
     using?: BoolFilter<"user"> | boolean
-    permission?: StringFilter<"user"> | string
+    role?: StringFilter<"user"> | string
     teamid?: IntFilter<"user"> | number
     team?: XOR<TeamScalarRelationFilter, teamWhereInput>
     operation?: OperationListRelationFilter
@@ -9019,7 +9019,7 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     using?: SortOrder
-    permission?: SortOrder
+    role?: SortOrder
     teamid?: SortOrder
     team?: teamOrderByWithRelationInput
     operation?: operationOrderByRelationAggregateInput
@@ -9033,7 +9033,7 @@ export namespace Prisma {
     username?: StringFilter<"user"> | string
     password?: StringFilter<"user"> | string
     using?: BoolFilter<"user"> | boolean
-    permission?: StringFilter<"user"> | string
+    role?: StringFilter<"user"> | string
     teamid?: IntFilter<"user"> | number
     team?: XOR<TeamScalarRelationFilter, teamWhereInput>
     operation?: OperationListRelationFilter
@@ -9044,7 +9044,7 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     using?: SortOrder
-    permission?: SortOrder
+    role?: SortOrder
     teamid?: SortOrder
     _count?: userCountOrderByAggregateInput
     _avg?: userAvgOrderByAggregateInput
@@ -9061,7 +9061,7 @@ export namespace Prisma {
     username?: StringWithAggregatesFilter<"user"> | string
     password?: StringWithAggregatesFilter<"user"> | string
     using?: BoolWithAggregatesFilter<"user"> | boolean
-    permission?: StringWithAggregatesFilter<"user"> | string
+    role?: StringWithAggregatesFilter<"user"> | string
     teamid?: IntWithAggregatesFilter<"user"> | number
   }
 
@@ -9439,7 +9439,7 @@ export namespace Prisma {
     username: string
     password: string
     using?: boolean
-    permission: string
+    role: string
     team: teamCreateNestedOneWithoutUserInput
     operation?: operationCreateNestedManyWithoutUserInput
   }
@@ -9449,7 +9449,7 @@ export namespace Prisma {
     username: string
     password: string
     using?: boolean
-    permission: string
+    role: string
     teamid: number
     operation?: operationUncheckedCreateNestedManyWithoutUserInput
   }
@@ -9458,7 +9458,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
-    permission?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
     team?: teamUpdateOneRequiredWithoutUserNestedInput
     operation?: operationUpdateManyWithoutUserNestedInput
   }
@@ -9468,7 +9468,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
-    permission?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
     teamid?: IntFieldUpdateOperationsInput | number
     operation?: operationUncheckedUpdateManyWithoutUserNestedInput
   }
@@ -9478,7 +9478,7 @@ export namespace Prisma {
     username: string
     password: string
     using?: boolean
-    permission: string
+    role: string
     teamid: number
   }
 
@@ -9486,7 +9486,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
-    permission?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
   }
 
   export type userUncheckedUpdateManyInput = {
@@ -9494,7 +9494,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
-    permission?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
     teamid?: IntFieldUpdateOperationsInput | number
   }
 
@@ -9897,7 +9897,7 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     using?: SortOrder
-    permission?: SortOrder
+    role?: SortOrder
     teamid?: SortOrder
   }
 
@@ -9911,7 +9911,7 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     using?: SortOrder
-    permission?: SortOrder
+    role?: SortOrder
     teamid?: SortOrder
   }
 
@@ -9920,7 +9920,7 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     using?: SortOrder
-    permission?: SortOrder
+    role?: SortOrder
     teamid?: SortOrder
   }
 
@@ -10546,7 +10546,7 @@ export namespace Prisma {
     username: string
     password: string
     using?: boolean
-    permission: string
+    role: string
     operation?: operationCreateNestedManyWithoutUserInput
   }
 
@@ -10555,7 +10555,7 @@ export namespace Prisma {
     username: string
     password: string
     using?: boolean
-    permission: string
+    role: string
     operation?: operationUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -10624,7 +10624,7 @@ export namespace Prisma {
     username?: StringFilter<"user"> | string
     password?: StringFilter<"user"> | string
     using?: BoolFilter<"user"> | boolean
-    permission?: StringFilter<"user"> | string
+    role?: StringFilter<"user"> | string
     teamid?: IntFilter<"user"> | number
   }
 
@@ -11074,7 +11074,7 @@ export namespace Prisma {
     username: string
     password: string
     using?: boolean
-    permission: string
+    role: string
     team: teamCreateNestedOneWithoutUserInput
   }
 
@@ -11083,7 +11083,7 @@ export namespace Prisma {
     username: string
     password: string
     using?: boolean
-    permission: string
+    role: string
     teamid: number
   }
 
@@ -11177,7 +11177,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
-    permission?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
     team?: teamUpdateOneRequiredWithoutUserNestedInput
   }
 
@@ -11186,7 +11186,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
-    permission?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
     teamid?: IntFieldUpdateOperationsInput | number
   }
 
@@ -11429,7 +11429,7 @@ export namespace Prisma {
     username: string
     password: string
     using?: boolean
-    permission: string
+    role: string
   }
 
   export type reagentUpdateWithoutTeamInput = {
@@ -11477,7 +11477,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
-    permission?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
     operation?: operationUpdateManyWithoutUserNestedInput
   }
 
@@ -11486,7 +11486,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
-    permission?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
     operation?: operationUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -11495,7 +11495,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
-    permission?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
   }
 
   export type lotCreateManyReagentInput = {

@@ -21,7 +21,7 @@
       <li><button>信息  <svg class="icon"><use xlink:href="#icon-wendu"></use></svg></button>
         <ul>
           <li><RouterLink to="/team"><button>检验小组</button></RouterLink></li>
-          <li><button>检验组套</button></li>
+          <li><RouterLink to="/user"><button>用户</button></RouterLink></li>
         </ul>
       </li>
       <li><RouterLink to="/loginout"><button>登出<svg class="icon"> <use xlink:href="#icon-dengchu"></use></svg></button></RouterLink>   </li>

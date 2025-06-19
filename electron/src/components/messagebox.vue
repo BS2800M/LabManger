@@ -6,7 +6,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="centerDialogVisible = false" size="large">取消</el-button>
-          <el-button type="primary"  size="large" @click="yes(state.action,state.deleteid,state.refresh)">
+          <el-button type="primary"  size="large" @click="state.action">
            确认
           </el-button>
         </div>
@@ -16,39 +16,33 @@
   
   <script  setup>
 import {ref,reactive,defineExpose,defineProps,watch} from 'vue'
-import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 let centerDialogVisible = ref(false)
 
 let state=reactive({
-type:'',
-message:'',
-action:'',
-deleteid:'',
+type:null,
+message:null,
+action:null,
 centerDialogVisible:false,
-refresh:''
 })
-function openmessagebox(intype,inmessage,inaction,indeleteid,inrefresh){
+function openmessagebox(intype,inmessage,action){
 state.type=intype
 state.message=inmessage
-state.action=inaction
-state.deleteid=indeleteid
-state.refresh=inrefresh
+state.action=action
 centerDialogVisible.value=true
-}
-
-
-
-
-
-defineExpose({openmessagebox})
-
-function yes(action,deleteid,refresh){
-if (action!=='close'){                     
-action(deleteid).then(
-data=>{
-    eventBus.emit(refresh)
+if (state.type==='error'){
+  state.action=()=>{
+    centerDialogVisible.value=false
   }
-  )}
-centerDialogVisible.value = false
 }
+}
+
+
+function closemessagebox(){
+  centerDialogVisible.value=false
+}
+
+
+defineExpose({openmessagebox,closemessagebox})
+
+
 </script>

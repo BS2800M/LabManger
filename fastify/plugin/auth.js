@@ -10,7 +10,7 @@ async function auth(fastify, options) {
             const decoded = jwt.verify(jwt_token, 'labmanger');
             request.userid = decoded.userid;
             request.username = decoded.username;
-            request.permission = decoded.permission;
+            request.role = decoded.role;
             request.teamid = decoded.teamid;
         }
         catch (err) {

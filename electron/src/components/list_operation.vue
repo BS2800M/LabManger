@@ -78,7 +78,7 @@
             <el-table-column label="操作" min-width="150">
                 <template #default="scope">
                     <el-button size="small" type="primary" @click="barcodeprint(scope.row)">补打条码</el-button>
-                    <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',api_operation_del,scope.row.id,EVENT_TYPES.OPERATION_UPDATED)">删除</el-button>
+                    <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',()=>operation_del(scope.row.id))">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -119,8 +119,8 @@
 
 
 
-  function openmessagebox(a,b,c,d,e){
-  messageboxRef.value.openmessagebox(a,b,c,d,e)
+  function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
 }
 
 onMounted(() => {
@@ -131,7 +131,7 @@ onMounted(() => {
 onUnmounted(() => {
   eventBus.off(EVENT_TYPES.OPERATION_UPDATED)
 })
-function operation_show(){
+async function operation_show(){
     state.searchlater=format_YYYYMMDDHHmm_iso(state.searchlater_show)
     state.searchearlier=format_YYYYMMDDHHmm_iso(state.searchearlier_show)
     api_operation_show(state) 
@@ -142,7 +142,7 @@ function operation_show(){
 
  } )
   .catch(err=>{
-    openmessagebox('error',err,'close',null,null)
+    openmessagebox('error',err.response.data.msg,null)
                 })
 }
   function barcodeprint(data){
@@ -150,7 +150,15 @@ function operation_show(){
     printdatalist.push(toRaw(data))
     myapi.gotoprint(printdatalist)
   }      
-
+  async function operation_del(id){
+    api_operation_del(id).then(data=>{
+      eventBus.emit(EVENT_TYPES.OPERATION_UPDATED)
+      messageboxRef.value.closemessagebox()
+    })
+    .catch(function(err){
+      openmessagebox('error',err.response.data.msg,null)
+    })
+  }
   async  function exportToExcel() {
     state.pagesize=9000000 // 设置为最大值
 

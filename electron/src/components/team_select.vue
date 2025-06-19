@@ -5,11 +5,21 @@
 <script setup>
 import {  ref, onMounted,reactive} from 'vue';
 import { api_team_show } from '../api/team';
+import { defineProps,defineEmits,watch } from 'vue';
+
+
+
 const allteamlist=ref([])
 const selectteam=reactive({selectid:0,teamid:0})
+const props = defineProps({
+  modelValue: {
+    required: true
+  }
+})
+const emit = defineEmits(['update:modelValue'])
 
 function list_AllTeam(){
-  api_team_show({name:"",page:1,pagesize:100})
+  api_team_show({name:"",page:1,pagesize:99999})
   .then(data=>{
     let i=0
     for (i in data.data.data)
@@ -20,17 +30,26 @@ function list_AllTeam(){
       teamid:data.data.data[i].id
     })
     }
-    selectteam.teamid=localStorage.getItem('t_teamid')
-    selectteam.selectid=localStorage.getItem('t_selectid')
+
   })
 }
 
 function changeselect(){
     selectteam.teamid=allteamlist.value[selectteam.selectid].teamid
-    localStorage.setItem('t_teamid',selectteam.teamid)
-    localStorage.setItem('t_selectid',selectteam.selectid)
-    
+    emit('update:modelValue',selectteam.teamid)
 }
+
+
+watch(() => props.modelValue,newValue => {
+  for (let i in allteamlist.value){
+    if (allteamlist.value[i].teamid==newValue){
+      selectteam.selectid=i
+      break
+    }
+  }
+})
+
+
 
 
 onMounted(list_AllTeam)

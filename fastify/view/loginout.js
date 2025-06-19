@@ -23,7 +23,7 @@ async function login(request, reply) {
     const token = jwt.sign({
         userid: user.id,
         username: user.username,
-        permission: user.permission,
+        role: user.role,
         teamid: user.teamid
     }, 'labmanger', { expiresIn: '5000h' });
     return {

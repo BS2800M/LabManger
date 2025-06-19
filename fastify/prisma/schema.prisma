@@ -99,7 +99,7 @@ model user{
   username String //用户名
   password String //密码的sha256
   using Boolean @default(true) //是否使用
-  permission String //权限
+  role String //角色
   team team @relation(fields: [teamid], references: [id]) //外键 团队
   teamid Int //团队id
   operation operation[] //外键 操作

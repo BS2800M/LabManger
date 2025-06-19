@@ -3,6 +3,7 @@ import mainrouter from './router/mainrouter.js';
 import auth from './plugin/auth.js';
 import cluster from 'cluster';
 import { startScheduledTasks } from './plugin/scheduler.js';
+import check_permission from './plugin/permission.js';
 // 环境检测
 const isProduction = process.env.NODE_ENV === 'production' ? true : false;
 async function setErrorHandler(mainfastify) {
@@ -21,6 +22,7 @@ async function start() {
     try {
         await setErrorHandler(mainfastify); //设置错误处理
         await startScheduledTasks(); //启动定时任务
+        await mainfastify.register(check_permission); //注册插件
         await mainfastify.register(auth); //注册插件
         await mainrouter(mainfastify, null); //注册路由
         await mainfastify.listen({ port: 8000 }); //启动

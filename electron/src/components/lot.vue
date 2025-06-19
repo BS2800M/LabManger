@@ -33,7 +33,7 @@
             <el-table-column label="操作" min-width="100" show-overflow-tooltip>
                 <template #default="scope">
                     <el-button size="small" type="primary" @click="editbox_openeditbox(scope.row)">编辑</el-button>
-                    <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',api_lot_del,scope.row.id,EVENT_TYPES.LOT_UPDATED)">删除</el-button>
+                    <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',()=>lot_del(scope.row.id))">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -53,7 +53,7 @@ import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 // 创建ref引用
 const messageboxRef = ref(null)
 const editboxRef = ref(null)
-
+const tableRef = ref(null)
 // 状态管理
 const state = reactive({
     reagentname: '',    // 输入搜索名称
@@ -61,21 +61,32 @@ const state = reactive({
     page: 1,       // 当前页
     totalpages: 1,        // 总页
     pagesize:13,    // 每页显示数量
+    selectedrow:null,
 })
 
-function lot_show() {
+async function lot_show() {
     api_lot_show(state)
         .then(data => {
             state.tableData = data.data.data
             state.totalpages = data.data.totalpages
         })
         .catch(err => {
-            openmessagebox('error',err,'close',null,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
 }
+async function lot_del(id){
+    api_lot_del(id).then(data=>{
+    eventBus.emit(EVENT_TYPES.LOT_UPDATED)
+    messageboxRef.value.closemessagebox()
+  })
+  .catch(function(err){
+    openmessagebox('error',err.response.data.msg,null)
+  })
+}
 
-function openmessagebox(a,b,c,d,e){
-  messageboxRef.value.openmessagebox(a,b,c,d,e)
+
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
 }
 
 function editbox_openaddbox() {

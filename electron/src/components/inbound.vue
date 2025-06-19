@@ -79,8 +79,8 @@ import 'element-plus/dist/index.css'
 import { h } from 'vue'
 // 组件引用
 const messageboxRef = ref()
-function openmessagebox(a,b,c,d,e){
-  messageboxRef.value.openmessagebox(a,b,c,d,e)
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
 }
 // 使用reactive统一管理状态
 const formData = reactive({
@@ -112,7 +112,7 @@ function list_allreagent() {
             }
         })
         .catch(err => {
-            openmessagebox('error',err,'close',null,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
 }
 
@@ -130,7 +130,7 @@ function list_alllot() {
 
         })
         .catch(err => {
-            openmessagebox('error',err,'close',null,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
 }
 
@@ -158,7 +158,7 @@ function select_reagentchange(){ //当选择的试剂发生改变时
             }
         })
         .catch(err => {
-            openmessagebox('error',err,'close',null,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
         checkinput()
         formData.lot_selectvalue = null
@@ -196,7 +196,7 @@ function inbound() {
         myapi.gotoprint(data.data.list)
         })
         .catch(err => {
-            openmessagebox('error',err,'close',null,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
 }
 

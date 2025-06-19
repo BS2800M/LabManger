@@ -28,6 +28,7 @@ declare module 'vue' {
     Messagebox: typeof import('./src/components/messagebox.vue')['default']
     Outbound: typeof import('./src/components/outbound.vue')['default']
     Print: typeof import('./src/components/print.vue')['default']
+    Role_select: typeof import('./src/components/role_select.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Team: typeof import('./src/components/team.vue')['default']
@@ -35,6 +36,8 @@ declare module 'vue' {
     Team_select: typeof import('./src/components/team_select.vue')['default']
     Template: typeof import('./src/components/template.vue')['default']
     Template_editbox: typeof import('./src/components/template_editbox.vue')['default']
+    User: typeof import('./src/components/user.vue')['default']
+    User_editbox: typeof import('./src/components/user_editbox.vue')['default']
     Warn_reagent: typeof import('./src/components/warn_reagent.vue')['default']
   }
 }

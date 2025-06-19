@@ -29,8 +29,8 @@ let username=ref("")
 let password=ref("")
 let backgrounblur=ref({filter:""})
 let messageboxRef=ref()
-function openmessagebox(a,b,c,d,e){
-  messageboxRef.value.openmessagebox(a,b,c,d),e
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
 }
 
 function login(){
@@ -42,7 +42,7 @@ function login(){
 		router.push("/home")
 	})
 	.catch(err=>{
-		openmessagebox('error',err,'close',null,null)
+		openmessagebox('error',err.response.data.msg,null)
 	})
 
 }

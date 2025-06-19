@@ -49,6 +49,9 @@ const uiState = reactive({
 })
 
 let messageboxRef = ref()
+function openmessagebox(a,b,c){
+  messageboxRef.value.openmessagebox(a,b,c)
+}
 
 defineExpose({
   openeditbox,
@@ -132,7 +135,7 @@ function team_update() {
       eventBus.emit(EVENT_TYPES.TEAM_UPDATED)
     })
     .catch(err => {
-      messageboxRef.value.messagebox_warn(err)
+      openmessagebox('error',err.response.data.msg,null)
     })
 }
 function team_add() {
@@ -143,7 +146,7 @@ function team_add() {
       eventBus.emit(EVENT_TYPES.TEAM_UPDATED)
     })
     .catch(err => {
-      messageboxRef.value.messagebox_warn(err)
+      openmessagebox('error',err.response.data.msg,null)
     })
 }
 </script>
