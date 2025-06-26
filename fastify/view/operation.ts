@@ -147,11 +147,10 @@ async function special_outbound(request: FastifyRequest, reply: any) {
 
 async function operation_show(request: FastifyRequest, reply: any) {
     const {reagentname,searchlater,searchearlier,barcodenumber,pagesize,page}:OperationShowRequestQuery=request.query as OperationShowRequestQuery
-    const teamid = request.teamid
     const where:OperationShowSearchParams = {
         using:true,
         reagent:{
-            teamid:teamid,
+            ...request.validate_where
         }
     }
     if (searchlater != "" || searchearlier != "") {
@@ -217,6 +216,7 @@ async function operation_show(request: FastifyRequest, reply: any) {
 
 async function operation_del(request: FastifyRequest, reply: any) {
     const {id}:OperationDelRequestBody=request.body as OperationDelRequestBody
+    const {teamid,userid}=request
     const del=await prisma.operation.update({
         where:{id:id},
         data:{

@@ -6,13 +6,15 @@ import {
     ReagentSearchParams,
     ReagentUpdateRequestBody,
     ReagentDelRequestBody} from '../types/reagent.js'
+import {checkOwnership } from '../plugin/permission.js'
+import { FastifyReply } from 'fastify'  
 
 
 
 
 
 
-async function reagent_add(request: FastifyRequest, reply: any) {
+async function reagent_add(request: FastifyRequest, reply: FastifyReply) {
     const { name, specifications, warn_number, price,storage_condition,warn_days, using,generate_lot }:ReagentAddRequestBody = request.body as ReagentAddRequestBody
     const teamid = request.teamid
     const add = await prisma.reagent.create({
@@ -51,11 +53,11 @@ async function reagent_add(request: FastifyRequest, reply: any) {
     return {status:0,msg:"成功",data:add}
 }
 
-async function reagent_show(request: FastifyRequest, reply: any) {
+async function reagent_show(request: FastifyRequest, reply: FastifyReply) {
     const { name, page, pagesize }:ReagentShowRequestQuery = request.query as ReagentShowRequestQuery
-    const teamid = request.teamid
     const where:ReagentSearchParams = {
         using:true,
+        ...request.validate_where
     }
     if(name!==""){
         where.name = {contains:name}
@@ -70,9 +72,9 @@ async function reagent_show(request: FastifyRequest, reply: any) {
     return {status:0,msg:"成功",data:show,total:total,page:page,pagesize:pagesize,totalpages:Math.ceil(total/pagesize)}
 }
 
-async function reagent_update(request: FastifyRequest, reply: any) {
+async function reagent_update(request: FastifyRequest, reply: FastifyReply) {
     const { id, name, specifications, warn_number, price, storage_condition, warn_days, using }:ReagentUpdateRequestBody = request.body as ReagentUpdateRequestBody
-    const teamid = request.teamid
+    const { teamid,userid} = request
     const update = await prisma.reagent.update({
         where: { id },
         data: { name, specifications, warn_number, price, storage_condition, teamid, warn_days, using }
@@ -82,8 +84,9 @@ async function reagent_update(request: FastifyRequest, reply: any) {
 }
 
 
-async function reagent_del(request: FastifyRequest, reply: any) {
+async function reagent_del(request: FastifyRequest, reply: FastifyReply) {
     const { id }:ReagentDelRequestBody = request.body as ReagentDelRequestBody
+    const { teamid,userid} = request
     const del = await prisma.reagent.update({
         where: { id },
         data: { using: false }
@@ -93,7 +96,7 @@ async function reagent_del(request: FastifyRequest, reply: any) {
 
 
 
-async function reagent_showall(request: FastifyRequest, reply: any) {
+async function reagent_showall(request: FastifyRequest, reply: FastifyReply) {
     const teamid = request.teamid
     const showall = await prisma.reagent.findMany({
         where: { teamid: teamid,using:true },

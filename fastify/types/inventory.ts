@@ -6,7 +6,7 @@ export interface InventoryQuery {
 
 export interface InventoryWhere {
     reagent: {
-        teamid: number;
+        teamid?: number;
     };
     using: boolean;
     inventory_number?: {

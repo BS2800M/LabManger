@@ -5,6 +5,8 @@ declare module 'fastify' {
         userid: number
         username: string    
         role: string
+        scope: string
+        validate_where: object
     }
 }
 

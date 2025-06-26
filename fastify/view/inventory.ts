@@ -10,13 +10,12 @@ import {
 
 async function inventory_show(request: FastifyRequest, reply: any) {
     const {page,pagesize,only_warn}:InventoryQuery=request.query as InventoryQuery
-    const teamid = request.teamid
     if(only_warn){ //只显示需要提醒的库存
         // 先获取所有库存数据，过滤出预警库存，然后分页
         const allInventory = await prisma.inventory.findMany({
             where: {
                 reagent: {
-                    teamid: teamid
+                    ...request.validate_where
                 },
                 using: true
             },
@@ -75,7 +74,7 @@ async function inventory_show(request: FastifyRequest, reply: any) {
     // 非预警情况的处理
     let where:InventoryWhere={
         reagent:{
-            teamid:teamid
+            ...request.validate_where
         },
         using:true,
     }

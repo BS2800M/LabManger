@@ -66,12 +66,15 @@ async function user_del(request: FastifyRequest, reply: any) {
 
 async function user_show(request: FastifyRequest, reply: any) {
     const {name,page,pagesize}:UserShowRequestBody = request.query as UserShowRequestBody
-    const where:any = {using:true}
+    const where:any = 
+    {using:true,
+    ...request.validate_where}
     if(name !== ""){
         where.username = {
             contains:name
         }
     }
+    console.log(where)
     const total = await prisma.user.count({where})
     const usersdata = await prisma.user.findMany({
         skip:(page - 1) * pagesize,
