@@ -211,7 +211,7 @@ function operation_special_outbound(){
     })
   })
   .catch(err=>{
-    openmessagebox('error',err.response.data.msg,null)
+    openmessagebox('error',err.message,null)
   })
 }
 
@@ -231,7 +231,7 @@ onMounted(() => {
 position: absolute;
 top: 0px;
 left:0px;
-background-color:rgb(44, 62, 80);
+background-color:rgb(30, 42, 54);
 height: 100vh;
 width:100vw;
 z-index: 0;
@@ -313,16 +313,16 @@ z-index: 0;
   position: absolute;
   left:200px;
   top:350px;
-  background-color: rgb(44, 62, 80);
+  background-color: rgb(30, 42, 54);
 }
 :deep(.el-table .rowstyle)
 {
   color: rgb(255, 255, 255);
-  background-color:rgb(44, 62, 80);
+  background-color:rgb(30, 42, 54);
 }
 :deep(.el-table .rowstyle:hover)
 {
-  color: rgb(44, 62, 80);
+  color: rgb(30, 42, 54);
   background-color: rgb(255, 255, 255);
 }
 

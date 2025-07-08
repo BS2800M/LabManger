@@ -55,12 +55,14 @@ async function user_del(request, reply) {
 }
 async function user_show(request, reply) {
     const { name, page, pagesize } = request.query;
-    const where = { using: true };
+    const where = { using: true,
+        ...request.validate_where };
     if (name !== "") {
         where.username = {
             contains: name
         };
     }
+    console.log(where);
     const total = await prisma.user.count({ where });
     const usersdata = await prisma.user.findMany({
         skip: (page - 1) * pagesize,

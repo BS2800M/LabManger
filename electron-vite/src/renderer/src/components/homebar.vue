@@ -18,7 +18,7 @@
           <li><RouterLink to="/warn_reagent"><button >提醒</button></RouterLink></li>
         </ul>
       </li>
-      <li><button>信息  <svg class="icon"><use xlink:href="#icon-wendu"></use></svg></button>
+      <li><button>管理 <svg class="icon"><use xlink:href="#icon-wendu"></use></svg></button>
         <ul>
           <li><RouterLink to="/team"><button>检验小组</button></RouterLink></li>
           <li><RouterLink to="/user"><button>用户</button></RouterLink></li>
@@ -58,7 +58,7 @@ const teamname = ref(localStorage.teamname)
   }
   #Sidebar{
     position: absolute;
-    background-color:rgb(44, 62, 80);
+    background-color:rgb(60, 83, 108);
     width: 200px;
     height: 100%;
     top: 0px;
@@ -70,7 +70,7 @@ const teamname = ref(localStorage.teamname)
   }
   #Sidebar #silde{
     position: absolute;
-    top: 100px;
+    top: 150px;
   }
   #Sidebar ul{
     list-style-type: none;
@@ -85,13 +85,13 @@ const teamname = ref(localStorage.teamname)
     width: 200px;
     text-decoration: none;
     transition: 0.2s ease-in-out;
-    background-color:rgb(44, 62, 80);
+    background-color:rgb(60, 83, 108);
     border-radius: 10px;
     padding-top: 10px;
     padding-bottom: 10px;
   }
   #Sidebar ul li button:hover{
-    color: rgb(44, 62, 80);
+    color: rgb(60, 83, 108);
     background-color: white;
   }
 

@@ -7,18 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-/electron/node_modules
-/electron/dist
-/electron/electron-dist
+/electron-vite/node_modules
+/electron-vite/dist
+/electron-vite/electron-dist
+/electron-vite/out
+
+
 /fastify/node_modules
-.DS_Store
-dist
-dist-ssr
-coverage
-*.local
 db.sqlite3
 data.db
-electron-dist
 /fastify/prisma/migrations
 /fastify/cilent
 

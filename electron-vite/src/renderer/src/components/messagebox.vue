@@ -1,5 +1,5 @@
 <template>
-    <el-dialog v-model="centerDialogVisible" title="警告" width="500" center>
+    <el-dialog v-model="centerDialogVisible" :title="state.title" width="500" center>
       <span style="font-size: 25px;">
         {{state.message}}
       </span>
@@ -23,6 +23,7 @@ type:null,
 message:null,
 action:null,
 centerDialogVisible:false,
+title:'警告',
 })
 function openmessagebox(intype,inmessage,action){
 state.type=intype
@@ -30,6 +31,7 @@ state.message=inmessage
 state.action=action
 centerDialogVisible.value=true
 if (state.type==='error'){
+  state.title='错误'
   state.action=()=>{
     centerDialogVisible.value=false
   }

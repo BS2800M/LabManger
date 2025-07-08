@@ -47,7 +47,7 @@ function createWindow () {
     height: 800,
     minHeight:800,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, '../preload/index.js'),
     }
   })
 
@@ -60,7 +60,7 @@ function createWindow () {
     enableRemoteModule: true, 
     nodeIntegration: true, 
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, '../preload/index.js'),
     }
   })
   ipcMain.handle('read_conf',read_conf)
@@ -68,11 +68,11 @@ function createWindow () {
   ipcMain.handle('gotoprint',async(event,args)=>{gotoprint(args)}) //监听 用户界面发出准备打印的命令发送到主进程
   ipcMain.on('print', () =>{ printWindow.webContents.print(printOptions)}) //监听 printwindow渲染好的条码发送到主进程
 
-  printWindow.loadFile('./dist/index.html', {hash: 'print'})
+  // printWindow.loadFile('./dist/index.html', {hash: 'print'})
   // mainWindow.loadFile('./dist/index.html') 
-  mainWindow.loadURL('http://localhost:3000') 
+  mainWindow.loadURL('http://localhost:5173') 
   // mainWindow.loadURL('http://localhost:3000') 
-  // printWindow.loadURL('http://localhost:3000/#/print')  
+  printWindow.loadURL('http://localhost:5173/#/print')  
   // // 打开开发工具
   mainWindow.webContents.openDevTools()
   // printWindow.webContents.openDevTools()

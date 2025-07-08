@@ -67,7 +67,7 @@ onMounted(readprinters)
 position: absolute;
 top: 0px;
 left:0px;
-background-color:rgb(44, 62, 80);
+background-color:rgb(30, 42, 54);
 height: 100vh;
 width: 100vw;
 z-index: 0;
@@ -76,14 +76,16 @@ z-index: 0;
 #setting{
   position: absolute;
   width: 500px;
-  height: 280px;
-  top: 350px;
+  height:180px;
+  top: 520px;
   left:250px;
-  color: rgb(255, 255, 255);
+  color: white;
+  background-color:rgb(60, 83, 108);
   border-radius: 20px;
-  border-color: white;
   border-style: solid;
-  border-width: 1px; 
+  border-color: rgb(60, 83, 108);
+  border-width: 2px; 
+  padding: 10px;
 }
 
 .el-switch{

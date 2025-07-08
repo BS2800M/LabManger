@@ -71,7 +71,7 @@ async function lot_show() {
             state.totalpages = data.data.totalpages
         })
         .catch(err => {
-            openmessagebox('error',err.response.data.msg,null)
+            openmessagebox('error',err.message,null)
         })
 }
 async function lot_del(id){
@@ -80,7 +80,7 @@ async function lot_del(id){
     messageboxRef.value.closemessagebox()
   })
   .catch(function(err){
-    openmessagebox('error',err.response.data.msg,null)
+    openmessagebox('error',err.message,null)
   })
 }
 
@@ -122,7 +122,7 @@ onUnmounted(() => {
     position: absolute;
     top: 0px;
     left:0px;
-    background-color:rgb(44, 62, 80);
+    background-color:rgb(30, 42, 54);
     height: 100vh;
     width:100vw;
     z-index: 0;
@@ -132,16 +132,16 @@ onUnmounted(() => {
     position: absolute;
     left: 200px;
     top: 100px;
-    background-color: rgb(44, 62, 80);
+    background-color: rgb(30, 42, 54);
 }
 :deep(.el-table .rowstyle)
 {
     color: rgb(255, 255, 255);
-    background-color:rgb(44, 62, 80);
+    background-color:rgb(30, 42, 54);
 }
 :deep(.el-table .rowstyle:hover)
 {
-    color: rgb(44, 62, 80);
+    color: rgb(30, 42, 54);
     background-color: rgb(255, 255, 255);
 }
 

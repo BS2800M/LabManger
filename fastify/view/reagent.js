@@ -38,9 +38,9 @@ async function reagent_add(request, reply) {
 }
 async function reagent_show(request, reply) {
     const { name, page, pagesize } = request.query;
-    const teamid = request.teamid;
     const where = {
         using: true,
+        ...request.validate_where
     };
     if (name !== "") {
         where.name = { contains: name };
@@ -56,7 +56,7 @@ async function reagent_show(request, reply) {
 }
 async function reagent_update(request, reply) {
     const { id, name, specifications, warn_number, price, storage_condition, warn_days, using } = request.body;
-    const teamid = request.teamid;
+    const { teamid, userid } = request;
     const update = await prisma.reagent.update({
         where: { id },
         data: { name, specifications, warn_number, price, storage_condition, teamid, warn_days, using }
@@ -65,6 +65,7 @@ async function reagent_update(request, reply) {
 }
 async function reagent_del(request, reply) {
     const { id } = request.body;
+    const { teamid, userid } = request;
     const del = await prisma.reagent.update({
         where: { id },
         data: { using: false }

@@ -129,11 +129,10 @@ async function special_outbound(request, reply) {
 }
 async function operation_show(request, reply) {
     const { reagentname, searchlater, searchearlier, barcodenumber, pagesize, page } = request.query;
-    const teamid = request.teamid;
     const where = {
         using: true,
         reagent: {
-            teamid: teamid,
+            ...request.validate_where
         }
     };
     if (searchlater != "" || searchearlier != "") {
@@ -197,6 +196,7 @@ async function operation_show(request, reply) {
 }
 async function operation_del(request, reply) {
     const { id } = request.body;
+    const { teamid, userid } = request;
     const del = await prisma.operation.update({
         where: { id: id },
         data: {
