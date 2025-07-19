@@ -1,7 +1,7 @@
 <template>
     <messagebox ref="messageboxRef"></messagebox>
     <div id="background" :style="null">
-        <div id="search">
+        <div id="background2">
             <el-input 
                 style="left:200px;top:10px;width:250px;" 
                 v-model="state.reagentname" 
@@ -193,61 +193,19 @@ async function operation_show(){
 
 </script>
   <style scoped>
-#background{
-position: absolute;
-top: 0px;
-left:0px;
-background-color:rgb(30, 42, 54);
-height: 100vh;
-width:100vw;
-z-index: 0;
+
+#background2{
+  height: 90px;
 }
 .el-table{
   position: absolute;
   left: 200px;
   top: 100px;
-  background-color: rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle)
-{
-  color: rgb(255, 255, 255);
-  background-color:rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle:hover)
-{
-  color: rgb(30, 42, 54);
-  background-color: rgb(255, 255, 255);
+  background-color:rgb(53, 73, 94);
 }
 
 
-:deep( .el-input .el-input__wrapper),
-:deep( .el-input .el-input__inner)
-{
-  background-color: rgb(30, 42, 54);
-  --el-input-focus-border-color:white;
-  color: white;
-}
 
-:deep( .el-input .el-input__wrapper),
-:deep( .el-input .el-input__inner)
-{
-  background-color:transparent;
-  --el-input-focus-border-color:white;
-  color: white;
-}
-/* 翻页器的样式 */
-:deep(.el-pagination .btn-prev),
-:deep(.el-pagination .btn-next) 
-{
-  background-color:transparent !important;
-  color: white;
-}
-:deep(.el-pagination .el-pager li:not(.active):not(.disabled)) {
-  background-color:transparent !important;
-  color: white;
-}
-:deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
-  font-size: 25px;
-}
+
 
   </style>

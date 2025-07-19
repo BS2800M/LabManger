@@ -1,5 +1,6 @@
 <template>
     <div id="background" :style="null">
+      <div id="background2">
         <el-input 
           class="searchinput"
           style="left:200px;top:10px;width:200px;" 
@@ -13,6 +14,7 @@
           @click="editbox_openaddbox"
         >增加用户</el-button>
         <el-pagination 
+         style=" position: absolute;left: 200px;top: 50px;"
           class="searchinput" 
           background  
           layout="prev, pager, next"  
@@ -20,6 +22,7 @@
           :page-count="state.totalpages" 
           @change="user_show" 
         />
+      </div>
         <el-table
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
@@ -109,63 +112,19 @@ onUnmounted(() => {
 })
 </script >
 <style scoped>
-#background{
-position: absolute;
-top: 0px;
-left:0px;
-background-color:rgb(30, 42, 54);
-height: 100vh;
-width:100vw;
-z-index: 0;
+#background2{
+  height: 90px;
 }
 .el-table{
   position: absolute;
   left: 200px;
-  top: 50px;
-  background-color: rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle)
-{
-  color: rgb(255, 255, 255);
-  background-color:rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle:hover)
-{
-  color: rgb(30, 42, 54);
-  background-color: rgb(255, 255, 255);
+  top: 100px;
 }
 
 #add{
   position: absolute;
   left:1000px;
   top:5px
-}
-.el-pagination{
-  position: absolute;
-  left: 400px;
-  top: 10px;
-}
-:deep( .searchinput .el-input__wrapper),
-:deep( .searchinput .el-input__inner)
-{
-  background:transparent;
-  --el-input-focus-border-color:white;
-  color: white;
-}
-
-:deep(.el-pagination .btn-prev),
-:deep(.el-pagination .btn-next) 
-{
-  background-color:transparent !important;
-  color: white;
-}
-
-:deep(.el-pagination .el-pager li:not(.active):not(.disabled)) {
-  background-color:transparent !important;
-  color: white;
-}
-:deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
-  font-size: 25px;
 }
 
 </style>

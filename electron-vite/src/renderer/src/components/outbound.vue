@@ -1,16 +1,15 @@
 <template>
   <messagebox ref="messageboxRef" ></messagebox>
 <div id="background" :style="null">
-  <p id="title">快速出库</p>
-  <el-input v-model="formData.barcodenumber" style="width: 700px;height:50px;" placeholder="快速录入唯一试剂条码号" @keyup.enter="operation_outbound"/>
+  <div id="background2">
+  <p id="title" style=" position:absolute; left:200px;top:0px;">快速出库</p>
+  <el-input v-model="formData.barcodenumber" style=" position:absolute;width: 700px;height:50px; left:200px;top:100px;" placeholder="快速录入唯一试剂条码号" @keyup.enter="operation_outbound"/>
   <button id="outbound" @click="operation_outbound">
         <span>出库</span>
         <svg class="icon" fill="currentColor" aria-hidden="true"> <use xlink:href="#icon-chuku"></use></svg>
   </button>
-
-    <p id="title2">特殊出库</p>
-    <div id="content2">
-    <span class="contenttext">试剂</span>
+    <p id="title2" style=" position:absolute; left:200px;top:120px;">特殊出库</p>
+    <span style=" position:absolute; left:200px;top:240px;"   >试剂</span>
             <el-select-v2 
                 class="searchinput"      
                 v-model="formData.reagent_selectvalue" 
@@ -18,10 +17,10 @@
                 :options="formData.allreagentlist" 
                 placeholder="选择试剂" 
                 @change="select_reagentchange" 
-                style="width: 250px"  
+                style="width:250px ;position:absolute; width: 300px;left:250px;top:240px "  
                 :height="300" 
             />
-            <span class="contenttext">批号</span>
+            <span style=" position:absolute;left:560px;top:240px;" >批号</span>
             <el-select-v2 
                 class="searchinput" 
                 v-model="formData.lot_selectvalue" 
@@ -29,25 +28,28 @@
                 :options="formData.alllotlist" 
                 placeholder="选择批号" 
                 @change="select_lotchange"  
-                style="width: 250px" 
+                style="width:250px ;position:absolute; width: 300px;left:600px;top:240px" 
                 :height="400"  
                 ref="refInput" 
             />
-            <span class="contenttext">数量</span>
+            <span  style=" position:absolute;left:910px;top:240px;" >数量</span>
             <el-input-number 
                 class="searchinput"  
                 v-model="formData.number" 
                 :min="1" 
                 :max="9999" 
                 placeholder="0" 
+                style="width:150px;position:absolute;left:960px;top:240px" 
                 @change="checkinput"  
             />
             <el-button 
                 type="success"  
                 :disabled="formData.editbox_disablebutton" 
                 @click="ready_operation_special_outbound"
+                style="position:absolute;left:250px;top:280px" 
             >准备特殊出库</el-button>
-          </div>
+ 
+        </div>
         <el-table
             :data="formData.tableData"
             :default-sort="{ prop: 'date', order: 'descending' }"
@@ -227,19 +229,14 @@ onMounted(() => {
 
 
 <style scoped>
-#background{
-position: absolute;
-top: 0px;
-left:0px;
-background-color:rgb(30, 42, 54);
-height: 100vh;
-width:100vw;
-z-index: 0;
+
+#background2{
+  height: 340px;
 }
 #outbound {
     position: absolute;
-    left:250px;
-    top:190px;
+    left:950px;
+    top:100px;
     width: 200px;
     height: 50px;
     background-color: rgb(25, 153, 11);
@@ -269,6 +266,14 @@ z-index: 0;
     font-weight: 100;
     color: white;
   }
+  #title2{
+    position: absolute;
+    font-size: 40px;
+    font-weight: 100;
+    color: white;
+    left:250px;
+    top:200px;
+  }
   .el-input{
     position: absolute;
     top: 130px;
@@ -284,23 +289,6 @@ z-index: 0;
     color:white;
     white-space: pre-line;
   }
-  #content2{
-    position: absolute;
-    left:250px;
-    top:300px;
-  }
-  #title2{
-    position: absolute;
-    font-size: 40px;
-    font-weight: 100;
-    color: white;
-    left:250px;
-    top:200px;
-  }
-  .contenttext{
-    color: white;
-    font-size: 20px;
-  }
 
   .icon {
   width: 2em;
@@ -313,19 +301,7 @@ z-index: 0;
   position: absolute;
   left:200px;
   top:350px;
-  background-color: rgb(30, 42, 54);
 }
-:deep(.el-table .rowstyle)
-{
-  color: rgb(255, 255, 255);
-  background-color:rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle:hover)
-{
-  color: rgb(30, 42, 54);
-  background-color: rgb(255, 255, 255);
-}
-
 #outbound2 {
     position: absolute;
     left:250px;

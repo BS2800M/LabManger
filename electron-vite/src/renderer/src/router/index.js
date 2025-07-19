@@ -1,13 +1,5 @@
 import {createRouter,createWebHistory,createWebHashHistory} from 'vue-router'
 
-// import login from '@/components/login.vue'
-// import homebar from '@/components/homebar.vue'
-// import home from '@/components/home.vue'
-// import print from '@/components/print.vue'
-// import loginout from '../components/loginout.vue'
-// import team from '@/components/team.vue'
-// import user from '@/components/user.vue'
-
 
 
 const login = () => import('@/components/login.vue');

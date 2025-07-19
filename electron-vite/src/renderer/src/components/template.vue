@@ -1,5 +1,6 @@
 <template>
-    <div id="background" :style="null">
+    <div id="background" >
+      <div id="background2">
         <el-input 
           style="left:200px;top:10px;width:250px;" 
           v-model="state.name" 
@@ -20,6 +21,7 @@
           @change="reagent_show" 
           style="position: absolute;left: 200px;top: 50px;"
         />
+      </div>
         <el-table
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
@@ -106,53 +108,15 @@ onUnmounted(() => {
 })
 </script >
 <style scoped>
-#background{
-position: absolute;
-top: 0px;
-left:0px;
-background-color:rgb(30, 42, 54);
-height: 100vh;
-width:100vw;
-z-index: 0;
+
+#background2{
+  height: 90px;
 }
 .el-table{
   position: absolute;
   left: 200px;
   top: 100px;
-  background-color: rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle)
-{
-  color: rgb(255, 255, 255);
-  background-color:rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle:hover)
-{
-  color: rgb(44, 62, 80);
-  background-color: rgb(255, 255, 255);
 }
 
-:deep( .el-input .el-input__wrapper),
-:deep( .el-input .el-input__inner)
-{
-  background:transparent;
-  --el-input-focus-border-color:white;
-  color: white;
-}
-
-:deep(.el-pagination .btn-prev),
-:deep(.el-pagination .btn-next) 
-{
-  background-color:transparent !important;
-  color: white;
-}
-
-:deep(.el-pagination .el-pager li:not(.active):not(.disabled)) {
-  background-color:transparent !important;
-  color: white;
-}
-:deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
-  font-size: 25px;
-}
 
 </style>

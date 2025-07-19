@@ -1,7 +1,7 @@
 <template>
     <div id="background" :style="null">
-        <div id="content">
-            <span>试剂</span>
+        <div id="background2">
+            <span style="position: absolute; left:200px;top:20px;">试剂</span>
             <el-select-v2 
                 class="searchinput"      
                 v-model="formData.reagent_selectvalue" 
@@ -9,10 +9,10 @@
                 :options="formData.allreagentlist" 
                 placeholder="选择试剂" 
                 @change="select_reagentchange" 
-                style="width: 300px"  
+                style=" position:absolute; width: 300px;left:250px;top:20px;"  
                 :height="500" 
             />
-            <span>批号</span>
+            <span style="position:absolute; left:580px;top:20px;">批号</span>
             <el-select-v2 
                 class="searchinput" 
                 v-model="formData.lot_selectvalue" 
@@ -20,11 +20,11 @@
                 :options="formData.alllotlist" 
                 placeholder="选择批号" 
                 @change="select_lotchange"  
-                style="width: 300px" 
+                style="position:absolute; width:300px;left:620px;top:20px;" 
                 :height="500"  
                 ref="refInput" 
             />
-            <span>数量</span>
+            <span style=" position:absolute;width:150px;left:200px;top:60px;" >数量</span>
             <el-input-number 
                 class="searchinput"  
                 v-model="formData.number" 
@@ -32,11 +32,13 @@
                 :max="9999" 
                 placeholder="0" 
                 @change="checkinput"  
+                style=" position:absolute;width:150px;left:250px;top:60px;" 
             />
             <el-button 
                 type="success"  
                 :disabled="formData.editbox_disablebutton" 
                 @click="ready_inbound"
+                style=" position:absolute;left:250px;top:100px;"
             >准备入库</el-button>
         </div>
         <el-table
@@ -210,20 +212,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-#background{
-position: absolute;
-top: 0px;
-left:0px;
-background-color:rgb(30, 42, 54);
-height: 100vh;
-width:100vw;
-z-index: 0;
-}
-#background #content{
-    position: absolute;
-    left:210px;
-    top:100px;
-    color: white;
+
+#background2{
+height: 140px;
+
 }
 #inbound{
   position: absolute;
@@ -240,40 +232,18 @@ z-index: 0;
   font-size: 30px;
   font-weight:700;
   transition: all 0.3s ease-in-out;
-  
-}
-#inbound img{
-  top: 8px;
-  left:150px;
-  position: absolute;
-  transition: all 0.3s ease-in-out;
-  filter: invert(99%) sepia(74%) saturate(0%) hue-rotate(1deg) brightness(112%) contrast(100%);
 }
   #inbound:hover{
   color: rgb(25, 153, 11);
   background-color: rgb(255, 255, 255);
   border-style: solid;
   border-color: rgb(25, 153, 11);
+}
 
-}
-#inbound:hover img{
-  filter: invert(49%) sepia(36%) saturate(6867%) hue-rotate(83deg) brightness(92%) contrast(91%);
-}
 .el-table{
   position: absolute;
   left: 200px;
   top: 250px;
-  background-color: rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle)
-{
-  color: rgb(255, 255, 255);
-  background-color:rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle:hover)
-{
-  color: rgb(30, 42, 54);
-  background-color: rgb(255, 255, 255);
 }
 
 .icon {
@@ -283,9 +253,5 @@ z-index: 0;
   fill:currentColor;
   overflow: hidden;
 }
-
-
-
-
 
 </style>

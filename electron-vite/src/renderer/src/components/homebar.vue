@@ -58,15 +58,14 @@ const teamname = ref(localStorage.teamname)
   }
   #Sidebar{
     position: absolute;
-    background-color:rgb(60, 83, 108);
-    width: 200px;
+    background-color:rgb(39, 53, 65);
+    width: 190px;
     height: 100%;
     top: 0px;
     left: 0px;
-    border-right-style: solid;
-    border-right-color: rgb(255, 255, 255);
-    border-right-width: 1px;
+
     z-index: 1;
+    box-shadow: 0 0 10px #000;;
   }
   #Sidebar #silde{
     position: absolute;
@@ -82,16 +81,16 @@ const teamname = ref(localStorage.teamname)
     font-size: 20px;
     border-style: none;
     color: white;
-    width: 200px;
+    width: 190px;
     text-decoration: none;
     transition: 0.2s ease-in-out;
-    background-color:rgb(60, 83, 108);
+    background-color:rgb(39, 53, 65);
     border-radius: 10px;
     padding-top: 10px;
     padding-bottom: 10px;
   }
   #Sidebar ul li button:hover{
-    color: rgb(60, 83, 108);
+    color: rgb(79, 108, 140);
     background-color: white;
   }
 

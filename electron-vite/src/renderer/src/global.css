@@ -1,0 +1,82 @@
+#background{
+    position: absolute;
+    top: 0px;
+    left:0px;
+    background-color:rgb(53, 72, 94);
+    height: 100vh;
+    width:100vw;
+    z-index: 0;
+    }
+    #background2{
+    color: white;
+    background-color: rgb(39, 53, 65);
+    box-shadow: 0 0 10px rgb(0, 0, 0)
+    }
+    .el-table{
+     background-color:rgb(53, 73, 94) !important;
+    }
+    .el-table .rowstyle
+    {
+      color: rgb(255, 255, 255) !important;
+      background-color:rgb(53, 72, 94) !important;
+    }
+    .el-table .rowstyle:hover
+    {
+      color:rgb(53, 72, 94);
+      background-color: rgb(255, 255, 255);
+    }
+
+    .el-pagination{
+      position: absolute;
+      left: 400px;
+      top: 10px;
+    }
+     .el-input .el-input__wrapper,
+     .el-input .el-input__inner
+    {
+      background:transparent;
+      --el-input-focus-border-color:white;
+      color: white;
+    }
+    
+    .el-pagination .btn-prev,
+    .el-pagination .btn-next
+    {
+      background-color:transparent !important;
+      color: white;
+    }
+    
+    .el-pagination .el-pager li:not(.active):not(.disabled) {
+      background-color:transparent !important;
+      color: white;
+    }
+    .el-pagination.is-background .el-pager li:not(.is-disabled).is-active {
+      font-size: 25px;
+    }
+
+    .el-input .el-input__wrapper
+    .el-input .el-input__inner
+    {
+        background-color:transparent;
+        --el-input-focus-border-color:white;
+        color: white !important;
+    }
+    .el-input.is-disabled .el-input__wrapper {
+      --el-disabled-bg-color:transparent !important;
+    }
+
+    .el-input-number__decrease, .el-input-number__increase{
+      background-color: rgba(255, 255, 255, 0) !important;
+    }
+    .el-select__wrapper {
+      background-color: rgba(0, 132, 255, 0) !important;
+      --el-text-color-regular: white !important;
+    }
+
+    #editbox{
+      color: white;
+      background-color: rgb(53, 73, 94);
+    }
+    #editbox #topbg{
+      background-color: rgb(53, 73, 94);
+    }

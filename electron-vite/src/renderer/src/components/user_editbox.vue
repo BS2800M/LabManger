@@ -163,7 +163,6 @@ function user_add() {
 #editbox{
   position: absolute;
   z-index: 2;
-  background-color: rgb(255, 255, 255);
   width: 90vw;
   height: 90vh;
   left:5vw;
@@ -176,7 +175,6 @@ function user_add() {
   position: absolute;
   z-index: 2;
   width: 90vw;
-  background-color: whitesmoke;
   left:0px;
   text-align: center;
 }

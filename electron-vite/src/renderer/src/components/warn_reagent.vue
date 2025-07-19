@@ -1,5 +1,6 @@
 <template>
-    <div id="background" :style="null">   
+    <div id="background" :style="null">  
+      <div id="background2">
         <el-pagination 
           background  
           layout="prev, pager, next"  
@@ -22,6 +23,7 @@
           style="position: absolute;left: 1000px;top: 50px;"
           >
           更新信息</el-button>
+        </div> 
         <el-table
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
@@ -40,6 +42,8 @@
     <messagebox ref="messageboxRef"></messagebox>
 </template>
 <script setup>
+
+
 import { ref, onMounted, reactive, onUnmounted } from 'vue'
 import messagebox from '@/components/messagebox.vue'
 import { formatDateColumn } from '@/api/dateformat.js'
@@ -134,76 +138,17 @@ onUnmounted(() => {
 })
 </script >
 <style scoped>
-#background{
-position: absolute;
-top: 0px;
-left:0px;
-background-color:rgb(30, 42, 54);
-height: 100vh;
-width:100vw;
-z-index: 0;
+#background2{
+  height: 90px;
 }
 .el-table{
   position: absolute;
   left: 200px;
   top: 100px;
-  background-color: rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle)
-{
-  color: rgb(255, 255, 255);
-  background-color:rgb(30, 42, 54);
-}
-:deep(.el-table .rowstyle:hover)
-{
-  color: rgb(30, 42, 54);
-  background-color: rgb(255, 255, 255);
-}
-
-
-.el-pagination{
-  position: absolute;
-  left: 400px;
-  top: 10px;
-
 }
 #export{
   position: absolute;
   left: 900px;
   top: 10px;
-}
-#cal{
-  position: absolute;
-  left: 1000px;
-  top: 10px;
-}
-.switch{
-  left: 250px;
-  top: 10px;
-  --el-switch-on-color: #76ca00;
-  --el-switch-off-color: #cba006;
-
-}
-:deep( .el-input .el-input__wrapper),
-:deep( .el-input .el-input__inner)
-{
-  background:transparent;
-  --el-input-focus-border-color:white;
-  color: white;
-}
-
-:deep(.el-pagination .btn-prev),
-:deep(.el-pagination .btn-next) 
-{
-  background-color:transparent !important;
-  color: white;
-}
-
-:deep(.el-pagination .el-pager li:not(.active):not(.disabled)) {
-  background-color:transparent !important;
-  color: white;
-}
-:deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
-  font-size: 25px;
 }
 </style>

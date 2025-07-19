@@ -209,7 +209,6 @@ function list_allreagent(){
 #editbox{
   position: absolute;
   z-index: 2;
-  background-color: rgb(255, 255, 255);
   width: 90vw;
   height: 80vh;
   left: 5vw;
@@ -222,7 +221,7 @@ function list_allreagent(){
   position: absolute;
   z-index: 2;
   width: 90vw;
-  background-color: whitesmoke;
+  background-color:  rgb(53, 73, 94);
   left:0px;
   text-align: center;
 }
