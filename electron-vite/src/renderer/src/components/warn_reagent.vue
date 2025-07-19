@@ -1,13 +1,5 @@
 <template>
     <div id="background" :style="null">   
-      <el-switch 
-      class="switch"
-      v-model="state.only_warn" 
-      size="large" 
-      active-text="显示警告" 
-      inactive-text="显示所有" 
-      inline-prompt  
-      @change="list_reagentnumber"/>
         <el-pagination 
           background  
           layout="prev, pager, next"  
@@ -39,7 +31,6 @@
         >
           <el-table-column prop="reagentname" label="试剂名称" min-width="150" show-overflow-tooltip/>
           <el-table-column prop="lotname" label="批号" min-width="150" show-overflow-tooltip/>
-          <el-table-column prop="specifications" label="规格" min-width="100" show-overflow-tooltip/>
           <el-table-column prop="inventory_number" label="库存" min-width="100" show-overflow-tooltip/>
           <el-table-column prop="warn_number" label="警告数量" min-width="100" show-overflow-tooltip/>
           <el-table-column prop="lastweek_outbound_number" label="上周出库数量" min-width="100" show-overflow-tooltip/>
@@ -64,7 +55,6 @@ const state = reactive({
   tableData: [],         // 表格数据，初始化为空数组
   page: 1,       // 当前页
   totalpages: 1,        // 总页
-  only_warn: false,  // 是否只显示警告
   pagesize:13
 })
 

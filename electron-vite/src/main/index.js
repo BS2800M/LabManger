@@ -68,13 +68,12 @@ function createWindow () {
   ipcMain.handle('gotoprint',async(event,args)=>{gotoprint(args)}) //监听 用户界面发出准备打印的命令发送到主进程
   ipcMain.on('print', () =>{ printWindow.webContents.print(printOptions)}) //监听 printwindow渲染好的条码发送到主进程
 
-  // printWindow.loadFile('./dist/index.html', {hash: 'print'})
-  // mainWindow.loadFile('./dist/index.html') 
+  // printWindow.loadFile('./out/renderer/index.html', {hash: 'print'})
+  // mainWindow.loadFile('./out/renderer/index.html') 
   mainWindow.loadURL('http://localhost:5173') 
-  // mainWindow.loadURL('http://localhost:3000') 
   printWindow.loadURL('http://localhost:5173/#/print')  
   // // 打开开发工具
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
   // printWindow.webContents.openDevTools()
   mainWindow.setMenu(null);
 }

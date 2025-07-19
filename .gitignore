@@ -11,6 +11,7 @@ lerna-debug.log*
 /electron-vite/dist
 /electron-vite/electron-dist
 /electron-vite/out
+/electron-vite/dist
 
 
 /fastify/node_modules

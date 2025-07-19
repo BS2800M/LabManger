@@ -4,74 +4,11 @@ import {
     InventoryQuery,
     InventoryWhere,
     TransformedInventoryShow,
-    InventoryAudit,
     InventoryUpdateList
 } from '../types/inventory.js'
 
 async function inventory_show(request: FastifyRequest, reply: any) {
     const {page,pagesize,only_warn}:InventoryQuery=request.query as InventoryQuery
-    if(only_warn){ //只显示需要提醒的库存
-        // 先获取所有库存数据，过滤出预警库存，然后分页
-        const allInventory = await prisma.inventory.findMany({
-            where: {
-                reagent: {
-                    ...request.validate_where
-                },
-                using: true
-            },
-            include: {
-                reagent: {
-                    select: {
-                        name: true,
-                        warn_number: true,
-                        specifications: true,
-                        warn_days: true
-                    }
-                },
-                lot: {
-                    select: {
-                        name: true
-                    }
-                }
-            },
-            orderBy: {
-                id: 'asc'
-            }
-        })
-        // 先过滤预警库存
-        const filteredInventory = allInventory.filter(item => {
-            let isLowStock = item.inventory_number <= item.reagent.warn_number //库存不足条件
-            let lastoutbound_isotime = new Date(item.last_outbound_time).getTime()
-            let warn_isotime = lastoutbound_isotime + item.reagent.warn_days * 24 * 60 * 60 * 1000
-            let now_isotime = new Date().getTime()
-            let isOverWarnTime = (warn_isotime <= now_isotime) //超过预警时间条件
-            return isLowStock && isOverWarnTime
-        })
-        // 然后进行分页
-        const total = filteredInventory.length
-        const startIndex = (page - 1) * pagesize
-        const endIndex = startIndex + pagesize
-        const show = filteredInventory.slice(startIndex, endIndex)
-        // 转换数据格式
-        const transformed_show: TransformedInventoryShow[] = show.map((item: any) => {
-            return {
-                id: item.id,
-                reagentid: item.reagentid,
-                lotid: item.lotid,
-                reagentname: item.reagent.name,
-                lotname: item.lot.name,
-                inventory_number: item.inventory_number,
-                last_outbound_time: item.last_outbound_time,
-                lastweek_outbound_number: item.lastweek_outbound_number,
-                warn_number: item.reagent.warn_number,
-                specifications: item.reagent.specifications,
-                warn_days: item.reagent.warn_days,
-            }
-        })
-          return reply.status(200).send({status: 0,msg: "成功", data: transformed_show, total: total,page: page,pagesize: pagesize,totalpages: Math.ceil(total / pagesize) })
-    }
-    
-    // 非预警情况的处理
     let where:InventoryWhere={
         reagent:{
             ...request.validate_where

@@ -109,6 +109,7 @@ async function inventory_show(request, reply) {
     });
     return reply.status(200).send({ status: 0, msg: "成功", data: transformed_show, total: total, page: page, pagesize: pagesize, totalpages: Math.ceil(total / pagesize) });
 }
+// 库存更新列表
 async function inventory_update_list(list) {
     let returnmsg = ""; //返回信息
     const where_list = await Promise.all(list.map(async (item) => {
@@ -164,6 +165,7 @@ async function inventory_update_list(list) {
     });
     return { returnmsg, list };
 }
+// 库存审核列表 保证出入库记录和数量相符
 async function inventory_audit_list() {
     const inventory_needaudit = await prisma.inventory.findMany({
         where: {
@@ -216,11 +218,12 @@ async function inventory_audit_list() {
                     inventory_number: inbound_number - outbound_number,
                     lastweek_outbound_number: lastweek_outbound_number
                 }
-            });
+            }); 
         });
         await Promise.all(update_all);
     });
 }
+// 库存审核
 async function inventory_audit(request, reply) {
     await inventory_audit_list();
     return reply.status(200).send({ status: 0, msg: "成功" });

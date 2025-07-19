@@ -1,8 +1,15 @@
 {
+  "name": "labmanger",
+  "version": "1.0.0",
+  "description": "实验室管理系统",
+  "author": "你的名字",
   "scripts": {
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
-    "prebuild": "electron-vite build"
+    "prebuild": "electron-vite build",
+    "build:win": "npm run prebuild && electron-builder --win --ia32 --config",
+    "build:mac": "npm run prebuild && electron-builder --mac --config",
+    "build:linux": "npm run prebuild && electron-builder --linux --config"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^6.0.0",
@@ -20,7 +27,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "electron": "^27.3.11"
+    "electron": "^27.3.11",
+    "electron-builder": "^25.1.8"
   },
   "main": "src/main/index.js"
 }

@@ -6,7 +6,6 @@ const inventory_show_schema = {
         properties: {
             page: { type: 'number' },
             pagesize: { type: 'number' },
-            only_warn: { type: 'boolean' },
         },
         required: ['page', 'pagesize']
     }

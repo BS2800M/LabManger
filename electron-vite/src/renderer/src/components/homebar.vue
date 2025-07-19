@@ -15,7 +15,7 @@
           <li><RouterLink to="/inbound"><button >入库</button></RouterLink></li>
           <li><RouterLink to="/outbound"><button >出库</button></RouterLink></li>
           <li><RouterLink to="/list_operation"><button >记录</button></RouterLink></li>
-          <li><RouterLink to="/warn_reagent"><button >提醒</button></RouterLink></li>
+          <li><RouterLink to="/warn_reagent"><button >统计</button></RouterLink></li>
         </ul>
       </li>
       <li><button>管理 <svg class="icon"><use xlink:href="#icon-wendu"></use></svg></button>

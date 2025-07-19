@@ -1,20 +1,23 @@
 import {createRouter,createWebHistory,createWebHashHistory} from 'vue-router'
 
-import login from '@/components/login.vue'
-import homebar from '@/components/homebar.vue'
-import home from '@/components/home.vue'
-import print from '@/components/print.vue'
-import loginout from '../components/loginout.vue'
-import team from '@/components/team.vue'
-import user from '@/components/user.vue'
-// import reagent_template from '@/components/reagent_template.vue'
-// import lot from '@/components/lot.vue'
-// import inbound from '@/components/inbound.vue'
-// import outbound from '@/components/outbound.vue'
-// import list_operation from '@/components/list_operation.vue'
+// import login from '@/components/login.vue'
+// import homebar from '@/components/homebar.vue'
+// import home from '@/components/home.vue'
+// import print from '@/components/print.vue'
+// import loginout from '../components/loginout.vue'
+// import team from '@/components/team.vue'
+// import user from '@/components/user.vue'
 
 
+
+const login = () => import('@/components/login.vue');
+const home = () => import('@/components/home.vue');
 const template = () => import('@/components/template.vue');
+const homebar = () => import('@/components/homebar.vue');   
+const print = () => import('@/components/print.vue');
+const loginout = () => import('@/components/loginout.vue');
+const team = () => import('@/components/team.vue');
+const user = () => import('@/components/user.vue');
 const lot = () => import('@/components/lot.vue');
 const inbound = () => import('@/components/inbound.vue');
 const outbound = () => import('@/components/outbound.vue');

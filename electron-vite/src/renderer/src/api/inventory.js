@@ -7,7 +7,6 @@ export const api_inventory_show=(params)=>{
       return myrequest.get('/inventory/show/',{
             page:params.page,
             pagesize:params.pagesize,
-            only_warn:params.only_warn,
             })
       }
 
