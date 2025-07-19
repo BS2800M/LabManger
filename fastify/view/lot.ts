@@ -8,7 +8,7 @@ import {
     LotDelRequestBody,
     LotShowAllRequestQuery,
     TransformedShow } from '../types/lot.js'
-import { checkOwnership } from '../plugin/permission.js'
+
 
 
 

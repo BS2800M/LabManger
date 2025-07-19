@@ -38,7 +38,6 @@ catch (err) {
 }
 
 if(isProduction===true){
-  if(cluster.isPrimary===true){
     console.log(`生产环境：启动多进程模式 主进程 ${process.pid}`)
     for (let i = 0; i < 3; i++) {
       cluster.fork()
@@ -47,11 +46,7 @@ if(isProduction===true){
       console.log(`进程 ${worker.process.pid} 已退出`)
     })
   }
-  else{
-    console.log(`生产环境：子进程 ${process.pid} 已启动`)
-    start()
-  }
-}
+
 else{
   console.log(`开发环境：单进程模式 ${process.pid}`)
   start()

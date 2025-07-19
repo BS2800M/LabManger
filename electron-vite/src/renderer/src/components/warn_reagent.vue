@@ -71,7 +71,7 @@ async function list_reagentnumber() {
 
         })
         .catch(function(err){
-          openmessagebox('error',err.message,null)
+          openmessagebox('error',err.response.data.msg,null)
         })
 }
 

@@ -98,61 +98,58 @@ async function checkOwnership(teamid: number,userid: number, scope: string, reso
     let hasAccess = false
     if (scope === 'all') return true
     if (scope === 'team') {
-        const resourceQueries: Record<string, () => Promise<any>> = {
-            reagent: () => prisma.reagent.findUnique({
-                where: { id: resourceid },
-                select: { teamid: true }
-            }),
-            lot: () => prisma.lot.findUnique({
-                where: { id: resourceid },
-                select: { reagent: { select: { teamid: true } } }
-            }),
-            operation: () => prisma.operation.findUnique({
-                where: { id: resourceid },
-                select: { reagent: { select: { teamid: true } } }
-            }),
-            inventory: () => prisma.inventory.findUnique({
-                where: { id: resourceid },
-                select: { lot: { select: { reagent: { select: { teamid: true } } } } }
-            }),
-            user: () => prisma.user.findUnique({
-                where: { id: resourceid },
-                select: { teamid: true }
-            })
-        }
-        const result = await resourceQueries[resource]()
-        console.log(result)
-        if (result) {
+        let result:any
             switch(resource){
                 case 'reagent':
-                    hasAccess = result.teamid === teamid
+                    result=await prisma.reagent.findUnique({
+                        where: { id: resourceid },
+                        select: { teamid: true }
+                    }) 
+                    result = result.teamid === teamid
                     break
                 case 'lot':
-                    hasAccess = result.reagent?.teamid === teamid
+                    result=await prisma.lot.findUnique({
+                        where: { id: resourceid },
+                        select: { reagent: { select: { teamid: true } } }
+                    })
+                    result = result.reagent.teamid === teamid
                     break
                 case 'operation':
-                    hasAccess = result.reagent?.teamid === teamid
+                    result=await prisma.operation.findUnique({
+                        where: { id: resourceid },
+                        select: { reagent: { select: { teamid: true } } }
+                    })
+                    result = result.reagent.teamid === teamid
                     break
                 case 'inventory':
-                    hasAccess = result.lot?.reagent?.teamid === teamid
+                    result=await prisma.inventory.findUnique({
+                        where: { id: resourceid },
+                        select: { lot: { select: { reagent: { select: { teamid: true } } } } }
+                    })
+                    result = result.lot.reagent.teamid === teamid
                     break
                 case 'user':
-                    hasAccess = result.teamid === teamid
+                    result=await prisma.user.findUnique({
+                        where: { id: resourceid },
+                        select: { teamid: true }
+                    })
+                    result = result.teamid === teamid
                     break
             }
-
-        }
+            return result
     }
     if(scope==='own'){
-        const result=await prisma.user.findUnique({
-            where: { id: resourceid },
-            select: { id: true }
-        })
-        if(result){
-            hasAccess=result.id===userid
-        }
+        let result:any
+        switch(resource){
+            case 'user':
+                result=await prisma.user.findUnique({
+                    where: { id: resourceid },
+                    select: { id: true }})
+                result=result.id===userid
+                break
     }
-    return hasAccess
+    return result
+    }
 }
 
 
@@ -162,7 +159,6 @@ function createPermissionChecker(resource: string, action: string,mode:number) {
     return async function(request: FastifyRequest, reply: FastifyReply) {
         const { role, teamid, userid } = request
         const permissions = role_permissions[role]?.permissions || []
-        
         const permission = permissions.find((p: Permission) => 
             p.resource === resource && p.actions.includes(action)
         )
@@ -172,7 +168,7 @@ function createPermissionChecker(resource: string, action: string,mode:number) {
         }
         request.validate_where = createWhereClause(resource,permission.scope, teamid, userid) //储存数据访问范围
         const scope=permission.scope
-        if(mode===1){ //mode 为1是要检查资源所有权 
+        if(mode===1){ //mode 为1是要检查资源所有权  为0则无需检查资源所有权
             const {id}=request.body as any
             const {teamid,userid}=request
             const resourceid=id
@@ -186,9 +182,7 @@ function createPermissionChecker(resource: string, action: string,mode:number) {
 
 // 插件注册
 async function check_permission(fastify: FastifyInstance, options: any) {
-    fastify.decorate('check_permission', function(resource: string, action: string,mode:number) {
-        return createPermissionChecker(resource,action,mode)
-    })
+    fastify.decorate('check_permission', createPermissionChecker)
 }
 
 

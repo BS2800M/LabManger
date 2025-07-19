@@ -8,7 +8,7 @@ async function auth(fastify:FastifyInstance,options:any){
         const jwt_token = request.headers.token as string
 
         if(!jwt_token){
-            return reply.status(401).send({status:1,msg:'认证错误'})
+            return reply.status(401).send({status:1,msg:'请先登录'})
         }
         try{
             const decoded = jwt.verify(jwt_token,'labmanger') as JWTPayload   

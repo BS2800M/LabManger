@@ -211,7 +211,7 @@ function operation_special_outbound(){
     })
   })
   .catch(err=>{
-    openmessagebox('error',err.message,null)
+    openmessagebox('error',err.response.data.msg,null)
   })
 }
 

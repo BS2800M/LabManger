@@ -112,7 +112,7 @@ function list_allreagent() {
             }
         })
         .catch(err => {
-            openmessagebox('error',err.message,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
 }
 
@@ -130,7 +130,7 @@ function list_alllot() {
 
         })
         .catch(err => {
-            openmessagebox('error',err.message,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
 }
 
@@ -158,7 +158,7 @@ function select_reagentchange(){ //当选择的试剂发生改变时
             }
         })
         .catch(err => {
-            openmessagebox('error',err.message,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
         checkinput()
         formData.lot_selectvalue = null
@@ -196,7 +196,7 @@ function inbound() {
         myapi.gotoprint(data.data.list)
         })
         .catch(err => {
-            openmessagebox('error',err.message,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
 }
 

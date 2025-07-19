@@ -71,7 +71,7 @@ async function lot_show() {
             state.totalpages = data.data.totalpages
         })
         .catch(err => {
-            openmessagebox('error',err.message,null)
+            openmessagebox('error',err.response.data.msg,null)
         })
 }
 async function lot_del(id){
@@ -80,7 +80,7 @@ async function lot_del(id){
     messageboxRef.value.closemessagebox()
   })
   .catch(function(err){
-    openmessagebox('error',err.message,null)
+    openmessagebox('error',err.response.data.msg,null)
   })
 }
 

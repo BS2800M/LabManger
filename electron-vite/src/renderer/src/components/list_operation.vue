@@ -142,7 +142,7 @@ async function operation_show(){
 
  } )
   .catch(err=>{
-    openmessagebox('error',err.message,null)
+    openmessagebox('error',err.response.data.msg,null)
                 })
 }
   function barcodeprint(data){
@@ -156,7 +156,7 @@ async function operation_show(){
       messageboxRef.value.closemessagebox()
     })
     .catch(function(err){
-      openmessagebox('error',err.message,null)
+      openmessagebox('error',err.response.data.msg,null)
     })
   }
   async  function exportToExcel() {
