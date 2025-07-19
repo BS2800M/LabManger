@@ -20,7 +20,8 @@ LabManger 是一个基于 Vue.js + Electron 桌面应用和 Fastify 后端服务
 
 ### 前端 (Electron + Vue.js)
 - **框架**: Vue 3 + Vite
-- **桌面应用**: Electron 20.3.12
+- **桌面应用**: Electron 27.x
+- **构建工具**: electron-vite 4.x
 - **UI组件库**: Element Plus
 - **路由**: Vue Router 4
 - **HTTP客户端**: Axios
@@ -39,18 +40,24 @@ LabManger 是一个基于 Vue.js + Electron 桌面应用和 Fastify 后端服务
 
 ```
 LabManger/
-├── electron/                 # 前端桌面应用
-│   ├── src/                 # Vue 源码
-│   │   ├── components/      # Vue 组件
-│   │   ├── router/          # 路由配置
-│   │   ├── api/             # API 接口
-│   │   └── utils/           # 工具函数
-│   ├── public/              # 静态资源
-│   ├── dist/                # 构建输出
-│   ├── main.js              # Electron 主进程
-│   ├── preload.js           # 预加载脚本
-│   ├── package.json         # 前端依赖配置
-│   └── vite.config.js       # Vite 配置
+├── electron-vite/           # 前端桌面应用
+│   ├── src/                 # 源码目录
+│   │   ├── main/            # 主进程
+│   │   │   └── index.js     # 主进程入口
+│   │   ├── preload/         # 预加载脚本
+│   │   │   └── index.js     # 预加载脚本入口
+│   │   └── renderer/        # 渲染进程
+│   │       ├── index.html   # 渲染进程入口
+│   │       └── src/         # Vue 源码
+│   │           ├── components/  # Vue 组件
+│   │           ├── router/      # 路由配置
+│   │           ├── api/         # API 接口
+│   │           ├── utils/       # 工具函数
+│   │           ├── assets/      # 静态资源
+│   │           ├── main.js      # Vue 入口
+│   │           └── App.vue      # 根组件
+│   ├── electron.vite.config.cjs # electron-vite 配置
+│   └── package.json         # 前端依赖配置
 ├── fastify/                 # 后端服务
 │   ├── router/              # 路由定义
 │   ├── plugin/              # 插件
@@ -96,7 +103,7 @@ LabManger/
 ## 安装与部署
 
 ### 环境要求
-- Node.js 18.x 或更高版本
+- Node.js 20.x 或更高版本
 - npm 9.x 或更高版本
 - Windows 操作系统（支持 32 位架构）
 
@@ -135,7 +142,7 @@ LabManger/
 
 1. **进入前端目录**
    ```bash
-   cd electron
+   cd electron-vite
    ```
 
 2. **安装依赖**
@@ -145,20 +152,17 @@ LabManger/
 
 3. **开发模式**
    ```bash
-   # 启动 Vue 开发服务器
-   npm run vue:dev
-   
-   # 启动 Electron 应用
-   npm run electron:dev
+   npm run dev
    ```
 
 4. **构建应用**
    ```bash
-   # 构建 Vue 应用
-   npm run vue:build
-   
-   # 构建 Electron 应用
-   npm run electron:build
+   npm run build
+   ```
+
+5. **预览构建结果**
+   ```bash
+   npm run preview
    ```
 
 ## 配置说明
@@ -169,7 +173,8 @@ LabManger/
 - 环境变量: 通过 `.env` 文件配置
 
 ### 前端配置
-- 开发服务器端口: 3000
+- 开发服务器端口: 5173
+- 构建输出目录: `out/`
 - 配置文件: `conf.txt` (包含打印机配置、服务器地址等)
 - 应用图标: `icon.ico`
 
@@ -232,10 +237,11 @@ LabManger/
 ## 开发指南
 
 ### 前端开发
-1. 使用 Vue 3 Composition API
-2. 遵循 Element Plus 设计规范
-3. 组件化开发，保持代码复用性
-4. 使用 TypeScript 进行类型检查
+1. 使用 electron-vite 4.x 进行构建
+2. 使用 Vue 3 Composition API
+3. 遵循 Element Plus 设计规范
+4. 组件化开发，保持代码复用性
+5. 使用 TypeScript 进行类型检查
 
 ### 后端开发
 1. 使用 Fastify 框架
@@ -257,7 +263,7 @@ LabManger/
 4. 定期备份数据库
 
 ### 桌面应用打包
-1. 使用 electron-builder 打包
+1. 使用 electron-vite 内置的构建功能
 2. 支持 Windows 32 位架构
 3. 包含必要的依赖文件
 4. 配置应用图标和元信息
@@ -280,15 +286,18 @@ LabManger/
 - 检查条码格式是否正确
 - 确保条码扫描器正常工作
 
+### 5. electron-vite 相关问题
+- 确保 Node.js 版本 >= 20.x
+- 检查依赖版本兼容性
+- 清理 node_modules 并重新安装依赖
+
 ## 更新日志
 
-### v1.0.0
-- 初始版本发布
-- 基础功能实现
-- 用户认证和权限管理
-- 试剂和批次管理
-- 入库出库操作
-- 库存监控和预警
+### v2.0.0 (当前版本)
+- 使用 electron-vite 4.x 架构
+- 升级 Electron 到 27.x
+- 优化构建流程和开发体验
+- 完整功能实现
 
 ## 技术支持
 
