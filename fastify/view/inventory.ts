@@ -11,8 +11,10 @@ async function inventory_show(request: FastifyRequest, reply: any) {
     const {page,pagesize,only_warn}:InventoryQuery=request.query as InventoryQuery
     let where:InventoryWhere={
         reagent:{
-            ...request.validate_where
+            ...request.validate_where,
+            using:true
         },
+        
         using:true,
     }
     const total = await prisma.inventory.count({ where }) //获取总数

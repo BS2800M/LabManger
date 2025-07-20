@@ -34,7 +34,7 @@ myservice.interceptors.request.use(function (config) {
 //添加响应拦截器
 myservice.interceptors.response.use(
     res=>{
-          return res
+          return res.data
     },
     err=>{
           console.log(err.response)

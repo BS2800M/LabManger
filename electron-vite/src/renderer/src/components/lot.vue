@@ -69,8 +69,8 @@ const state = reactive({
 async function lot_show() {
     api_lot_show(state)
         .then(data => {
-            state.tableData = data.data.data
-            state.totalpages = data.data.totalpages
+            state.tableData = data.data
+            state.totalpages = data.totalpages
         })
         .catch(err => {
             openmessagebox('error',err.response.data.msg,null)

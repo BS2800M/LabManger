@@ -36,9 +36,9 @@ function openmessagebox(a,b,c){
 function login(){
 	api_login(username.value,password.value)
 	.then(data=>{
-		localStorage.token=data.data.token //储存token
-		localStorage.username=data.data.username//储存用户
-		localStorage.teamname=data.data.teamname//储存用户id
+		localStorage.token=data.token //储存token
+		localStorage.username=data.username//储存用户
+		localStorage.teamname=data.teamname//储存用户id
 		router.push("/home")
 	})
 	.catch(err=>{

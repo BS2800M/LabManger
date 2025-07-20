@@ -136,9 +136,9 @@ async function operation_show(){
     state.searchearlier=format_YYYYMMDDHHmm_iso(state.searchearlier_show)
     api_operation_show(state) 
     .then(data=>{
-      tableData.value=data.data.data
-      state.totalpages=data.data.totalpages
-      state.page=data.data.page
+      tableData.value=data.data
+      state.totalpages=data.totalpages
+      state.page=data.page
 
  } )
   .catch(err=>{
@@ -163,7 +163,6 @@ async function operation_show(){
     state.pagesize=9000000 // 设置为最大值
 
     let exportData=await api_operation_show(state)
-    exportData=exportData.data.data
     state.pagesize=10 // 恢复默认值
     // 准备导出数据
     exportData = exportData.map(item => ({

@@ -80,8 +80,9 @@ function editbox_openeditbox(editdate) {
 async function reagent_show() {
     api_reagent_show(state)
         .then(function(data) {
-            state.tableData = data.data.data
-            state.totalpages = data.data.totalpages
+            state.tableData = data.data
+            console.log(data)
+            state.totalpages = data.totalpages
         })
         .catch(function(err) {
           openmessagebox('error',err.response.data.msg,null)

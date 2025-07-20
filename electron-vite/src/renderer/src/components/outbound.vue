@@ -138,11 +138,11 @@ function operation_outbound(){
 function show_allreagent() {
     api_reagent_showall()
         .then(data => {
-            for (let i in data.data.data) {
+            for (let i in data.data) {
                 formData.allreagentlist.push({
-                    label: data.data.data[i].name,
+                    label: data.data[i].name,
                     value: i,
-                    id: data.data.data[i].id,
+                    id: data.data[i].id,
                 })
             }
         })
@@ -155,11 +155,11 @@ function show_alllot() {
     api_lot_showall(formData)
         .then(data => {
             formData.alllotlist = [] // 每次触发时清空数组
-            for (let i in data.data.data) {
+            for (let i in data.data) {
                 formData.alllotlist.push({
-                    label: data.data.data[i].name,
+                    label: data.data[i].name,
                     value: i,
-                    id: data.data.data[i].id,
+                    id: data.data[i].id,
                 })
             }
         })
@@ -207,9 +207,9 @@ function operation_special_outbound(){
   .then(data=>{
     formData.tableData = []
     ElMessage({
-      type: data.data.msg.includes("库存不足") ? "warning" : "success",
+      type: data.msg.includes("库存不足") ? "warning" : "success",
       message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-      h('span', null, data.data.msg)]),
+      h('span', null, data.msg)]),
     })
   })
   .catch(err=>{

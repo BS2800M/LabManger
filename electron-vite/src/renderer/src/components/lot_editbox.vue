@@ -189,15 +189,16 @@ function list_allreagent(){
   .then(data=>{
             allreagentlist.value=[]
             let i=""
-            for (i in data.data.data){
+            for (i in data.data){
               allreagentlist.value.push({
-                label:data.data.data[i].name,
+                label:data.data[i].name,
                 value:i,
-                id:data.data.data[i].id,
+                id:data.data[i].id,
               })
             }
         } )
   .catch(err=>{
+    console.log(err)
     openmessagebox('error',err.response.data.msg,null)
                 })
 }

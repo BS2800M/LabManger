@@ -70,8 +70,8 @@ function openmessagebox(a,b,c){
 async function list_reagentnumber() {
     api_inventory_show(state)
         .then(function(data) {
-            state.tableData = data.data.data
-            state.totalpages = data.data.totalpages
+            state.tableData = data.data
+            state.totalpages = data.totalpages
 
         })
         .catch(function(err){
@@ -82,7 +82,6 @@ async function list_reagentnumber() {
 async  function exportToExcel() {
     state.pagesize=1000000
     let exportData=await api_inventory_show(state)
-    exportData=exportData.data.data
     state.pagesize=10
     // 准备导出数据
     exportData = exportData.map(item => ({

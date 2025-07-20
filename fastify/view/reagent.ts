@@ -86,7 +86,6 @@ async function reagent_update(request: FastifyRequest, reply: FastifyReply) {
 
 async function reagent_del(request: FastifyRequest, reply: FastifyReply) {
     const { id }:ReagentDelRequestBody = request.body as ReagentDelRequestBody
-    const { teamid,userid} = request
     const del = await prisma.reagent.update({
         where: { id },
         data: { using: false }
@@ -97,9 +96,10 @@ async function reagent_del(request: FastifyRequest, reply: FastifyReply) {
 
 
 async function reagent_showall(request: FastifyRequest, reply: FastifyReply) {
-    const teamid = request.teamid
     const showall = await prisma.reagent.findMany({
-        where: { teamid: teamid,using:true },
+        where: {using:true,
+                ...request.validate_where
+         },
         select:{
             id:true,
             name:true,
@@ -110,4 +110,29 @@ async function reagent_showall(request: FastifyRequest, reply: FastifyReply) {
 }
 
 
-export {reagent_add,reagent_show,reagent_update,reagent_del,reagent_showall}
+
+
+async function reagent_lot_showall(request: FastifyRequest, reply: FastifyReply) {
+    let show=await prisma.reagent.findMany({
+        where: {using:true, ...request.validate_where},
+        select:{
+            id:true,
+            name:true,
+            lot:{
+                select:{
+                    name:true,
+                    id:true
+                }
+            }
+        }
+    })
+    return {status:0,msg:"成功",data:show}
+}
+
+
+
+
+
+
+
+export {reagent_add,reagent_show,reagent_update,reagent_del,reagent_showall,reagent_lot_showall}

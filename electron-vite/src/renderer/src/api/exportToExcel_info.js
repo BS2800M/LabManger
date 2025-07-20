@@ -5,7 +5,7 @@ async function exportToExcel_info(){
     const teamname=localStorage.teamname
     const workbook = new ExcelJS.Workbook()
     let allreagent=await api_operation_show_exportToExcel()
-    allreagent=allreagent.data.data //获取所有试剂信息
+    allreagent=allreagent.data //获取所有试剂信息
     for (const item of allreagent){ //遍历所有试剂信息
 
         try{

@@ -15,7 +15,6 @@ import {
 
 async function lot_add(request: FastifyRequest, reply: any) {
     const { name, reagentid, expiration_date, using }:LotAddRequestBody = request.body as LotAddRequestBody
-    const { teamid,userid } = request
     const add = await prisma.lot.create({
         data: { name, reagentid, expiration_date, using }
     })
@@ -85,7 +84,6 @@ async function lot_show(request: FastifyRequest, reply: any) {
 
 async function lot_update(request: FastifyRequest, reply: any) {
     const { id, name, reagentid, expiration_date, using }:LotUpdateRequestBody = request.body as LotUpdateRequestBody
-    const { teamid,userid } = request
     const update = await prisma.lot.update({
         where: { id },
         data: { name, reagentid, expiration_date, using }
@@ -95,14 +93,9 @@ async function lot_update(request: FastifyRequest, reply: any) {
 
 async function lot_del(request: FastifyRequest, reply: any) {
     const { id }:LotDelRequestBody = request.body as LotDelRequestBody
-    const { teamid,userid } = request
     const del = await prisma.lot.update({
         where: { id },
         data: { using: false }
-    })
-    await prisma.inventory.updateMany({  //删除对应的库存表
-        where:{lotid:id},
-        data:{using:false}
     })
     return {status:0,msg:"成功",data:del}
 }

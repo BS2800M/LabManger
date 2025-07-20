@@ -5,7 +5,7 @@
 <script setup>
 import {  ref, onMounted,reactive} from 'vue';
 import { api_team_show } from '../api/team';
-import { defineProps,defineEmits,watch } from 'vue';
+import { defineProps,watch } from 'vue';
 
 
 
@@ -22,12 +22,12 @@ function list_AllTeam(){
   api_team_show({name:"",page:1,pagesize:99999})
   .then(data=>{
     let i=0
-    for (i in data.data.data)
+    for (i in data)
     {
       allteamlist.value.push({
-      label:data.data.data[i].name,
+      label:data[i].name,
       value:i,
-      teamid:data.data.data[i].id
+      teamid:data[i].id
     })
     }
 

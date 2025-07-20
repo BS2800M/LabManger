@@ -22,8 +22,8 @@
     }
     .el-table .rowstyle:hover
     {
-      color:rgb(53, 72, 94);
-      background-color: rgb(255, 255, 255);
+      color:rgb(53, 72, 94) !important;
+      background-color: rgb(255, 255, 255) !important;
     }
 
     .el-pagination{

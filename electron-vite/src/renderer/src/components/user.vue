@@ -80,14 +80,14 @@ function editbox_openeditbox(editdate) {
 async function user_show() {
     api_user_show(state)
         .then(function(data) {
-            state.tableData = data.data.data
-            state.total = data.data.total
-            state.pagesize = data.data.pagesize
-            state.totalpages = data.data.totalpages
+            state.tableData = data.data
+            state.total = data.total
+            state.pagesize = data.pagesize
+            state.totalpages = data.totalpages
         })
         .catch(function(err) {
+          console.log(err)
           openmessagebox('error',err.response.data.msg,null)
-            state.tableData = []
         })
 }
 
