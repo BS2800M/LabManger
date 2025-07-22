@@ -38,7 +38,6 @@ async function reagent_router(fastify:AuthFastifyInstance,options:any){
     fastify.put('/update/',{schema:shemajson.reagent_update_schema,preHandler:fastify.check_permission('reagent','update',1)},reagent.reagent_update)
     fastify.put('/del/',{schema:shemajson.reagent_del_schema,preHandler:fastify.check_permission('reagent','del',1)},reagent.reagent_del)
     fastify.get('/showall/',{schema:shemajson.reagent_showall_schema,preHandler:fastify.check_permission('reagent','showall')},reagent.reagent_showall)
-    fastify.get('/showall_lot/',{schema:shemajson.reagent_showall_schema,preHandler:fastify.check_permission('reagent','showall')},reagent.reagent_lot_showall)
 }
 
 async function lot_router(fastify:AuthFastifyInstance,options:any){

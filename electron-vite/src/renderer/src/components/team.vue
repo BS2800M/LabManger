@@ -12,6 +12,7 @@
           id="add" 
           type="success" 
           @click="editbox_openaddbox"
+          style=" position: absolute;left: 1000px;top: 50px;"
         >增加检验小组</el-button>
         <el-pagination 
           style=" position: absolute;left: 200px;top: 50px;"

@@ -1,27 +1,19 @@
 <template>
     <div id="background" :style="null">
         <div id="background2">
-            <span style="position: absolute; left:200px;top:20px;">试剂</span>
-            <el-select-v2  
-                v-model="formData.reagent_selectvalue" 
-                filterable 
-                :options="formData.allreagentlist" 
-                placeholder="选择试剂" 
-                @change="select_reagentchange" 
-                style=" position:absolute; width: 300px;left:250px;top:20px;"  
-                :height="500" 
-            />
-            <span style="position: absolute; left:570px;top:20px;">批号</span>
-            <el-select-v2  
-                v-model="formData.lot_selectvalue" 
-                filterable 
-                :options="formData.alllotlist" 
-                placeholder="选择批号" 
-                @change="select_lotchange" 
-                style=" position:absolute; width: 300px;left:610px;top:20px;"  
-                :height="500" 
-            />
-
+            <span style=" position:absolute;width:150px;left:200px;top:20px;" >试剂</span>
+            <div style=" position:absolute; width: 300px;left:250px;top:20px;">
+            <el-tree-select
+            v-model="tree.select"
+            lazy
+            style="width: 350px;"
+            :load="load_tree"
+            :props="tree.props" 
+            @change="get_id"
+            filterable
+            placeholder="搜索试剂名称"
+        />
+            </div>
             <span style=" position:absolute;width:150px;left:200px;top:60px;" >数量</span>
             <el-input-number 
                 class="searchinput"  
@@ -29,7 +21,7 @@
                 :min="1" 
                 :max="9999" 
                 placeholder="0" 
-                @change="checkinput"  
+                @change="get_id"
                 style=" position:absolute;width:150px;left:250px;top:60px;" 
             />
             <el-button 
@@ -89,85 +81,33 @@ const formData = reactive({
     lot_selectvalue: null, // 选择批号下拉菜单对应的绑定值
     reagentid: null, // 选择试剂下拉菜单对应的id
     lotid: null, // 选择批号下拉菜单对应的id
-    allreagentlist: [], // 包含获取的试剂id、试剂名称、地点、下拉菜单的label和绑定值
-    reagent_selectvalue: null, // 选择试剂下拉菜单对应的绑定值
-    alllotlist: [], // 包含获取的批号id、批号名称、下拉菜单的label和绑定值
+    reagentname:null,
+    lot:null,
     tableData: [], // 表格数据
-    
 })
 
-const validationRules = {
-    required: ['reagent_selectvalue', 'lot_selectvalue', 'number']
-}
 
-// 方法定义
+let tree=reactive({
+    props : {
+    label: 'label',
+    children: 'children',
+    isLeaf: 'isLeaf',
+    },
+    searchname:undefined,
+    select:null,
+    value:0,
+    bufferdata:[]
+})
 
-function show_allreagent() {
-    api_reagent_showall()
-        .then(data => {
-            for (let i in data.data) {
-                formData.allreagentlist.push({
-                    label: data.data[i].name,
-                    value: i,
-                    id: data.data[i].id,
-                })
-            }
-        })
-        .catch(err => {
-            messageboxRef.value.messagebox_warn(err)
-        })
-}
-
-function show_alllot() {
-    api_lot_showall(formData)
-        .then(data => {
-            formData.alllotlist = [] // 每次触发时清空数组
-            for (let i in data.data) {
-                formData.alllotlist.push({
-                    label: data.data[i].name,
-                    value: i,
-                    id: data.data[i].id,
-                })
-            }
-        })
-        .catch(err => {
-            messageboxRef.value.messagebox_warn(err)
-        })
-}
-
-function checkinput() {    // 检查必填字段
-
-    const hasEmptyField = validationRules.required.some(field => {
-        const value = formData[field]
-        return value === null || value === undefined
-    })
-    formData.editbox_disablebutton = hasEmptyField
-}
-
-function select_reagentchange(){ //当选择的试剂发生改变时
-    if (formData.reagent_selectvalue != null) {
-        formData.reagentid = formData.allreagentlist[formData.reagent_selectvalue].id
-        show_alllot()
-        checkinput()
-        formData.lot_selectvalue = null
-}
-}
-function select_lotchange(){//当选择的批号发生改变时
-    if (formData.lot_selectvalue != null) {
-            formData.lotid = formData.alllotlist[formData.lot_selectvalue].id
-        }
-    checkinput()
-}
 
 function ready_inbound() {
-    formData.tableData.push({
+        formData.tableData.push({
         rowsid: formData.tableData.length + 1,
         reagentid: formData.reagentid,
-        reagentname: formData.allreagentlist[formData.reagent_selectvalue].label,
+        reagentname: formData.reagentname,
         lotid: formData.lotid,
-        lot: formData.alllotlist[formData.lot_selectvalue].label,
+        lot: formData.lot,
         number: formData.number,
-
     })
 }
 
@@ -186,14 +126,69 @@ function inbound() {
             openmessagebox('error',err.response.data.msg,null)
         })
 }
-
 function delete_inbound(rowsid) {
     formData.tableData = formData.tableData.filter(item => item.rowsid !== rowsid)
 }
+
+
+
+
+function load_tree(node, resolve){
+
+    if (node.level===0){
+        api_reagent_showall().then(data=>{
+        let reagents=[]
+        for (let i in data.data){
+            reagents.push({label:data.data[i].name,
+                id:data.data[i].id,
+                value:++tree.value,
+                isLeaf:false
+            })
+        } 
+        resolve(reagents)
+    })
+    }
+    if (node.level===1){
+        let bufferparmas={reagentid:node.data.id}
+        api_lot_showall(bufferparmas).then(data=>{
+            let lots=[]
+            for (let i in data.data){
+            lots.push({label:data.data[i].name,
+                id:data.data[i].id,
+                value:++tree.value,
+                isLeaf:true,
+                reagentname:node.data.label,
+                reagentid:node.data.id
+            })
+        }
+        resolve(lots)
+        tree.bufferdata.push(...lots)
+
+
+        })
+    }
+}
+
+function get_id(selectedValue){
+   for (let i in tree.bufferdata){
+    if (tree.bufferdata[i].value===selectedValue){
+        formData.lotid=tree.bufferdata[i].id
+        formData.lot=tree.bufferdata[i].label
+        formData.reagentid=tree.bufferdata[i].reagentid
+        formData.reagentname=tree.bufferdata[i].reagentname
+        }
+   }
+   if (tree.select!==null && formData.number!==null){
+    formData.editbox_disablebutton=false
+   }
+   if (tree.select===null || formData.number===null){
+    formData.editbox_disablebutton=true
+   }
+}
+
+
 // 生命周期钩子
-onMounted(() => {
-    show_allreagent()
-})
+
 </script>
 
 <style scoped>

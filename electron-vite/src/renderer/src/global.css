@@ -28,8 +28,6 @@
 
     .el-pagination{
       position: absolute;
-      left: 400px;
-      top: 10px;
     }
      .el-input .el-input__wrapper,
      .el-input .el-input__inner
@@ -56,11 +54,17 @@
 
     .el-input .el-input__wrapper
     .el-input .el-input__inner
+
     {
         background-color:transparent;
         --el-input-focus-border-color:white;
         color: white !important;
     }
+    .el-select {
+      --el-select-multiple-input-color:white !important
+    }
+
+
     .el-input.is-disabled .el-input__wrapper {
       --el-disabled-bg-color:transparent !important;
     }

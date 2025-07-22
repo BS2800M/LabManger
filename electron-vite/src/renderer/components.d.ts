@@ -18,6 +18,7 @@ declare module 'vue' {
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
+    ElTreeSelect: typeof import('element-plus/es')['ElTreeSelect']
     Home: typeof import('./src/components/home.vue')['default']
     Homebar: typeof import('./src/components/homebar.vue')['default']
     Inbound: typeof import('./src/components/inbound.vue')['default']

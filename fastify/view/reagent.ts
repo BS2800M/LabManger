@@ -6,7 +6,6 @@ import {
     ReagentSearchParams,
     ReagentUpdateRequestBody,
     ReagentDelRequestBody} from '../types/reagent.js'
-import {checkOwnership } from '../plugin/permission.js'
 import { FastifyReply } from 'fastify'  
 
 
@@ -112,22 +111,6 @@ async function reagent_showall(request: FastifyRequest, reply: FastifyReply) {
 
 
 
-async function reagent_lot_showall(request: FastifyRequest, reply: FastifyReply) {
-    let show=await prisma.reagent.findMany({
-        where: {using:true, ...request.validate_where},
-        select:{
-            id:true,
-            name:true,
-            lot:{
-                select:{
-                    name:true,
-                    id:true
-                }
-            }
-        }
-    })
-    return {status:0,msg:"成功",data:show}
-}
 
 
 
@@ -135,4 +118,4 @@ async function reagent_lot_showall(request: FastifyRequest, reply: FastifyReply)
 
 
 
-export {reagent_add,reagent_show,reagent_update,reagent_del,reagent_showall,reagent_lot_showall}
+export {reagent_add,reagent_show,reagent_update,reagent_del,reagent_showall}

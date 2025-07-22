@@ -81,7 +81,6 @@ async function reagent_show() {
     api_reagent_show(state)
         .then(function(data) {
             state.tableData = data.data
-            console.log(data)
             state.totalpages = data.totalpages
         })
         .catch(function(err) {
