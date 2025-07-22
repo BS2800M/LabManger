@@ -7,8 +7,5 @@
   import messagebox from '@/components/messagebox.vue'
   export default{
     name:'APP',
-    components:{
-      messagebox
-    }
   }
 </script>
