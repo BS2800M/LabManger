@@ -1,5 +1,5 @@
 // 控制应用生命周期和创建原生浏览器窗口的模组
-const { app, BrowserWindow,ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const path = require('path')
 const fs=require('fs')
 var mainWindow=null
@@ -51,6 +51,9 @@ function createWindow () {
     }
   })
 
+
+
+
   printWindow = new BrowserWindow({ 
     show: false,  //隐藏窗口
     width: 500, 
@@ -68,14 +71,36 @@ function createWindow () {
   ipcMain.handle('gotoprint',async(event,args)=>{gotoprint(args)}) //监听 用户界面发出准备打印的命令发送到主进程
   ipcMain.on('print', () =>{ printWindow.webContents.print(printOptions)}) //监听 printwindow渲染好的条码发送到主进程
 
+
+
+
+
   // printWindow.loadFile('./out/renderer/index.html', {hash: 'print'})
   // mainWindow.loadFile('./out/renderer/index.html') 
   mainWindow.loadURL('http://localhost:5173') 
   printWindow.loadURL('http://localhost:5173/#/print')  
   // // 打开开发工具
   mainWindow.webContents.openDevTools()
+  
   // printWindow.webContents.openDevTools()
   mainWindow.setMenu(null);
+
+  // 添加开发时刷新快捷键菜单
+  const template = [
+    {
+      label: 'View',
+      submenu: [
+        {
+          label: '强制刷新',
+          accelerator: 'F5',
+          click: () => { mainWindow.reload(); }
+        },
+        { role: 'toggledevtools' }
+      ]
+    }
+  ];
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 

@@ -30,11 +30,9 @@
           <el-button class="button" size="large" type="info" @click="closeeditbox">取消</el-button>
         </div>
   </div>
-  <messagebox ref="messageboxRef"></messagebox>
 </template>
 
 <script setup>
-import messagebox from './messagebox.vue'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import {ref,defineExpose,reactive} from 'vue'
@@ -76,14 +74,8 @@ const uiState = reactive({
 // 试剂列表数据
 const allreagentlist = ref([])
 
-// 其他必要的ref
-
-let messageboxRef = ref()
 
 
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
 
 
 
@@ -167,9 +159,6 @@ function modify_lot(){
       closeeditbox()
       eventBus.emit(EVENT_TYPES.LOT_UPDATED)
     })
-    .catch(err => {
-      openmessagebox('error',err.response.data.msg,null)
-    })
 }
 
 function add_lot(){
@@ -179,9 +168,6 @@ function add_lot(){
     closeeditbox()
     eventBus.emit(EVENT_TYPES.LOT_UPDATED)
  } )
-  .catch(err=>{
-    openmessagebox('error',err.response.data.msg,null)
-                })
 }
 
 function list_allreagent(){
@@ -197,10 +183,6 @@ function list_allreagent(){
               })
             }
         } )
-  .catch(err=>{
-    console.log(err)
-    openmessagebox('error',err.response.data.msg,null)
-                })
 }
 
 

@@ -15,13 +15,29 @@ const inbound = () => import('@/components/inbound.vue');
 const outbound = () => import('@/components/outbound.vue');
 const list_operation = () => import('@/components/list_operation.vue');
 const warn_reagent = () => import('@/components/warn_reagent.vue');
+const messagebox = () => import('@/components/messagebox.vue');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const router=createRouter({
     history:createWebHashHistory(),
     routes:[
         {
             path:'/',
-            components:{main:home,bar:homebar}
+            components:{main:home,bar:homebar,}
         },
         {
             path:'/login',

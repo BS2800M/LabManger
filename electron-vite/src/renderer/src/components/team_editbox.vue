@@ -17,12 +17,10 @@
         <el-button class="button" size="large" type="info" @click="closeeditbox">取消</el-button>
       </div>
   </div>
-<messagebox ref="messageboxRef"></messagebox>
 </template>
 <script setup>
 import { defineExpose, ref, reactive } from 'vue';
 import { api_team_update,api_team_add } from '@/api/team.js'
-import messagebox from '@/components/messagebox.vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 
 // 使用reactive统一管理表单数据
@@ -48,10 +46,7 @@ const uiState = reactive({
   blockstyle: { display: 'none' },  
 })
 
-let messageboxRef = ref()
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
+
 
 defineExpose({
   openeditbox,
@@ -134,9 +129,7 @@ function team_update() {
       // 触发模板更新事件，通知父组件刷新列表
       eventBus.emit(EVENT_TYPES.TEAM_UPDATED)
     })
-    .catch(err => {
-      openmessagebox('error',err.response.data.msg,null)
-    })
+
 }
 function team_add() {
   api_team_add(formData)
@@ -145,9 +138,7 @@ function team_add() {
       // 触发模板更新事件，通知父组件刷新列表
       eventBus.emit(EVENT_TYPES.TEAM_UPDATED)
     })
-    .catch(err => {
-      openmessagebox('error',err.response.data.msg,null)
-    })
+
 }
 </script>
 

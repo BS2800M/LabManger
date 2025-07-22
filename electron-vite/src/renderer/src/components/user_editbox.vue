@@ -19,12 +19,10 @@
         <el-button class="button" size="large" type="info" @click="closeeditbox">取消</el-button>
       </div>
   </div>
-<messagebox ref="messageboxRef"></messagebox>
 </template>
 <script setup>
 import { defineExpose, ref, reactive } from 'vue';
 import { api_user_add,api_user_update } from '@/api/user.js'
-import messagebox from '@/components/messagebox.vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import team_select from '@/components/team_select.vue'
 import role_select from '@/components/role_select.vue'
@@ -52,10 +50,7 @@ const uiState = reactive({
   blockstyle: { display: 'none' },  
 })
 
-let messageboxRef = ref()
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
+
 
 defineExpose({
   openeditbox,
@@ -141,9 +136,7 @@ function user_update() {
       // 触发模板更新事件，通知父组件刷新列表
       eventBus.emit(EVENT_TYPES.USER_UPDATED)
     })
-    .catch(err => {
-      openmessagebox('error',err.response.data.msg,null)
-    })
+
 }
 function user_add() {
   api_user_add(formData)
@@ -152,9 +145,7 @@ function user_add() {
       // 触发模板更新事件，通知父组件刷新列表
       eventBus.emit(EVENT_TYPES.USER_UPDATED)
     })
-    .catch(err => {
-      openmessagebox('error',err.response.data.msg,null)
-    })
+
 }
 </script>
 

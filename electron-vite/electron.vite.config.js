@@ -22,6 +22,9 @@ export default {
       ],
 
       server: {
+        watch: {
+          usePolling: true,   // 修复HMR热更新失效
+        },
         hmr:true,
         host: '0.0.0.0',
         port: 5173,

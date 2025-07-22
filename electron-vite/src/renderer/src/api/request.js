@@ -1,6 +1,6 @@
 import axios from 'axios';
 import router from '@/router/index.js'
-
+import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 
 // var mybaseurl="http://127.0.0.1:3000/cross"  //调试
 var mybaseurl=null  
@@ -37,7 +37,8 @@ myservice.interceptors.response.use(
           return res.data
     },
     err=>{
-          console.log(err.response)
+
+          eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:err.response,action:null})
           if(err.response.data.msg=='认证错误'){
             router.push('/login')
           }

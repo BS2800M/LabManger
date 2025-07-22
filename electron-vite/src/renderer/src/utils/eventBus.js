@@ -10,4 +10,6 @@ export const EVENT_TYPES = {
   OPERATION_UPDATED: 'operation-updated', // 出入库信息更新事件
   TEAM_UPDATED: 'team-updated',           // 团队信息更新事件
   USER_UPDATED: 'user-updated',           // 用户信息更新事件
+  SHOW_MESSAGEBOX: 'show-messagebox',     // 显示消息框事件
+  CLOSE_MESSAGEBOX: 'close-messagebox',   // 关闭消息框事件
 } 

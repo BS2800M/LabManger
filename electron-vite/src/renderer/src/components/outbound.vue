@@ -1,5 +1,4 @@
 <template>
-  <messagebox ref="messageboxRef" ></messagebox>
 <div id="background" :style="null">
   <div id="background2">
   <p id="title" style=" position:absolute; left:200px;top:0px;">快速出库</p>
@@ -75,7 +74,6 @@ import { ElMessage } from 'element-plus'
 import { h } from 'vue'
 import 'element-plus/dist/index.css'
 import {ref,onMounted,reactive} from 'vue'
-import messagebox from '@/components/messagebox.vue';
 import { api_operation_outbound,api_operation_special_outbound} from '../api/operation';
 import { api_reagent_showall } from '@/api/reagent'
 import { api_lot_showall } from '@/api/lot'
@@ -84,10 +82,7 @@ import { api_lot_showall } from '@/api/lot'
 
 
 
-const messageboxRef=ref() //引入messagebox
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
+
 const formData = reactive({
     barcodenumber:'',
     number:1,//出库数量
@@ -158,9 +153,6 @@ function operation_special_outbound(){
       message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
       h('span', null, data.msg)]),
     })
-  })
-  .catch(err=>{
-    openmessagebox('error',err.response.data.msg,null)
   })
 }
 

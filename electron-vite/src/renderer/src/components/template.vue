@@ -36,17 +36,16 @@
           <el-table-column label="操作" min-width="100">
             <template #default="scope">
               <el-button size="small" type="primary" @click="editbox_openeditbox(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',()=>reagent_del(scope.row.id))">删除</el-button>
+              <el-button size="small" type="danger" @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>reagent_del(scope.row.id)})">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
     </div>
-    <messagebox ref="messageboxRef"  ></messagebox>
     <template_editbox ref="editboxRef"></template_editbox>
 </template>
 <script setup>
 import { ref, onMounted, reactive, onUnmounted } from 'vue'
-import messagebox from './messagebox.vue'
+
 import template_editbox from './template_editbox.vue'
 import { api_reagent_show,api_reagent_del } from '@/api/reagent'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
@@ -66,9 +65,6 @@ const state = reactive({
 })
 
 
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
 function editbox_openaddbox() {
     editboxRef.value.openaddbox()
 }
@@ -83,21 +79,15 @@ async function reagent_show() {
             state.tableData = data.data
             state.totalpages = data.totalpages
         })
-        .catch(function(err) {
-          openmessagebox('error',err.response.data.msg,null)
-            state.tableData = []
-        })
+
 }
 async function reagent_del(id){
   api_reagent_del(id).then(data=>{
     eventBus.emit(EVENT_TYPES.TEMPLATE_UPDATED)
-    messageboxRef.value.closemessagebox()
-  })
-  .catch(function(err){
-      openmessagebox('error',err.response.data.msg,null)
+    eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
   })
 }
-// 生命周期钩子
+// // 生命周期钩子
 onMounted(() => {
     reagent_show()
     eventBus.on(EVENT_TYPES.TEMPLATE_UPDATED,reagent_show)
@@ -120,3 +110,13 @@ onUnmounted(() => {
 
 
 </style>
+
+
+
+
+
+
+
+
+
+

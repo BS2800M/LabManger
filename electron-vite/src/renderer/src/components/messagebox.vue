@@ -15,8 +15,9 @@
   </template>
   
   <script  setup>
-import {ref,reactive,defineExpose,defineProps,watch} from 'vue'
+import {ref,reactive,defineExpose,onMounted,onUnmounted} from 'vue'
 let centerDialogVisible = ref(false)
+import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 
 let state=reactive({
 type:null,
@@ -37,14 +38,20 @@ if (state.type==='error'){
   }
 }
 }
-
-
 function closemessagebox(){
   centerDialogVisible.value=false
 }
 
 
 defineExpose({openmessagebox,closemessagebox})
+onMounted(() => {
+    eventBus.on(EVENT_TYPES.SHOW_MESSAGEBOX,(a)=>{
+    openmessagebox(a.type,a.message,a.action)})
+    eventBus.on(EVENT_TYPES.CLOSE_MESSAGEBOX,closemessagebox)
+})
 
-
+onUnmounted(() => {
+  eventBus.off(EVENT_TYPES.SHOW_MESSAGEBOX)
+  eventBus.off(EVENT_TYPES.CLOSE_MESSAGEBOX)
+})
 </script>

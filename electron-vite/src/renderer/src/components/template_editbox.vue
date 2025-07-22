@@ -27,18 +27,13 @@
         <el-button class="button" size="large" type="info" @click="closeeditbox">取消</el-button>
       </div>
   </div>
-  <messagebox ref="messageboxRef"  ></messagebox>
 </template>
 <script setup>
 import { defineExpose, ref, reactive } from 'vue';
 import { api_reagent_update, api_reagent_add } from '@/api/reagent'
-import messagebox from '@/components/messagebox.vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { format_iso_YYYYMMDDHHmm } from '@/api/dateformat'
-const messageboxRef=ref(null)
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
+
 
 
 // 使用reactive统一管理表单数据
@@ -152,9 +147,7 @@ function reagent_update() {
       // 触发模板更新事件，通知父组件刷新列表
       eventBus.emit(EVENT_TYPES.TEMPLATE_UPDATED)
     })
-    .catch(err => {
-      openmessagebox('error',err.response.data.msg,null)
-    })
+
 }
 function reagent_add() {
   api_reagent_add(formData)
@@ -162,9 +155,6 @@ function reagent_add() {
       closeeditbox()
       // 触发模板更新事件，通知父组件刷新列表
       eventBus.emit(EVENT_TYPES.TEMPLATE_UPDATED)
-    })
-    .catch(err => {
-      openmessagebox('error',err.response.data.msg,null)
     })
 }
 

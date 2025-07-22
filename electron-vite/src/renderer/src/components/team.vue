@@ -37,23 +37,20 @@
           <el-table-column label="操作" min-width="100">
             <template #default="scope">
               <el-button size="small" type="primary" @click="editbox_openeditbox(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',()=>team_del(scope.row.id))">删除</el-button>
+              <el-button size="small" type="danger" @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>team_del(scope.row.id)})">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
     </div>
-    <messagebox ref="messageboxRef"></messagebox>
     <team_editbox ref="editboxRef"></team_editbox>
 </template>
 <script setup>
 import { ref, onMounted, reactive, onUnmounted } from 'vue'
-import messagebox from '@/components/messagebox.vue'
 import team_editbox from '@/components/team_editbox.vue'
 import { api_team_show,api_team_del} from '@/api/team.js'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 
-// 创建ref引用
-const messageboxRef = ref(null)
+
 const editboxRef = ref(null)
 // 状态管理
 const state = reactive({
@@ -66,9 +63,7 @@ const state = reactive({
   total_pages: 1,        // 总页
 })
 
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
+
 
 function editbox_openaddbox() {
     editboxRef.value.openaddbox()
@@ -86,20 +81,15 @@ async function team_show() {
             state.pagesize = data.pagesize
             state.totalpages = data.totalpages
         })
-        .catch(function(err) {
-          openmessagebox('error',err.response.data.msg,null)
-            state.tableData = []
-        })
+
 }
 
 async function team_del(id){
   api_team_del(id).then(data=>{
     eventBus.emit(EVENT_TYPES.TEAM_UPDATED)
-    messageboxRef.value.closemessagebox()
+    eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
     })
-  .catch(function(err){
-    openmessagebox('error',err.response.data.msg,null)
-  })
+
 }
 
 // 生命周期钩子

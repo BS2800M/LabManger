@@ -1,5 +1,4 @@
 <template>
-    <messagebox ref="messageboxRef"></messagebox>
     <div id="background" :style="null">
         <div id="background2">
             <el-input 
@@ -78,7 +77,7 @@
             <el-table-column label="操作" min-width="150">
                 <template #default="scope">
                     <el-button size="small" type="primary" @click="barcodeprint(scope.row)">补打条码</el-button>
-                    <el-button size="small" type="danger" @click="openmessagebox('delete','是否删除',()=>operation_del(scope.row.id))">删除</el-button>
+                    <el-button size="small" type="danger" @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>operation_del(scope.row.id)})">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -90,7 +89,6 @@
   import {ref,onMounted,reactive,onUnmounted} from 'vue'
   import { ElConfigProvider } from 'element-plus'
   import zhCn from 'element-plus/es/locale/lang/zh-cn'
-  import messagebox from '@/components/messagebox.vue'
   import { api_operation_show,api_operation_del } from '@/api/operation'
   import { toRaw } from 'vue';
   import {formatDateColumn,getnowtime,getnowtime_previousmonth} from '@/api/dateformat.js'
@@ -113,15 +111,12 @@
     
 
   })
-  // 创建ref引用
-  const messageboxRef = ref(null)
+
   let tableData=ref(null)
 
 
 
-  function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
+
 
 onMounted(() => {
     operation_show()
@@ -141,9 +136,7 @@ async function operation_show(){
       state.page=data.page
 
  } )
-  .catch(err=>{
-    openmessagebox('error',err.response.data.msg,null)
-                })
+
 }
   function barcodeprint(data){
     let printdatalist=[]
@@ -153,11 +146,9 @@ async function operation_show(){
   async function operation_del(id){
     api_operation_del(id).then(data=>{
       eventBus.emit(EVENT_TYPES.OPERATION_UPDATED)
-      messageboxRef.value.closemessagebox()
+      eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
     })
-    .catch(function(err){
-      openmessagebox('error',err.response.data.msg,null)
-    })
+
   }
   async  function exportToExcel() {
     state.pagesize=9000000 // 设置为最大值
@@ -202,9 +193,6 @@ async function operation_show(){
   top: 100px;
   background-color:rgb(53, 73, 94);
 }
-
-
-
 
 
   </style>

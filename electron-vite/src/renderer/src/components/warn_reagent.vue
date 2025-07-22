@@ -39,13 +39,11 @@
           <el-table-column prop="last_outbound_time" label="最后一次出库" min-width="200" :formatter="formatDateColumn" show-overflow-tooltip/>
         </el-table>
     </div>
-    <messagebox ref="messageboxRef"></messagebox>
 </template>
 <script setup>
 
 
 import { ref, onMounted, reactive, onUnmounted } from 'vue'
-import messagebox from '@/components/messagebox.vue'
 import { formatDateColumn } from '@/api/dateformat.js'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { api_inventory_show,api_inventory_audit } from '@/api/inventory'
@@ -62,9 +60,7 @@ const state = reactive({
   pagesize:13
 })
 
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
+
 
 
 async function list_reagentnumber() {
@@ -73,9 +69,6 @@ async function list_reagentnumber() {
             state.tableData = data.data
             state.totalpages = data.totalpages
 
-        })
-        .catch(function(err){
-          openmessagebox('error',err.response.data.msg,null)
         })
 }
 

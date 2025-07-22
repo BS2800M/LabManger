@@ -55,14 +55,12 @@
                 <use xlink:href="#icon-ruku"></use>
             </svg>
         </button>
-        <messagebox ref="messageboxRef"></messagebox>
         <svg id="barcode"></svg>
     </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import messagebox from '@/components/messagebox.vue'
 import { api_operation_inbound } from '@/api/operation'
 import { api_reagent_showall} from '@/api/reagent'
 import { api_lot_showall} from '@/api/lot'
@@ -70,10 +68,6 @@ import { ElMessage } from 'element-plus'
 import 'element-plus/dist/index.css'
 import { h } from 'vue'
 // 组件引用
-const messageboxRef = ref()
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
 // 使用reactive统一管理状态
 const formData = reactive({
     number: 1, // 出库数量
@@ -122,9 +116,7 @@ function inbound() {
         })
         myapi.gotoprint(data.list)
         })
-        .catch(err => {
-            openmessagebox('error',err.response.data.msg,null)
-        })
+
 }
 function delete_inbound(rowsid) {
     formData.tableData = formData.tableData.filter(item => item.rowsid !== rowsid)
