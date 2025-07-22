@@ -27,6 +27,7 @@ myservice.interceptors.request.use(function (config) {
   }
   return config;
 }, function (error) {
+  console.log(error)
   // 对请求错误做些什么
   return Promise.reject(error);
 });
@@ -37,6 +38,7 @@ myservice.interceptors.response.use(
           return res.data
     },
     err=>{
+          console.log(err)
           if (err.response.data.msg===undefined){
             eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:"无法连接服务器或服务器内部错误",action:null})
           }else{

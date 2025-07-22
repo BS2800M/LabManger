@@ -51,7 +51,6 @@ import { api_reagent_show,api_reagent_del } from '@/api/reagent'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 // 创建ref引用
 const editboxRef = ref(null)
-const messageboxRef = ref(null)
 
 
 

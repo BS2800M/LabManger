@@ -1,8 +1,9 @@
 <template>
-    <el-dialog v-model="centerDialogVisible" :title="state.title" width="500" center>
-      <span style="font-size: 25px;">
-        {{state.message}}
-      </span>
+  <div>
+    <el-dialog v-model="centerDialogVisible" :title="state.title" width="500"  id="dialog" center>
+        <span style="font-size: 20px; color: white;">
+          {{state.message}}
+        </span>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="centerDialogVisible = false" size="large">取消</el-button>
@@ -12,13 +13,13 @@
         </div>
       </template>
     </el-dialog>
-  </template>
+  </div>
+</template>
   
   <script  setup>
 import {ref,reactive,defineExpose,onMounted,onUnmounted} from 'vue'
 let centerDialogVisible = ref(false)
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
-
 let state=reactive({
 type:null,
 message:null,
@@ -50,8 +51,10 @@ onMounted(() => {
     eventBus.on(EVENT_TYPES.CLOSE_MESSAGEBOX,closemessagebox)
 })
 
-onUnmounted(() => {
-  eventBus.off(EVENT_TYPES.SHOW_MESSAGEBOX)
-  eventBus.off(EVENT_TYPES.CLOSE_MESSAGEBOX)
-})
+
 </script>
+<style>
+#dialog{
+  background-color: rgb(94, 53, 53);
+}
+</style>

@@ -84,3 +84,7 @@
     #editbox #topbg{
       background-color: rgb(53, 73, 94);
     }
+    .el-dialog__title{
+      color: white !important;
+      font-size: 30px !important;
+    }
