@@ -33,6 +33,7 @@ declare module 'vue' {
     Role_select: typeof import('./src/components/role_select.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    Statistics: typeof import('./src/components/statistics.vue')['default']
     Team: typeof import('./src/components/team.vue')['default']
     Team_editbox: typeof import('./src/components/team_editbox.vue')['default']
     Team_select: typeof import('./src/components/team_select.vue')['default']
@@ -40,6 +41,5 @@ declare module 'vue' {
     Template_editbox: typeof import('./src/components/template_editbox.vue')['default']
     User: typeof import('./src/components/user.vue')['default']
     User_editbox: typeof import('./src/components/user_editbox.vue')['default']
-    Warn_reagent: typeof import('./src/components/warn_reagent.vue')['default']
   }
 }

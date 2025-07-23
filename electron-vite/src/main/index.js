@@ -84,7 +84,6 @@ function createWindow () {
   }
   else{
     mainWindow.setMenu(null);
-    mainWindow.webContents.openDevTools()
     printWindow.loadFile('./out/renderer/index.html', {hash: 'print'})
     mainWindow.loadFile('./out/renderer/index.html') 
   }

@@ -9,9 +9,8 @@ export interface InventoryWhere {
         teamid?: number;
         using:true;
     };
-    using: boolean;
-    inventory_number?: {
-        lte: number;
+    lot: {
+        using: true;
     };
 }
 

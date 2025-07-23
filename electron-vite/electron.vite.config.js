@@ -19,6 +19,12 @@ export default {
         },
       },
       plugins: [vue(),
+        AutoImport({
+          resolvers: [ElementPlusResolver()],
+        }),
+        Components({
+          resolvers: [ElementPlusResolver()],
+        }),
       ],
 
       server: {

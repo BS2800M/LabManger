@@ -1,9 +1,10 @@
-import ExcelJS from 'exceljs'
+
+import {Workbook} from 'exceljs'
 import {api_operation_show_exportToExcel} from '@/api/operation'
 import {format_iso_YYYYMMDDHHmm} from '@/api/dateformat'
 async function exportToExcel_info(){
     const teamname=localStorage.teamname
-    const workbook = new ExcelJS.Workbook()
+    const workbook = new Workbook()
     let allreagent=await api_operation_show_exportToExcel()
     allreagent=allreagent.data //获取所有试剂信息
     for (const item of allreagent){ //遍历所有试剂信息

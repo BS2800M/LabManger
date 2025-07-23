@@ -92,7 +92,7 @@
   import { api_operation_show,api_operation_del } from '@/api/operation'
   import { toRaw } from 'vue';
   import {formatDateColumn,getnowtime,getnowtime_previousmonth} from '@/api/dateformat.js'
-  import * as XLSX from 'xlsx'
+  import {Workbook} from 'exceljs'
   import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
   import {format_YYYYMMDDHHmm_iso} from '@/api/dateformat.js'
   import {exportToExcel_info } from '@/api/exportToExcel_info.js'
@@ -108,8 +108,6 @@
     pagesize:13,
     searchlater_show:getnowtime_previousmonth(),
     searchearlier_show:getnowtime()
-    
-
   })
 
   let tableData=ref(null)
@@ -151,34 +149,52 @@ async function operation_show(){
 
   }
   async  function exportToExcel() {
-    state.pagesize=9000000 // 设置为最大值
+    state.pagesize = 9000000 // 设置为最大值
 
-    let exportData=await api_operation_show(state)
-    state.pagesize=10 // 恢复默认值
+    let result = await api_operation_show(state)
+    state.pagesize = 10 // 恢复默认值
+    // 取出数据数组
+    let exportData = result.data || []
     // 准备导出数据
     exportData = exportData.map(item => ({
-        '时间': formatDateColumn(null, null, item.creation_time),
-        '试剂名称': item.reagentname,
-        '批号': item.lotname,
-        '动作': item.operation_action,
-        '用户': item.username,
-        '条码号': item.barcodenumber
+      '时间': formatDateColumn(null, null, item.creation_time),
+      '试剂名称': item.reagentname,
+      '批号': item.lotname,
+      '动作': item.operation_action,
+      '用户': item.username,
+      '条码号': item.barcodenumber
     }))
-    // 创建工作簿
-    const ws = XLSX.utils.json_to_sheet(exportData)
-    // 设置列宽
-    ws['!cols'] = [
-        { wch: 30 },  // 时间列宽
-        { wch: 30 },  // 试剂名称列宽
-        { wch: 20 },  // 批号列宽
-        { wch: 10 },  // 动作列宽
-        { wch: 10 },  // 用户列宽
-        { wch: 20 }   // 条码号列宽
+
+    // 使用 exceljs 创建工作簿和工作表
+    const workbook = new Workbook()
+    const worksheet = workbook.addWorksheet('操作记录')
+
+    // 添加表头
+    worksheet.columns = [
+      { header: '时间', key: '时间', width: 30 },
+      { header: '试剂名称', key: '试剂名称', width: 30 },
+      { header: '批号', key: '批号', width: 20 },
+      { header: '动作', key: '动作', width: 10 },
+      { header: '用户', key: '用户', width: 10 },
+      { header: '条码号', key: '条码号', width: 20 }
     ]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, '操作记录')
-    // 导出文件
-    XLSX.writeFile(wb, `操作记录${new Date().toLocaleDateString()}.xlsx`)
+
+    // 添加数据行
+    exportData.forEach(row => {
+      worksheet.addRow(row)
+    })
+
+    // 生成并下载 Excel 文件
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `操作记录${new Date().toLocaleDateString()}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
   }
 
 </script>

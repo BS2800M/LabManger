@@ -14,8 +14,10 @@ async function inventory_show(request: FastifyRequest, reply: any) {
             ...request.validate_where,
             using:true
         },
-        
-        using:true,
+        lot:{
+            using:true
+        }
+
     }
     const total = await prisma.inventory.count({ where }) //获取总数
     const show = await prisma.inventory.findMany({
@@ -41,6 +43,7 @@ async function inventory_show(request: FastifyRequest, reply: any) {
             }
         }
     })
+    console.log(show)
     const transformed_show: TransformedInventoryShow[] = show.map((item: TransformedInventoryShow) => {
         return {
             id: item.id,

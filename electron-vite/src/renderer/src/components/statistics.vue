@@ -43,13 +43,12 @@
 <script setup>
 
 
-import { ref, onMounted, reactive, onUnmounted } from 'vue'
+import {  onMounted, reactive, onUnmounted } from 'vue'
 import { formatDateColumn } from '@/api/dateformat.js'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { api_inventory_show,api_inventory_audit } from '@/api/inventory'
-import * as XLSX from 'xlsx'
-// 创建ref引用
-const messageboxRef = ref(null)
+import {Workbook} from 'exceljs'
+
 
 // 状态管理
 const state = reactive({
@@ -66,47 +65,65 @@ const state = reactive({
 async function list_reagentnumber() {
     api_inventory_show(state)
         .then(function(data) {
+          console.log(data)
             state.tableData = data.data
             state.totalpages = data.totalpages
-
         })
 }
 
-async  function exportToExcel() {
-    state.pagesize=1000000
-    let exportData=await api_inventory_show(state)
-    state.pagesize=10
-    // 准备导出数据
-    exportData = exportData.map(item => ({
-        '试剂名称': item.reagentname,
-        '批号': item.lotname,
-        '规格': item.specifications,
-        '应库存':item.inventory_number,
-        '实际库存':null,
-        '警告数量':item.warn_number,
-        '警告天数':item.warn_days,
-        '上周出库数量':item.lastweek_outbound_number,
-        '最后一次出库':formatDateColumn(null,null,item.last_outbound_time)
-    }))
-    // 创建工作簿
-    const ws = XLSX.utils.json_to_sheet(exportData)
-    // 设置列宽
-    ws['!cols'] = [
-        { wch: 20 },  // 试剂名称列宽
-        { wch: 20 },  // 批号名称列宽
-        { wch: 8 },  // 规格列宽
-        { wch: 8 },  // 应库存列宽
-        { wch: 8 },   // 实际库存列宽
-        { wch: 8 },   // 警告数量列宽
-        { wch: 8 },   // 警告天数列宽
-        { wch: 15 },   // 上个月出库数量列宽
-        { wch: 20 },   // 最后一次出库列宽
-    ]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, '盘库表')
-    // 导出文件
-    XLSX.writeFile(wb, `盘库表${new Date().toLocaleDateString()}.xlsx`)
-  }
+async function exportToExcel() {
+  state.pagesize = 1000000
+  let result = await api_inventory_show(state)
+  state.pagesize = 10
+  // 取出数据数组
+  let exportData = result.data || []
+  // 准备导出数据
+  exportData = exportData.map(item => ({
+    '试剂名称': item.reagentname,
+    '批号': item.lotname,
+    '规格': item.specifications,
+    '应库存': item.inventory_number,
+    '实际库存': null,
+    '警告数量': item.warn_number,
+    '警告天数': item.warn_days,
+    '上周出库数量': item.lastweek_outbound_number,
+    '最后一次出库': formatDateColumn(null, null, item.last_outbound_time)
+  }))
+
+  // 使用 exceljs 创建工作簿和工作表
+  const workbook = new Workbook()
+  const worksheet = workbook.addWorksheet('盘库表')
+
+  // 添加表头
+  worksheet.columns = [
+    { header: '试剂名称', key: '试剂名称', width: 20 },
+    { header: '批号', key: '批号', width: 20 },
+    { header: '规格', key: '规格', width: 8 },
+    { header: '应库存', key: '应库存', width: 8 },
+    { header: '实际库存', key: '实际库存', width: 8 },
+    { header: '警告数量', key: '警告数量', width: 8 },
+    { header: '警告天数', key: '警告天数', width: 8 },
+    { header: '上周出库数量', key: '上周出库数量', width: 15 },
+    { header: '最后一次出库', key: '最后一次出库', width: 20 }
+  ]
+
+  // 添加数据行
+  exportData.forEach(row => {
+    worksheet.addRow(row)
+  })
+
+  // 生成并下载 Excel 文件
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `盘库表${new Date().toLocaleDateString()}.xlsx`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(url)
+}
 
   async function inventory_audit(){
     state.reagentid=-1
