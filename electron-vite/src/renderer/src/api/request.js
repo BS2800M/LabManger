@@ -26,10 +26,10 @@ myservice.interceptors.request.use(function (config) {
     config.headers.token = sendtoken // 如果不是登录接口，就给请求头里面设置token
   }
   return config;
-}, function (error) {
-  console.log(error)
-  // 对请求错误做些什么
-  return Promise.reject(error);
+}, function (err) {
+  console.log(err)
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:"无法连接服务器或服务器内部错误",action:null})
+  return Promise.reject(err);
 });
 
 //添加响应拦截器
@@ -39,10 +39,11 @@ myservice.interceptors.response.use(
     },
     err=>{
           console.log(err)
-          if (err.response.data.msg===undefined){
-            eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:"无法连接服务器或服务器内部错误",action:null})
-          }else{
+          if (err.response!==undefined){
             eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:err.response,action:null})
+          }
+          else{
+            eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:"无法连接服务器或服务器内部错误",action:null})
           }
           if(err.response.data.msg=='认证错误'){
             router.push('/login')

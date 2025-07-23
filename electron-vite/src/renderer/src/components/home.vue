@@ -8,30 +8,15 @@
 
       </div>
   </div>
-  <messagebox ref="messageboxRef"  ></messagebox>
 </template >
   
 
 <script setup>
 import {ref,onMounted} from 'vue'
-import messagebox from '@/components/messagebox.vue'
 
 let allprinter = ref([])
 let select_printerid=ref()
 let allow_print=ref()
-
-const messageboxRef = ref(null)
-
-
-
-
-
-
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
-}
-
-
 
 
 

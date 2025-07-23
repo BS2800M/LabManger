@@ -42,15 +42,13 @@ if (state.type==='error'){
 function closemessagebox(){
   centerDialogVisible.value=false
 }
-
-
 defineExpose({openmessagebox,closemessagebox})
 onMounted(() => {
     eventBus.on(EVENT_TYPES.SHOW_MESSAGEBOX,(a)=>{
-    openmessagebox(a.type,a.message,a.action)})
+    openmessagebox(a.type,a.message,a.action)
+  })
     eventBus.on(EVENT_TYPES.CLOSE_MESSAGEBOX,closemessagebox)
 })
-
 
 </script>
 <style>

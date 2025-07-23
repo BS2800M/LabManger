@@ -72,35 +72,23 @@ function createWindow () {
   ipcMain.on('print', () =>{ printWindow.webContents.print(printOptions)}) //监听 printwindow渲染好的条码发送到主进程
 
 
+  const isDev=process.env.NODE_ENV==='development'
+  if(isDev){
+    mainWindow.webContents.openDevTools()
+    printWindow.webContents.openDevTools()
+    mainWindow.loadURL('http://localhost:5173') 
+    printWindow.loadURL('http://localhost:5173/#/print')  
+    // 添加开发时刷新快捷键菜单
+    // const menu = Menu.buildFromTemplate(template);
+    // Menu.setApplicationMenu(menu);
+  }
+  else{
+    mainWindow.setMenu(null);
+    mainWindow.webContents.openDevTools()
+    printWindow.loadFile('./out/renderer/index.html', {hash: 'print'})
+    mainWindow.loadFile('./out/renderer/index.html') 
+  }
 
-
-
-  // printWindow.loadFile('./out/renderer/index.html', {hash: 'print'})
-  // mainWindow.loadFile('./out/renderer/index.html') 
-  mainWindow.loadURL('http://localhost:5173') 
-  printWindow.loadURL('http://localhost:5173/#/print')  
-  // // 打开开发工具
-  mainWindow.webContents.openDevTools()
-  
-  // printWindow.webContents.openDevTools()
-  mainWindow.setMenu(null);
-
-  // 添加开发时刷新快捷键菜单
-  const template = [
-    {
-      label: 'View',
-      submenu: [
-        {
-          label: '强制刷新',
-          accelerator: 'F5',
-          click: () => { mainWindow.reload(); }
-        },
-        { role: 'toggledevtools' }
-      ]
-    }
-  ];
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
 }
 
 

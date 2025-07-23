@@ -1,4 +1,4 @@
-import {createRouter,createWebHistory,createWebHashHistory} from 'vue-router'
+import {createRouter,createWebHashHistory} from 'vue-router'
 
 
 
@@ -14,8 +14,7 @@ const lot = () => import('@/components/lot.vue');
 const inbound = () => import('@/components/inbound.vue');
 const outbound = () => import('@/components/outbound.vue');
 const list_operation = () => import('@/components/list_operation.vue');
-const warn_reagent = () => import('@/components/warn_reagent.vue');
-const messagebox = () => import('@/components/messagebox.vue');
+const statistics = () => import('@/components/statistics.vue');
 
 
 
@@ -69,8 +68,8 @@ const router=createRouter({
             components:{main:list_operation,bar:homebar}
         },
         {
-            path:'/warn_reagent',
-            components:{main:warn_reagent,bar:homebar}
+            path:'/statistics',
+            components:{main:statistics,bar:homebar}
         },
         {
             path:'/team',
