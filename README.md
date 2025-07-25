@@ -157,7 +157,7 @@ LabManger/
    npm run build:win
    ```
 
-5. **新建文件conf.txt到D:\vb\LabManger\electron-vite\dist\win-ia32-unpacked 内容如下**
+5. **新建文件conf.txt到LabManger\electron-vite\dist\win-ia32-unpacked 内容如下**
    
    **其中baseurl 为你的服务端ip和端口**
    ```bash
