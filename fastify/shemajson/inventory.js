@@ -5,7 +5,6 @@ const inventory_show_schema = {
         properties: {
             page: { type: 'number' },
             pagesize: { type: 'number' },
-            only_warn: { type: 'boolean' },
         },
         required: ['page', 'pagesize']
     }
@@ -20,4 +19,4 @@ const inventory_audit_schema = {
         required: ['reagentid', 'lotid']
     }
 };
-export { inventory_show_schema, inventory_audit_schema };
+export { inventory_show_schema, inventory_audit_schema, };

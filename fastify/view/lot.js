@@ -1,7 +1,6 @@
 import prisma from '../prisma/script.js';
 async function lot_add(request, reply) {
     const { name, reagentid, expiration_date, using } = request.body;
-    const { teamid, userid } = request;
     const add = await prisma.lot.create({
         data: { name, reagentid, expiration_date, using }
     });
@@ -64,7 +63,6 @@ async function lot_show(request, reply) {
 }
 async function lot_update(request, reply) {
     const { id, name, reagentid, expiration_date, using } = request.body;
-    const { teamid, userid } = request;
     const update = await prisma.lot.update({
         where: { id },
         data: { name, reagentid, expiration_date, using }
@@ -73,13 +71,8 @@ async function lot_update(request, reply) {
 }
 async function lot_del(request, reply) {
     const { id } = request.body;
-    const { teamid, userid } = request;
     const del = await prisma.lot.update({
         where: { id },
-        data: { using: false }
-    });
-    await prisma.inventory.updateMany({
-        where: { lotid: id },
         data: { using: false }
     });
     return { status: 0, msg: "成功", data: del };

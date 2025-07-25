@@ -28,13 +28,13 @@
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
           :style="{width:'calc(100vw - 205px)'}"
-          row-class-name="rowstyle"
           header-cell-class-name="rowstyle"
+          :row-class-name="tableRowClassName"
         >
           <el-table-column prop="reagentname" label="试剂名称" min-width="150" show-overflow-tooltip/>
           <el-table-column prop="lotname" label="批号" min-width="150" show-overflow-tooltip/>
           <el-table-column prop="inventory_number" label="库存" min-width="100" show-overflow-tooltip/>
-          <el-table-column prop="warn_number" label="警告数量" min-width="100" show-overflow-tooltip/>
+          <el-table-column prop="warning_type" :sortable="true" label="警告类型" min-width="100" show-overflow-tooltip/>
           <el-table-column prop="lastweek_outbound_number" label="上周出库数量" min-width="100" show-overflow-tooltip/>
           <el-table-column prop="last_outbound_time" label="最后一次出库" min-width="200" :formatter="formatDateColumn" show-overflow-tooltip/>
         </el-table>
@@ -50,6 +50,9 @@ import { api_inventory_show,api_inventory_audit } from '@/api/inventory'
 import {Workbook} from 'exceljs'
 
 
+
+
+
 // 状态管理
 const state = reactive({
   inputsearchname: '',    // 输入搜索名称
@@ -60,12 +63,17 @@ const state = reactive({
 })
 
 
+function tableRowClassName({ row,rowindex }) {
+  if (row.warning_status===true) {
+    return 'warning-row'
+  }
+  return 'success-row'
+}
 
 
 async function list_reagentnumber() {
     api_inventory_show(state)
         .then(function(data) {
-          console.log(data)
             state.tableData = data.data
             state.totalpages = data.totalpages
         })
@@ -84,8 +92,7 @@ async function exportToExcel() {
     '规格': item.specifications,
     '应库存': item.inventory_number,
     '实际库存': null,
-    '警告数量': item.warn_number,
-    '警告天数': item.warn_days,
+    '警告类型': item.warning_type,
     '上周出库数量': item.lastweek_outbound_number,
     '最后一次出库': formatDateColumn(null, null, item.last_outbound_time)
   }))

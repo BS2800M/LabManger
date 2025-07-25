@@ -30,6 +30,9 @@ export interface TransformedInventoryShow {
     warn_days?:number,
     reagent?:any,
     lot?:any,
+    expiration_date?:Date,
+    warning_type?:[],
+    warning_status?:boolean
 } 
 export interface InventoryAudit {
     reagentid:number,

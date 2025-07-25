@@ -65,7 +65,6 @@ async function reagent_update(request, reply) {
 }
 async function reagent_del(request, reply) {
     const { id } = request.body;
-    const { teamid, userid } = request;
     const del = await prisma.reagent.update({
         where: { id },
         data: { using: false }
@@ -73,9 +72,10 @@ async function reagent_del(request, reply) {
     return { status: 0, msg: "成功", data: del };
 }
 async function reagent_showall(request, reply) {
-    const teamid = request.teamid;
     const showall = await prisma.reagent.findMany({
-        where: { teamid: teamid, using: true },
+        where: { using: true,
+            ...request.validate_where
+        },
         select: {
             id: true,
             name: true,

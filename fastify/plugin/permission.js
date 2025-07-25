@@ -10,7 +10,7 @@ const role_permissions = {
             { resource: 'reagent', actions: ['add', 'show', 'update', 'del', 'showall'], scope: 'all' },
             { resource: 'lot', actions: ['add', 'show', 'update', 'del', 'showall'], scope: 'all' },
             { resource: 'operation', actions: ['inbound', 'outbound', 'special_outbound', 'show', 'del', 'export'], scope: 'all' },
-            { resource: 'inventory', actions: ['show', 'update'], scope: 'all' },
+            { resource: 'inventory', actions: ['show', 'audit'], scope: 'all' },
             { resource: 'user', actions: ['add', 'show', 'update', 'del'], scope: 'all' },
         ]
     },
@@ -22,7 +22,7 @@ const role_permissions = {
             { resource: 'reagent', actions: ['add', 'show', 'update', 'del', 'showall'], scope: 'all' },
             { resource: 'lot', actions: ['add', 'show', 'update', 'del', 'showall'], scope: 'all' },
             { resource: 'operation', actions: ['inbound', 'outbound', 'special_outbound', 'show', 'del', 'export'], scope: 'all' },
-            { resource: 'inventory', actions: ['show', 'update'], scope: 'all' },
+            { resource: 'inventory', actions: ['show'], scope: 'all' },
             { resource: 'user', actions: ['add', 'show', 'update', 'del'], scope: 'all' },
         ]
     },
@@ -34,7 +34,7 @@ const role_permissions = {
             { resource: 'reagent', actions: ['add', 'show', 'update', 'del', 'showall'], scope: 'team' },
             { resource: 'lot', actions: ['add', 'show', 'update', 'del', 'showall'], scope: 'team' },
             { resource: 'operation', actions: ['inbound', 'outbound', 'special_outbound', 'show', 'del', 'export'], scope: 'team' },
-            { resource: 'inventory', actions: ['show', 'update'], scope: 'team' },
+            { resource: 'inventory', actions: ['show'], scope: 'team' },
             { resource: 'user', actions: ['add', 'show', 'update', 'del'], scope: 'team' },
         ]
     },
@@ -46,7 +46,7 @@ const role_permissions = {
             { resource: 'reagent', actions: ['show', 'showall'], scope: 'team' },
             { resource: 'lot', actions: ['add', 'show', 'update', 'del', 'showall'], scope: 'team' },
             { resource: 'operation', actions: ['inbound', 'outbound', 'special_outbound', 'show', 'export'], scope: 'team' },
-            { resource: 'inventory', actions: ['show', 'update'], scope: 'team' },
+            { resource: 'inventory', actions: ['show'], scope: 'team' },
             { resource: 'user', actions: ['show', 'update'], scope: 'own' },
         ]
     }
@@ -89,60 +89,59 @@ async function checkOwnership(teamid, userid, scope, resource, resourceid) {
     if (scope === 'all')
         return true;
     if (scope === 'team') {
-        const resourceQueries = {
-            reagent: () => prisma.reagent.findUnique({
-                where: { id: resourceid },
-                select: { teamid: true }
-            }),
-            lot: () => prisma.lot.findUnique({
-                where: { id: resourceid },
-                select: { reagent: { select: { teamid: true } } }
-            }),
-            operation: () => prisma.operation.findUnique({
-                where: { id: resourceid },
-                select: { reagent: { select: { teamid: true } } }
-            }),
-            inventory: () => prisma.inventory.findUnique({
-                where: { id: resourceid },
-                select: { lot: { select: { reagent: { select: { teamid: true } } } } }
-            }),
-            user: () => prisma.user.findUnique({
-                where: { id: resourceid },
-                select: { teamid: true }
-            })
-        };
-        const result = await resourceQueries[resource]();
-        console.log(result);
-        if (result) {
-            switch (resource) {
-                case 'reagent':
-                    hasAccess = result.teamid === teamid;
-                    break;
-                case 'lot':
-                    hasAccess = result.reagent?.teamid === teamid;
-                    break;
-                case 'operation':
-                    hasAccess = result.reagent?.teamid === teamid;
-                    break;
-                case 'inventory':
-                    hasAccess = result.lot?.reagent?.teamid === teamid;
-                    break;
-                case 'user':
-                    hasAccess = result.teamid === teamid;
-                    break;
-            }
+        let result;
+        switch (resource) {
+            case 'reagent':
+                result = await prisma.reagent.findUnique({
+                    where: { id: resourceid },
+                    select: { teamid: true }
+                });
+                result = result.teamid === teamid;
+                break;
+            case 'lot':
+                result = await prisma.lot.findUnique({
+                    where: { id: resourceid },
+                    select: { reagent: { select: { teamid: true } } }
+                });
+                result = result.reagent.teamid === teamid;
+                break;
+            case 'operation':
+                result = await prisma.operation.findUnique({
+                    where: { id: resourceid },
+                    select: { reagent: { select: { teamid: true } } }
+                });
+                result = result.reagent.teamid === teamid;
+                break;
+            case 'inventory':
+                result = await prisma.inventory.findUnique({
+                    where: { id: resourceid },
+                    select: { lot: { select: { reagent: { select: { teamid: true } } } } }
+                });
+                result = result.lot.reagent.teamid === teamid;
+                break;
+            case 'user':
+                result = await prisma.user.findUnique({
+                    where: { id: resourceid },
+                    select: { teamid: true }
+                });
+                result = result.teamid === teamid;
+                break;
         }
+        return result;
     }
     if (scope === 'own') {
-        const result = await prisma.user.findUnique({
-            where: { id: resourceid },
-            select: { id: true }
-        });
-        if (result) {
-            hasAccess = result.id === userid;
+        let result;
+        switch (resource) {
+            case 'user':
+                result = await prisma.user.findUnique({
+                    where: { id: resourceid },
+                    select: { id: true }
+                });
+                result = result.id === userid;
+                break;
         }
+        return result;
     }
-    return hasAccess;
 }
 // 权限检查中间件
 function createPermissionChecker(resource, action, mode) {
@@ -155,7 +154,7 @@ function createPermissionChecker(resource, action, mode) {
         }
         request.validate_where = createWhereClause(resource, permission.scope, teamid, userid); //储存数据访问范围
         const scope = permission.scope;
-        if (mode === 1) { //mode 为1是要检查资源所有权 
+        if (mode === 1) { //mode 为1是要检查资源所有权  为0则无需检查资源所有权
             const { id } = request.body;
             const { teamid, userid } = request;
             const resourceid = id;
@@ -168,9 +167,7 @@ function createPermissionChecker(resource, action, mode) {
 }
 // 插件注册
 async function check_permission(fastify, options) {
-    fastify.decorate('check_permission', function (resource, action, mode) {
-        return createPermissionChecker(resource, action, mode);
-    });
+    fastify.decorate('check_permission', createPermissionChecker);
 }
 export default fp(check_permission);
 export { role_permissions, checkOwnership };

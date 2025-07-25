@@ -293,8 +293,8 @@ formData.editbox_disablebutton=true
 }
 #outbound2 {
     position: absolute;
-    left:250px;
-    top:700px;
+    left:200px;
+    top:680px;
     width: 200px;
     height: 50px;
     background-color: rgb(25, 153, 11);

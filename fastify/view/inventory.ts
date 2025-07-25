@@ -33,17 +33,17 @@ async function inventory_show(request: FastifyRequest, reply: any) {
                     name: true,
                     warn_number: true,
                     specifications: true,
-                    warn_days: true
+                    warn_days:true
                 }
             },
             lot: {
                 select: {
-                    name: true
+                    name: true,
+                    expiration_date:true
                 }
             }
         }
     })
-    console.log(show)
     const transformed_show: TransformedInventoryShow[] = show.map((item: TransformedInventoryShow) => {
         return {
             id: item.id,
@@ -57,9 +57,48 @@ async function inventory_show(request: FastifyRequest, reply: any) {
             warn_number: item.reagent.warn_number,
             specifications: item.reagent.specifications,
             warn_days: item.reagent.warn_days,
+            expiration_date: item.lot.expiration_date,
+            warning_type:[] ,
+            warning_status:false
         }
     })
-    return reply.status(200).send({ status: 0, msg: "成功", data: transformed_show, total: total, page: page, pagesize: pagesize, totalpages: Math.ceil(total / pagesize) })
+    let dashbord_warning_totalnum=0
+    let dashbord_warning_numnum=0
+    let dashbord_warning_expirnum=0
+    const now=new Date().getTime()
+    for (let item of transformed_show) {
+        if (item.inventory_number <= (item.warn_number as number)) {
+            (item.warning_type as string[]).push("数量")
+            item.warning_status = true
+            dashbord_warning_numnum++
+        }
+        if ( now  >  (item.expiration_date?.getTime() as number)-(item.warn_days as number)*24*60*60*1000) {
+            (item.warning_type as string[]).push("有效期")
+            item.warning_status = true
+            dashbord_warning_expirnum++
+        }
+
+    }
+    for (let item of transformed_show) {
+        if (item.warning_status) {
+            dashbord_warning_totalnum++
+        }
+    }
+
+    return reply.status(200).send({ status: 0, msg: "成功", 
+        data: transformed_show, 
+        total: total, 
+        page: page, 
+        pagesize: pagesize, 
+        totalpages: Math.ceil(total / pagesize),
+        only_warn:only_warn,
+        dashbord:{
+            total:total,
+            warning_totalnum:dashbord_warning_totalnum,
+            warning_numnum:dashbord_warning_numnum,
+            warning_expirnum:dashbord_warning_expirnum
+        }
+    })
 }
 
 
@@ -198,6 +237,10 @@ async function inventory_audit(request: FastifyRequest, reply: any) {
     await inventory_audit_list()
     return reply.status(200).send({status:0,msg:"成功"})
 }
+
+
+
+
 
 
 export {inventory_show,inventory_update_list,inventory_audit,inventory_audit_list}

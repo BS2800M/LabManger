@@ -4,7 +4,7 @@ async function auth(fastify, options) {
     fastify.decorate('auth', async function (request, reply) {
         const jwt_token = request.headers.token;
         if (!jwt_token) {
-            return reply.status(401).send({ status: 1, msg: '认证错误' });
+            return reply.status(401).send({ status: 1, msg: '请先登录' });
         }
         try {
             const decoded = jwt.verify(jwt_token, 'labmanger');

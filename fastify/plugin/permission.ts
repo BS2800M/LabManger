@@ -25,7 +25,7 @@ const role_permissions: Record<string, RoleConfig> = {
             { resource: 'reagent', actions: ['add', 'show', 'update', 'del','showall'], scope: 'all' },
             { resource: 'lot', actions: ['add', 'show', 'update', 'del','showall'], scope: 'all' },
             { resource: 'operation', actions: ['inbound','outbound','special_outbound','show','del','export'], scope: 'all' },
-            { resource: 'inventory', actions: ['show', 'update'], scope: 'all' },
+            { resource: 'inventory', actions: ['show', 'audit'], scope: 'all' },
             { resource: 'user', actions: ['add', 'show', 'update', 'del'], scope: 'all' },
         ]
     },
@@ -37,7 +37,7 @@ const role_permissions: Record<string, RoleConfig> = {
             { resource: 'reagent', actions: ['add', 'show', 'update', 'del','showall'], scope: 'all' },
             { resource: 'lot', actions: ['add', 'show', 'update', 'del','showall'], scope: 'all' },
             { resource: 'operation', actions: ['inbound','outbound','special_outbound','show','del','export'], scope: 'all' },
-            { resource: 'inventory', actions: ['show', 'update'], scope: 'all' },
+            { resource: 'inventory', actions: ['show'], scope: 'all' },
             { resource: 'user', actions: ['add', 'show', 'update', 'del'], scope: 'all' },
         ]
     },
@@ -49,7 +49,7 @@ const role_permissions: Record<string, RoleConfig> = {
             { resource: 'reagent', actions: ['add', 'show', 'update', 'del','showall'], scope: 'team' },
             { resource: 'lot', actions: ['add', 'show', 'update', 'del','showall'], scope: 'team' },
             { resource: 'operation', actions: ['inbound','outbound','special_outbound','show','del','export'], scope: 'team' },
-            { resource: 'inventory', actions: ['show', 'update'], scope: 'team' },
+            { resource: 'inventory', actions: ['show'], scope: 'team' },
             { resource: 'user', actions: ['add', 'show', 'update', 'del'], scope: 'team' },
         ]
     },
@@ -61,7 +61,7 @@ const role_permissions: Record<string, RoleConfig> = {
             { resource: 'reagent', actions: ['show','showall'], scope: 'team' },
             { resource: 'lot', actions: ['add', 'show', 'update', 'del','showall'], scope: 'team' },
             { resource: 'operation', actions: ['inbound','outbound','special_outbound','show','export'], scope: 'team' },
-            { resource: 'inventory', actions: ['show', 'update'], scope: 'team' },
+            { resource: 'inventory', actions: ['show'], scope: 'team' },
             { resource: 'user', actions: ['show','update'], scope: 'own' },
         ]
     }

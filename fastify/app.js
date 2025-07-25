@@ -1,9 +1,11 @@
 import Fastify from 'fastify';
 import mainrouter from './router/mainrouter.js';
 import auth from './plugin/auth.js';
-import cluster from 'cluster';
 import { startScheduledTasks } from './plugin/scheduler.js';
 import check_permission from './plugin/permission.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+import cluster from 'cluster';
 // 环境检测
 const isProduction = process.env.NODE_ENV === 'production' ? true : false;
 async function setErrorHandler(mainfastify) {
@@ -33,7 +35,7 @@ async function start() {
     }
 }
 if (isProduction === true) {
-    if (cluster.isPrimary === true) {
+    if (cluster.isPrimary) {
         console.log(`生产环境：启动多进程模式 主进程 ${process.pid}`);
         for (let i = 0; i < 3; i++) {
             cluster.fork();
@@ -43,7 +45,7 @@ if (isProduction === true) {
         });
     }
     else {
-        console.log(`生产环境：子进程 ${process.pid} 已启动`);
+        console.log(`生产环境：启动单进程模式 子进程 ${process.pid}`);
         start();
     }
 }

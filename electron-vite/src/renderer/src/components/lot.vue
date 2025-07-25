@@ -28,7 +28,6 @@
             row-class-name="rowstyle"
             header-cell-class-name="rowstyle"
         >
-            <el-table-column prop="creation_time" label="时间" sortable min-width="100" :formatter="formatDateColumn" show-overflow-tooltip/>
             <el-table-column prop="name" label="批号" min-width="150" show-overflow-tooltip/>
             <el-table-column prop="expiration_date" label="有效期" min-width="150" :formatter="formatDateColumn" show-overflow-tooltip/>
             <el-table-column prop="reagentname" label="所属试剂名称" min-width="100" show-overflow-tooltip/>

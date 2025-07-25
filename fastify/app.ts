@@ -2,9 +2,11 @@ import Fastify from 'fastify'
 import mainrouter from './router/mainrouter.js'
 import auth from './plugin/auth.js'
 import { FastifyInstance } from 'fastify'
-import cluster from 'cluster'
 import { startScheduledTasks } from './plugin/scheduler.js'
 import check_permission from './plugin/permission.js'
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+import cluster from 'cluster';
 // 环境检测
 
 const isProduction = process.env.NODE_ENV === 'production'?true:false
@@ -37,19 +39,22 @@ catch (err) {
 }
 }
 
-if(isProduction===true){
-    console.log(`生产环境：启动多进程模式 主进程 ${process.pid}`)
+if (isProduction === true) {
+  if (cluster.isPrimary) {
+    console.log(`生产环境：启动多进程模式 主进程 ${process.pid}`);
     for (let i = 0; i < 3; i++) {
-      cluster.fork()
+      cluster.fork();
     }
-    cluster.on('exit', (worker, code, signal) => { //监听进程退出
-      console.log(`进程 ${worker.process.pid} 已退出`)
-    })
+    cluster.on('exit', (worker: any, code: any, signal: any) => {
+      console.log(`进程 ${worker.process.pid} 已退出`);
+    });
+  } else {
+    console.log(`生产环境：启动单进程模式 子进程 ${process.pid}`);
+    start();
   }
-
-else{
-  console.log(`开发环境：单进程模式 ${process.pid}`)
-  start()
+} else {
+  console.log(`开发环境：单进程模式 ${process.pid}`);
+  start();
 }
 
 

@@ -24,5 +24,5 @@ const inventory_audit_schema = {
 
 export {
     inventory_show_schema,
-    inventory_audit_schema
+    inventory_audit_schema,
 } 

@@ -19,9 +19,25 @@
     {
       color: rgb(255, 255, 255) !important;
       background-color:rgb(53, 72, 94) !important;
+      --el-bg-color:green !important;
     }
     .el-table .rowstyle:hover
     {
+      color:rgb(53, 72, 94) !important;
+      background-color: rgb(255, 255, 255) !important;
+    }
+    .el-table .warning-row {
+      --el-table-tr-bg-color:rgb(211, 139, 6)  !important;
+      color: white;
+    }
+    .el-table .warning-row:hover {
+      color: rgb(211, 139, 6)!important;
+    }
+    .el-table .success-row {
+      color: rgb(255, 255, 255) !important;
+      background-color:rgb(53, 72, 94) !important;
+    }
+    .el-table .success-row:hover {
       color:rgb(53, 72, 94) !important;
       background-color: rgb(255, 255, 255) !important;
     }
