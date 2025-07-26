@@ -2652,6 +2652,8 @@ export namespace Prisma {
     teamid: number | null
     using: boolean | null
     warn_days: number | null
+    manufacturer: string | null
+    note: string | null
   }
 
   export type ReagentMaxAggregateOutputType = {
@@ -2665,6 +2667,8 @@ export namespace Prisma {
     teamid: number | null
     using: boolean | null
     warn_days: number | null
+    manufacturer: string | null
+    note: string | null
   }
 
   export type ReagentCountAggregateOutputType = {
@@ -2678,6 +2682,8 @@ export namespace Prisma {
     teamid: number
     using: number
     warn_days: number
+    manufacturer: number
+    note: number
     _all: number
   }
 
@@ -2709,6 +2715,8 @@ export namespace Prisma {
     teamid?: true
     using?: true
     warn_days?: true
+    manufacturer?: true
+    note?: true
   }
 
   export type ReagentMaxAggregateInputType = {
@@ -2722,6 +2730,8 @@ export namespace Prisma {
     teamid?: true
     using?: true
     warn_days?: true
+    manufacturer?: true
+    note?: true
   }
 
   export type ReagentCountAggregateInputType = {
@@ -2735,6 +2745,8 @@ export namespace Prisma {
     teamid?: true
     using?: true
     warn_days?: true
+    manufacturer?: true
+    note?: true
     _all?: true
   }
 
@@ -2835,6 +2847,8 @@ export namespace Prisma {
     teamid: number
     using: boolean
     warn_days: number
+    manufacturer: string
+    note: string
     _count: ReagentCountAggregateOutputType | null
     _avg: ReagentAvgAggregateOutputType | null
     _sum: ReagentSumAggregateOutputType | null
@@ -2867,6 +2881,8 @@ export namespace Prisma {
     teamid?: boolean
     using?: boolean
     warn_days?: boolean
+    manufacturer?: boolean
+    note?: boolean
     team?: boolean | teamDefaultArgs<ExtArgs>
     lot?: boolean | reagent$lotArgs<ExtArgs>
     operation?: boolean | reagent$operationArgs<ExtArgs>
@@ -2885,6 +2901,8 @@ export namespace Prisma {
     teamid?: boolean
     using?: boolean
     warn_days?: boolean
+    manufacturer?: boolean
+    note?: boolean
     team?: boolean | teamDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["reagent"]>
 
@@ -2899,6 +2917,8 @@ export namespace Prisma {
     teamid?: boolean
     using?: boolean
     warn_days?: boolean
+    manufacturer?: boolean
+    note?: boolean
     team?: boolean | teamDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["reagent"]>
 
@@ -2913,9 +2933,11 @@ export namespace Prisma {
     teamid?: boolean
     using?: boolean
     warn_days?: boolean
+    manufacturer?: boolean
+    note?: boolean
   }
 
-  export type reagentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "specifications" | "warn_number" | "price" | "creation_time" | "storage_condition" | "teamid" | "using" | "warn_days", ExtArgs["result"]["reagent"]>
+  export type reagentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "specifications" | "warn_number" | "price" | "creation_time" | "storage_condition" | "teamid" | "using" | "warn_days" | "manufacturer" | "note", ExtArgs["result"]["reagent"]>
   export type reagentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     team?: boolean | teamDefaultArgs<ExtArgs>
     lot?: boolean | reagent$lotArgs<ExtArgs>
@@ -2949,6 +2971,8 @@ export namespace Prisma {
       teamid: number
       using: boolean
       warn_days: number
+      manufacturer: string
+      note: string
     }, ExtArgs["result"]["reagent"]>
     composites: {}
   }
@@ -3386,6 +3410,8 @@ export namespace Prisma {
     readonly teamid: FieldRef<"reagent", 'Int'>
     readonly using: FieldRef<"reagent", 'Boolean'>
     readonly warn_days: FieldRef<"reagent", 'Int'>
+    readonly manufacturer: FieldRef<"reagent", 'String'>
+    readonly note: FieldRef<"reagent", 'String'>
   }
     
 
@@ -6229,7 +6255,6 @@ export namespace Prisma {
     inventory_number: number | null
     last_outbound_time: Date | null
     lastweek_outbound_number: number | null
-    using: boolean | null
     inventory_correction: number | null
   }
 
@@ -6240,7 +6265,6 @@ export namespace Prisma {
     inventory_number: number | null
     last_outbound_time: Date | null
     lastweek_outbound_number: number | null
-    using: boolean | null
     inventory_correction: number | null
   }
 
@@ -6251,7 +6275,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: number
     lastweek_outbound_number: number
-    using: number
     inventory_correction: number
     _all: number
   }
@@ -6282,7 +6305,6 @@ export namespace Prisma {
     inventory_number?: true
     last_outbound_time?: true
     lastweek_outbound_number?: true
-    using?: true
     inventory_correction?: true
   }
 
@@ -6293,7 +6315,6 @@ export namespace Prisma {
     inventory_number?: true
     last_outbound_time?: true
     lastweek_outbound_number?: true
-    using?: true
     inventory_correction?: true
   }
 
@@ -6304,7 +6325,6 @@ export namespace Prisma {
     inventory_number?: true
     last_outbound_time?: true
     lastweek_outbound_number?: true
-    using?: true
     inventory_correction?: true
     _all?: true
   }
@@ -6402,7 +6422,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date
     lastweek_outbound_number: number
-    using: boolean
     inventory_correction: number
     _count: InventoryCountAggregateOutputType | null
     _avg: InventoryAvgAggregateOutputType | null
@@ -6432,7 +6451,6 @@ export namespace Prisma {
     inventory_number?: boolean
     last_outbound_time?: boolean
     lastweek_outbound_number?: boolean
-    using?: boolean
     inventory_correction?: boolean
     reagent?: boolean | reagentDefaultArgs<ExtArgs>
     lot?: boolean | lotDefaultArgs<ExtArgs>
@@ -6445,7 +6463,6 @@ export namespace Prisma {
     inventory_number?: boolean
     last_outbound_time?: boolean
     lastweek_outbound_number?: boolean
-    using?: boolean
     inventory_correction?: boolean
     reagent?: boolean | reagentDefaultArgs<ExtArgs>
     lot?: boolean | lotDefaultArgs<ExtArgs>
@@ -6458,7 +6475,6 @@ export namespace Prisma {
     inventory_number?: boolean
     last_outbound_time?: boolean
     lastweek_outbound_number?: boolean
-    using?: boolean
     inventory_correction?: boolean
     reagent?: boolean | reagentDefaultArgs<ExtArgs>
     lot?: boolean | lotDefaultArgs<ExtArgs>
@@ -6471,11 +6487,10 @@ export namespace Prisma {
     inventory_number?: boolean
     last_outbound_time?: boolean
     lastweek_outbound_number?: boolean
-    using?: boolean
     inventory_correction?: boolean
   }
 
-  export type inventoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "reagentid" | "lotid" | "inventory_number" | "last_outbound_time" | "lastweek_outbound_number" | "using" | "inventory_correction", ExtArgs["result"]["inventory"]>
+  export type inventoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "reagentid" | "lotid" | "inventory_number" | "last_outbound_time" | "lastweek_outbound_number" | "inventory_correction", ExtArgs["result"]["inventory"]>
   export type inventoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     reagent?: boolean | reagentDefaultArgs<ExtArgs>
     lot?: boolean | lotDefaultArgs<ExtArgs>
@@ -6502,7 +6517,6 @@ export namespace Prisma {
       inventory_number: number
       last_outbound_time: Date
       lastweek_outbound_number: number
-      using: boolean
       inventory_correction: number
     }, ExtArgs["result"]["inventory"]>
     composites: {}
@@ -6935,7 +6949,6 @@ export namespace Prisma {
     readonly inventory_number: FieldRef<"inventory", 'Int'>
     readonly last_outbound_time: FieldRef<"inventory", 'DateTime'>
     readonly lastweek_outbound_number: FieldRef<"inventory", 'Int'>
-    readonly using: FieldRef<"inventory", 'Boolean'>
     readonly inventory_correction: FieldRef<"inventory", 'Int'>
   }
     
@@ -8518,7 +8531,9 @@ export namespace Prisma {
     storage_condition: 'storage_condition',
     teamid: 'teamid',
     using: 'using',
-    warn_days: 'warn_days'
+    warn_days: 'warn_days',
+    manufacturer: 'manufacturer',
+    note: 'note'
   };
 
   export type ReagentScalarFieldEnum = (typeof ReagentScalarFieldEnum)[keyof typeof ReagentScalarFieldEnum]
@@ -8557,7 +8572,6 @@ export namespace Prisma {
     inventory_number: 'inventory_number',
     last_outbound_time: 'last_outbound_time',
     lastweek_outbound_number: 'lastweek_outbound_number',
-    using: 'using',
     inventory_correction: 'inventory_correction'
   };
 
@@ -8701,6 +8715,8 @@ export namespace Prisma {
     teamid?: IntFilter<"reagent"> | number
     using?: BoolFilter<"reagent"> | boolean
     warn_days?: IntFilter<"reagent"> | number
+    manufacturer?: StringFilter<"reagent"> | string
+    note?: StringFilter<"reagent"> | string
     team?: XOR<TeamScalarRelationFilter, teamWhereInput>
     lot?: LotListRelationFilter
     operation?: OperationListRelationFilter
@@ -8718,6 +8734,8 @@ export namespace Prisma {
     teamid?: SortOrder
     using?: SortOrder
     warn_days?: SortOrder
+    manufacturer?: SortOrder
+    note?: SortOrder
     team?: teamOrderByWithRelationInput
     lot?: lotOrderByRelationAggregateInput
     operation?: operationOrderByRelationAggregateInput
@@ -8738,6 +8756,8 @@ export namespace Prisma {
     teamid?: IntFilter<"reagent"> | number
     using?: BoolFilter<"reagent"> | boolean
     warn_days?: IntFilter<"reagent"> | number
+    manufacturer?: StringFilter<"reagent"> | string
+    note?: StringFilter<"reagent"> | string
     team?: XOR<TeamScalarRelationFilter, teamWhereInput>
     lot?: LotListRelationFilter
     operation?: OperationListRelationFilter
@@ -8755,6 +8775,8 @@ export namespace Prisma {
     teamid?: SortOrder
     using?: SortOrder
     warn_days?: SortOrder
+    manufacturer?: SortOrder
+    note?: SortOrder
     _count?: reagentCountOrderByAggregateInput
     _avg?: reagentAvgOrderByAggregateInput
     _max?: reagentMaxOrderByAggregateInput
@@ -8776,6 +8798,8 @@ export namespace Prisma {
     teamid?: IntWithAggregatesFilter<"reagent"> | number
     using?: BoolWithAggregatesFilter<"reagent"> | boolean
     warn_days?: IntWithAggregatesFilter<"reagent"> | number
+    manufacturer?: StringWithAggregatesFilter<"reagent"> | string
+    note?: StringWithAggregatesFilter<"reagent"> | string
   }
 
   export type lotWhereInput = {
@@ -8934,7 +8958,6 @@ export namespace Prisma {
     inventory_number?: IntFilter<"inventory"> | number
     last_outbound_time?: DateTimeFilter<"inventory"> | Date | string
     lastweek_outbound_number?: IntFilter<"inventory"> | number
-    using?: BoolFilter<"inventory"> | boolean
     inventory_correction?: IntFilter<"inventory"> | number
     reagent?: XOR<ReagentScalarRelationFilter, reagentWhereInput>
     lot?: XOR<LotScalarRelationFilter, lotWhereInput>
@@ -8947,7 +8970,6 @@ export namespace Prisma {
     inventory_number?: SortOrder
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
-    using?: SortOrder
     inventory_correction?: SortOrder
     reagent?: reagentOrderByWithRelationInput
     lot?: lotOrderByWithRelationInput
@@ -8955,7 +8977,7 @@ export namespace Prisma {
 
   export type inventoryWhereUniqueInput = Prisma.AtLeast<{
     id?: number
-    reagentid_lotid_using?: inventoryReagentidLotidUsingCompoundUniqueInput
+    reagentid_lotid?: inventoryReagentidLotidCompoundUniqueInput
     AND?: inventoryWhereInput | inventoryWhereInput[]
     OR?: inventoryWhereInput[]
     NOT?: inventoryWhereInput | inventoryWhereInput[]
@@ -8964,11 +8986,10 @@ export namespace Prisma {
     inventory_number?: IntFilter<"inventory"> | number
     last_outbound_time?: DateTimeFilter<"inventory"> | Date | string
     lastweek_outbound_number?: IntFilter<"inventory"> | number
-    using?: BoolFilter<"inventory"> | boolean
     inventory_correction?: IntFilter<"inventory"> | number
     reagent?: XOR<ReagentScalarRelationFilter, reagentWhereInput>
     lot?: XOR<LotScalarRelationFilter, lotWhereInput>
-  }, "id" | "id" | "reagentid_lotid_using">
+  }, "id" | "id" | "reagentid_lotid">
 
   export type inventoryOrderByWithAggregationInput = {
     id?: SortOrder
@@ -8977,7 +8998,6 @@ export namespace Prisma {
     inventory_number?: SortOrder
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
-    using?: SortOrder
     inventory_correction?: SortOrder
     _count?: inventoryCountOrderByAggregateInput
     _avg?: inventoryAvgOrderByAggregateInput
@@ -8996,7 +9016,6 @@ export namespace Prisma {
     inventory_number?: IntWithAggregatesFilter<"inventory"> | number
     last_outbound_time?: DateTimeWithAggregatesFilter<"inventory"> | Date | string
     lastweek_outbound_number?: IntWithAggregatesFilter<"inventory"> | number
-    using?: BoolWithAggregatesFilter<"inventory"> | boolean
     inventory_correction?: IntWithAggregatesFilter<"inventory"> | number
   }
 
@@ -9135,6 +9154,8 @@ export namespace Prisma {
     storage_condition: string
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     team: teamCreateNestedOneWithoutReagentInput
     lot?: lotCreateNestedManyWithoutReagentInput
     operation?: operationCreateNestedManyWithoutReagentInput
@@ -9152,6 +9173,8 @@ export namespace Prisma {
     teamid: number
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     lot?: lotUncheckedCreateNestedManyWithoutReagentInput
     operation?: operationUncheckedCreateNestedManyWithoutReagentInput
     inventory?: inventoryUncheckedCreateNestedManyWithoutReagentInput
@@ -9166,6 +9189,8 @@ export namespace Prisma {
     storage_condition?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     team?: teamUpdateOneRequiredWithoutReagentNestedInput
     lot?: lotUpdateManyWithoutReagentNestedInput
     operation?: operationUpdateManyWithoutReagentNestedInput
@@ -9183,6 +9208,8 @@ export namespace Prisma {
     teamid?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     lot?: lotUncheckedUpdateManyWithoutReagentNestedInput
     operation?: operationUncheckedUpdateManyWithoutReagentNestedInput
     inventory?: inventoryUncheckedUpdateManyWithoutReagentNestedInput
@@ -9199,6 +9226,8 @@ export namespace Prisma {
     teamid: number
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
   }
 
   export type reagentUpdateManyMutationInput = {
@@ -9210,6 +9239,8 @@ export namespace Prisma {
     storage_condition?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
   }
 
   export type reagentUncheckedUpdateManyInput = {
@@ -9223,6 +9254,8 @@ export namespace Prisma {
     teamid?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
   }
 
   export type lotCreateInput = {
@@ -9367,7 +9400,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date | string
     lastweek_outbound_number: number
-    using?: boolean
     inventory_correction?: number
     reagent: reagentCreateNestedOneWithoutInventoryInput
     lot: lotCreateNestedOneWithoutInventoryInput
@@ -9380,7 +9412,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date | string
     lastweek_outbound_number: number
-    using?: boolean
     inventory_correction?: number
   }
 
@@ -9388,7 +9419,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
     reagent?: reagentUpdateOneRequiredWithoutInventoryNestedInput
     lot?: lotUpdateOneRequiredWithoutInventoryNestedInput
@@ -9401,7 +9431,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
@@ -9412,7 +9441,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date | string
     lastweek_outbound_number: number
-    using?: boolean
     inventory_correction?: number
   }
 
@@ -9420,7 +9448,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
@@ -9431,7 +9458,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
@@ -9678,6 +9704,8 @@ export namespace Prisma {
     teamid?: SortOrder
     using?: SortOrder
     warn_days?: SortOrder
+    manufacturer?: SortOrder
+    note?: SortOrder
   }
 
   export type reagentAvgOrderByAggregateInput = {
@@ -9699,6 +9727,8 @@ export namespace Prisma {
     teamid?: SortOrder
     using?: SortOrder
     warn_days?: SortOrder
+    manufacturer?: SortOrder
+    note?: SortOrder
   }
 
   export type reagentMinOrderByAggregateInput = {
@@ -9712,6 +9742,8 @@ export namespace Prisma {
     teamid?: SortOrder
     using?: SortOrder
     warn_days?: SortOrder
+    manufacturer?: SortOrder
+    note?: SortOrder
   }
 
   export type reagentSumOrderByAggregateInput = {
@@ -9835,10 +9867,9 @@ export namespace Prisma {
     userid?: SortOrder
   }
 
-  export type inventoryReagentidLotidUsingCompoundUniqueInput = {
+  export type inventoryReagentidLotidCompoundUniqueInput = {
     reagentid: number
     lotid: number
-    using: boolean
   }
 
   export type inventoryCountOrderByAggregateInput = {
@@ -9848,7 +9879,6 @@ export namespace Prisma {
     inventory_number?: SortOrder
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
-    using?: SortOrder
     inventory_correction?: SortOrder
   }
 
@@ -9868,7 +9898,6 @@ export namespace Prisma {
     inventory_number?: SortOrder
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
-    using?: SortOrder
     inventory_correction?: SortOrder
   }
 
@@ -9879,7 +9908,6 @@ export namespace Prisma {
     inventory_number?: SortOrder
     last_outbound_time?: SortOrder
     lastweek_outbound_number?: SortOrder
-    using?: SortOrder
     inventory_correction?: SortOrder
   }
 
@@ -10513,6 +10541,8 @@ export namespace Prisma {
     storage_condition: string
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     lot?: lotCreateNestedManyWithoutReagentInput
     operation?: operationCreateNestedManyWithoutReagentInput
     inventory?: inventoryCreateNestedManyWithoutReagentInput
@@ -10528,6 +10558,8 @@ export namespace Prisma {
     storage_condition: string
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     lot?: lotUncheckedCreateNestedManyWithoutReagentInput
     operation?: operationUncheckedCreateNestedManyWithoutReagentInput
     inventory?: inventoryUncheckedCreateNestedManyWithoutReagentInput
@@ -10598,6 +10630,8 @@ export namespace Prisma {
     teamid?: IntFilter<"reagent"> | number
     using?: BoolFilter<"reagent"> | boolean
     warn_days?: IntFilter<"reagent"> | number
+    manufacturer?: StringFilter<"reagent"> | string
+    note?: StringFilter<"reagent"> | string
   }
 
   export type userUpsertWithWhereUniqueWithoutTeamInput = {
@@ -10710,7 +10744,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date | string
     lastweek_outbound_number: number
-    using?: boolean
     inventory_correction?: number
     lot: lotCreateNestedOneWithoutInventoryInput
   }
@@ -10721,7 +10754,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date | string
     lastweek_outbound_number: number
-    using?: boolean
     inventory_correction?: number
   }
 
@@ -10846,7 +10878,6 @@ export namespace Prisma {
     inventory_number?: IntFilter<"inventory"> | number
     last_outbound_time?: DateTimeFilter<"inventory"> | Date | string
     lastweek_outbound_number?: IntFilter<"inventory"> | number
-    using?: BoolFilter<"inventory"> | boolean
     inventory_correction?: IntFilter<"inventory"> | number
   }
 
@@ -10859,6 +10890,8 @@ export namespace Prisma {
     storage_condition: string
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     team: teamCreateNestedOneWithoutReagentInput
     operation?: operationCreateNestedManyWithoutReagentInput
     inventory?: inventoryCreateNestedManyWithoutReagentInput
@@ -10875,6 +10908,8 @@ export namespace Prisma {
     teamid: number
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     operation?: operationUncheckedCreateNestedManyWithoutReagentInput
     inventory?: inventoryUncheckedCreateNestedManyWithoutReagentInput
   }
@@ -10916,7 +10951,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date | string
     lastweek_outbound_number: number
-    using?: boolean
     inventory_correction?: number
     reagent: reagentCreateNestedOneWithoutInventoryInput
   }
@@ -10927,7 +10961,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date | string
     lastweek_outbound_number: number
-    using?: boolean
     inventory_correction?: number
   }
 
@@ -10960,6 +10993,8 @@ export namespace Prisma {
     storage_condition?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     team?: teamUpdateOneRequiredWithoutReagentNestedInput
     operation?: operationUpdateManyWithoutReagentNestedInput
     inventory?: inventoryUpdateManyWithoutReagentNestedInput
@@ -10976,6 +11011,8 @@ export namespace Prisma {
     teamid?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     operation?: operationUncheckedUpdateManyWithoutReagentNestedInput
     inventory?: inventoryUncheckedUpdateManyWithoutReagentNestedInput
   }
@@ -11021,6 +11058,8 @@ export namespace Prisma {
     storage_condition: string
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     team: teamCreateNestedOneWithoutReagentInput
     lot?: lotCreateNestedManyWithoutReagentInput
     inventory?: inventoryCreateNestedManyWithoutReagentInput
@@ -11037,6 +11076,8 @@ export namespace Prisma {
     teamid: number
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     lot?: lotUncheckedCreateNestedManyWithoutReagentInput
     inventory?: inventoryUncheckedCreateNestedManyWithoutReagentInput
   }
@@ -11112,6 +11153,8 @@ export namespace Prisma {
     storage_condition?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     team?: teamUpdateOneRequiredWithoutReagentNestedInput
     lot?: lotUpdateManyWithoutReagentNestedInput
     inventory?: inventoryUpdateManyWithoutReagentNestedInput
@@ -11128,6 +11171,8 @@ export namespace Prisma {
     teamid?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     lot?: lotUncheckedUpdateManyWithoutReagentNestedInput
     inventory?: inventoryUncheckedUpdateManyWithoutReagentNestedInput
   }
@@ -11199,6 +11244,8 @@ export namespace Prisma {
     storage_condition: string
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     team: teamCreateNestedOneWithoutReagentInput
     lot?: lotCreateNestedManyWithoutReagentInput
     operation?: operationCreateNestedManyWithoutReagentInput
@@ -11215,6 +11262,8 @@ export namespace Prisma {
     teamid: number
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
     lot?: lotUncheckedCreateNestedManyWithoutReagentInput
     operation?: operationUncheckedCreateNestedManyWithoutReagentInput
   }
@@ -11268,6 +11317,8 @@ export namespace Prisma {
     storage_condition?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     team?: teamUpdateOneRequiredWithoutReagentNestedInput
     lot?: lotUpdateManyWithoutReagentNestedInput
     operation?: operationUpdateManyWithoutReagentNestedInput
@@ -11284,6 +11335,8 @@ export namespace Prisma {
     teamid?: IntFieldUpdateOperationsInput | number
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     lot?: lotUncheckedUpdateManyWithoutReagentNestedInput
     operation?: operationUncheckedUpdateManyWithoutReagentNestedInput
   }
@@ -11422,6 +11475,8 @@ export namespace Prisma {
     storage_condition: string
     using?: boolean
     warn_days: number
+    manufacturer?: string
+    note?: string
   }
 
   export type userCreateManyTeamInput = {
@@ -11441,6 +11496,8 @@ export namespace Prisma {
     storage_condition?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     lot?: lotUpdateManyWithoutReagentNestedInput
     operation?: operationUpdateManyWithoutReagentNestedInput
     inventory?: inventoryUpdateManyWithoutReagentNestedInput
@@ -11456,6 +11513,8 @@ export namespace Prisma {
     storage_condition?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
     lot?: lotUncheckedUpdateManyWithoutReagentNestedInput
     operation?: operationUncheckedUpdateManyWithoutReagentNestedInput
     inventory?: inventoryUncheckedUpdateManyWithoutReagentNestedInput
@@ -11471,6 +11530,8 @@ export namespace Prisma {
     storage_condition?: StringFieldUpdateOperationsInput | string
     using?: BoolFieldUpdateOperationsInput | boolean
     warn_days?: IntFieldUpdateOperationsInput | number
+    manufacturer?: StringFieldUpdateOperationsInput | string
+    note?: StringFieldUpdateOperationsInput | string
   }
 
   export type userUpdateWithoutTeamInput = {
@@ -11522,7 +11583,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date | string
     lastweek_outbound_number: number
-    using?: boolean
     inventory_correction?: number
   }
 
@@ -11586,7 +11646,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
     lot?: lotUpdateOneRequiredWithoutInventoryNestedInput
   }
@@ -11597,7 +11656,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
@@ -11607,7 +11665,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
@@ -11627,7 +11684,6 @@ export namespace Prisma {
     inventory_number: number
     last_outbound_time: Date | string
     lastweek_outbound_number: number
-    using?: boolean
     inventory_correction?: number
   }
 
@@ -11664,7 +11720,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
     reagent?: reagentUpdateOneRequiredWithoutInventoryNestedInput
   }
@@ -11675,7 +11730,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 
@@ -11685,7 +11739,6 @@ export namespace Prisma {
     inventory_number?: IntFieldUpdateOperationsInput | number
     last_outbound_time?: DateTimeFieldUpdateOperationsInput | Date | string
     lastweek_outbound_number?: IntFieldUpdateOperationsInput | number
-    using?: BoolFieldUpdateOperationsInput | boolean
     inventory_correction?: IntFieldUpdateOperationsInput | number
   }
 

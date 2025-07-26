@@ -135,7 +135,9 @@ exports.Prisma.ReagentScalarFieldEnum = {
   storage_condition: 'storage_condition',
   teamid: 'teamid',
   using: 'using',
-  warn_days: 'warn_days'
+  warn_days: 'warn_days',
+  manufacturer: 'manufacturer',
+  note: 'note'
 };
 
 exports.Prisma.LotScalarFieldEnum = {
@@ -165,7 +167,6 @@ exports.Prisma.InventoryScalarFieldEnum = {
   inventory_number: 'inventory_number',
   last_outbound_time: 'last_outbound_time',
   lastweek_outbound_number: 'lastweek_outbound_number',
-  using: 'using',
   inventory_correction: 'inventory_correction'
 };
 

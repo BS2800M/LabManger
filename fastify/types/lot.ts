@@ -1,16 +1,16 @@
-export interface LotShowRequestQuery {
-    reagentname: string;
+export interface   LotShowRequestQuery {
+    searchlot: string;
     page: number;
     pagesize: number;
 }
 
 export interface LotSearchParams {
     using: boolean;
-    reagent: {
-        name?: {
-            contains: string;
-        };
+    reagent?: {
         teamid?: number;
+    };
+    name?: {
+        contains: string;
     };
 }
 

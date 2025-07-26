@@ -7,9 +7,11 @@
         <p>试剂规格</p>  
         <el-input v-model="formData.specifications" style="width: 300px" placeholder="如：盒 箱 瓶"  />
         <p>试剂的储存环境</p>  
-        <el-input v-model="formData.storge_condition" style="width: 300px" placeholder="如：常温 冷藏 冷冻"  />
-        <p>生成初始批号</p>
-        <el-switch v-model="formData.generate_lot" :disabled="uiState.editbox_allowedit" size="large" @change="checkinput" />
+        <el-input v-model="formData.storage_condition" style="width: 300px" placeholder="如：常温 冷藏 冷冻"  />
+        <p>生产厂家</p>  
+        <el-input v-model="formData.manufacturer" style="width: 300px" placeholder="如：厂家名称"  />
+        <p>备注</p>  
+        <el-input v-model="formData.note" style="width: 300px" placeholder="如：备注"  />
       </div>
       <div id="content2">
         <p>预警数量</p>  
@@ -20,6 +22,8 @@
         <el-input-number v-model="formData.price" :min="0" :max="99999999" placeholder="0" @change="checkinput"/>
         <p>创建时间</p>  
         <el-input disabled v-model="formData.creation_time" style="width: 300px" placeholder="系统自动生成" />
+        <p>生成初始批号</p>
+        <el-switch v-model="formData.generate_lot" :disabled="uiState.editbox_allowedit" size="large" @change="checkinput" />
       </div>
       <div id="editboxbutton">
         <el-button class="button" size="large" type="warning" :style="uiState.editbuttonhide" @click="reagent_update"  :disabled="uiState.editbox_disablebutton" >修改</el-button>
@@ -101,7 +105,7 @@ function openeditbox(editdata) {
     id:editdata.id,
     name: editdata.name,
     specifications: editdata.specifications,
-    storge_condition: editdata.storge_condition,
+    storage_condition: editdata.storage_condition,
     warn_number: editdata.warn_number,
     price: editdata.price,
     creation_time: format_iso_YYYYMMDDHHmm(editdata.creation_time),

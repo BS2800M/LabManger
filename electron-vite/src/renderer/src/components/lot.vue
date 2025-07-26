@@ -3,8 +3,8 @@
         <div id="background2">
         <el-input 
             style="left:200px;top:10px;width:250px;" 
-            v-model="state.reagentname" 
-            placeholder="搜索试剂名称来搜索批号" 
+            v-model="state.searchlot" 
+            placeholder="搜索批号" 
             @input="lot_show" 
         />
         <el-button 
@@ -53,7 +53,7 @@ import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 const editboxRef = ref(null)
 // 状态管理
 const state = reactive({
-    reagentname: '',    // 输入搜索名称
+    searchlot: '',    // 输入搜索名称
     tableData: [],         // 表格数据，初始化为空数组
     page: 1,       // 当前页
     totalpages: 1,        // 总页

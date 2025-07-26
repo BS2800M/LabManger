@@ -33,7 +33,6 @@ async function lot_add(request: FastifyRequest, reply: any) {
             inventory_number:0,
             last_outbound_time:new Date(),
             lastweek_outbound_number:0,
-            using:true
         }
     })
 
@@ -41,15 +40,15 @@ async function lot_add(request: FastifyRequest, reply: any) {
 }
 
 async function lot_show(request: FastifyRequest, reply: any) {
-    const { reagentname, page, pagesize }:LotShowRequestQuery = request.query as LotShowRequestQuery
+    const { searchlot, page, pagesize }:LotShowRequestQuery = request.query as LotShowRequestQuery
     const where:LotSearchParams = {
         using:true,
         reagent:{
             ...request.validate_where
         }
     }
-    if(reagentname!==""){
-        where.reagent.name={contains:reagentname}
+    if(searchlot!==""){
+        where.name={contains:searchlot}
     }
 
     

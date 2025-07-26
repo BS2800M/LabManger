@@ -31,8 +31,8 @@
         >
           <el-table-column prop="name" label="试剂名称" min-width="150" show-overflow-tooltip/>
           <el-table-column prop="specifications" label="规格" min-width="100" show-overflow-tooltip/>
-          <el-table-column prop="warn_number" label="警告数量" min-width="100" show-overflow-tooltip/>
-          <el-table-column prop="warn_days" label="警告天数" min-width="100" show-overflow-tooltip/>
+          <el-table-column prop="manufacturer" label="生产厂家" min-width="100" show-overflow-tooltip/>
+          <el-table-column prop="note" label="备注" min-width="100" show-overflow-tooltip/>
           <el-table-column label="操作" min-width="100">
             <template #default="scope">
               <el-button size="small" type="primary" @click="editbox_openeditbox(scope.row)">编辑</el-button>

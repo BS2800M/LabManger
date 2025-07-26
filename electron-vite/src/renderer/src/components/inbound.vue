@@ -39,8 +39,8 @@
             header-cell-class-name="rowstyle"
             height="480"
         >
-            <el-table-column prop="reagentid" label="试剂id" sortable min-width="200" show-overflow-tooltip/>
-            <el-table-column prop="reagentname" label="试剂名字" min-width="300" show-overflow-tooltip/>
+            <el-table-column prop="reagentid" label="试剂id" sortable min-width="150" show-overflow-tooltip/>
+            <el-table-column prop="reagentname" label="试剂名字" min-width="200" show-overflow-tooltip/>
             <el-table-column prop="lot" label="批号" min-width="200" show-overflow-tooltip/>
             <el-table-column prop="number" label="数量" min-width="100" show-overflow-tooltip/>  
             <el-table-column label="操作" min-width="100" >
@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import {  reactive,} from 'vue'
 import { api_operation_inbound } from '@/api/operation'
 import { api_reagent_showall} from '@/api/reagent'
 import { api_lot_showall} from '@/api/lot'

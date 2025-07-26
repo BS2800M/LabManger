@@ -17,11 +17,11 @@ const lot_show_schema = {
     querystring: {
         type: 'object',
         properties: {
-            reagentname: { type: 'string' },
+            searchlot: { type: 'string' },
             page: { type: 'number' },
             pagesize: { type: 'number' },
         },
-        required: ['reagentname', 'page', 'pagesize']
+        required: ['searchlot', 'page', 'pagesize']
     }
 }
 

@@ -33,6 +33,8 @@ model reagent {
   teamid            Int //团队id
   using             Boolean     @default(true) //是否使用
   warn_days         Int //预警天数
+  manufacturer      String      @default("") //生产厂家
+  note              String      @default("") //备注
   lot               lot[] //外键 批次
   operation         operation[] //外键 操作
   inventory         inventory[] //外键 库存
@@ -83,10 +85,9 @@ model inventory {
   inventory_number         Int //实际库存数量
   last_outbound_time       DateTime //最后一次出库时间 
   lastweek_outbound_number Int //上周出库数量
-  using                    Boolean  @default(true) //是否使用
   inventory_correction     Int      @default(0) //库存修正数量 正数表示+，负数表示-
 
-  @@unique([reagentid, lotid, using])
+  @@unique([reagentid, lotid])
 }
 
 model user {

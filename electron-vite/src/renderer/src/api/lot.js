@@ -2,7 +2,7 @@ import { myrequest } from './request'
 
 export let api_lot_show=(params)=>{
     return myrequest.get('/lot/show/',{
-        reagentname:params.reagentname,
+        searchlot:params.searchlot,
         page:params.page,
         pagesize:params.pagesize
                 })

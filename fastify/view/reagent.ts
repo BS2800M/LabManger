@@ -14,7 +14,7 @@ import { FastifyReply } from 'fastify'
 
 
 async function reagent_add(request: FastifyRequest, reply: FastifyReply) {
-    const { name, specifications, warn_number, price,storage_condition,warn_days, using,generate_lot }:ReagentAddRequestBody = request.body as ReagentAddRequestBody
+    const { name, specifications, warn_number, price,storage_condition,warn_days, using,generate_lot,manufacturer,note }:ReagentAddRequestBody = request.body as ReagentAddRequestBody
     const teamid = request.teamid
     const add = await prisma.reagent.create({
         data: { 
@@ -25,7 +25,9 @@ async function reagent_add(request: FastifyRequest, reply: FastifyReply) {
             storage_condition, 
             teamid, 
             warn_days, 
-            using 
+            using,
+            manufacturer,
+            note
         }
     })
     
@@ -45,7 +47,6 @@ async function reagent_add(request: FastifyRequest, reply: FastifyReply) {
                 inventory_number: 0,
                 last_outbound_time: new Date(),
                 lastweek_outbound_number: 0,
-                using: true,
             }
         })
     }
@@ -72,11 +73,11 @@ async function reagent_show(request: FastifyRequest, reply: FastifyReply) {
 }
 
 async function reagent_update(request: FastifyRequest, reply: FastifyReply) {
-    const { id, name, specifications, warn_number, price, storage_condition, warn_days, using }:ReagentUpdateRequestBody = request.body as ReagentUpdateRequestBody
+    const { id, name, specifications, warn_number, price, storage_condition, warn_days, using,manufacturer,note }:ReagentUpdateRequestBody = request.body as ReagentUpdateRequestBody
     const { teamid,userid} = request
-    const update = await prisma.reagent.update({
+    const update = await prisma.reagent.update({                                
         where: { id },
-        data: { name, specifications, warn_number, price, storage_condition, teamid, warn_days, using }
+        data: { name, specifications, warn_number, price, storage_condition, teamid, warn_days, using,manufacturer,note }
     })
 
     return {status:0,msg:"成功",data:update}

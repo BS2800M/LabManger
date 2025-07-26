@@ -20,6 +20,8 @@ export interface ReagentUpdateRequestBody {
     storage_condition: string;
     warn_days: number;
     using: boolean;
+    manufacturer: string;
+    note: string;
 }
 
 export interface ReagentDelRequestBody {
@@ -37,4 +39,6 @@ export interface ReagentAddRequestBody {
     warn_days: number;
     using: boolean;
     generate_lot: boolean;
+    manufacturer: string;
+    note: string;
 } 
