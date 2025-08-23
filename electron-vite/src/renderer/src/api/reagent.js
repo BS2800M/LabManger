@@ -20,11 +20,14 @@ export let api_reagent_update=(body)=>{
         id:body.id,
         name:body.name,
         specifications:body.specifications,
-        warn_number:body.warn_number,
+        warnNumber:body.warnNumber,
         price:body.price,
-        storage_condition:body.storage_condition,
-        warn_days:body.warn_days,
-        using:body.using,   
+        storageCondition:body.storageCondition,
+        warnDays:body.warnDays,
+        active:body.active,   
+        note:body.note,
+        manufacturer:body.manufacturer
+        
     })
 }
 
@@ -33,12 +36,15 @@ export let api_reagent_add=(body)=>{
     return myrequest.post('/reagent/add/',{
         name:body.name,
         specifications:body.specifications,
-        warn_number:body.warn_number,
+        warnNumber:body.warnNumber,
         price:body.price,
-        storage_condition:body.storage_condition,
-        warn_days:body.warn_days,
-        using:body.using,
-        generate_lot:body.generate_lot
+        storageCondition:body.storageCondition,
+        warnDays:body.warnDays,
+        active:body.active,   
+        generateLot:body.generateLot,
+        note:body.note,
+        manufacturer:body.manufacturer
+
     })
 }
 

@@ -21,14 +21,14 @@ async function request_init(){
   })
 // 添加请求拦截器
 myservice.interceptors.request.use(function (config) {
-  if(config.url !== "/signin/"){   // 判断请求是否是登录接口
+  if(config.url !== "/signinout/signin/" && config.url!=="/signinout/signout/"){   // 判断请求是否是登录接口或者登出
     let sendtoken=localStorage.getItem('token')
-    config.headers.token = sendtoken // 如果不是登录接口，就给请求头里面设置token
+    sendtoken="Bearer "+sendtoken
+    config.headers.Authorization = sendtoken // 如果不是登录接口，就给请求头里面设置token
   }
   return config;
 }, function (err) {
   console.log(err)
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:"无法连接服务器或服务器内部错误",action:null})
   return Promise.reject(err);
 });
 
@@ -40,12 +40,12 @@ myservice.interceptors.response.use(
     err=>{
           console.log(err)
           if (err.response!==undefined){
-            eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:err.response.data.msg,action:null})
+            eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:err.response.data.message,action:null})
           }
           else{
             eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:"无法连接服务器或服务器内部错误",action:null})
           }
-          if(err.response.data.msg=='认证错误'){
+          if(err.response.message=='无效token'){
             router.push('/login')
           }
           return Promise.reject(err);  

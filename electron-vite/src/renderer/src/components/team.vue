@@ -11,7 +11,7 @@
         <el-button 
           id="add" 
           type="success" 
-          @click="editbox_openaddbox"
+          @click="add_drawer"
           style=" position: absolute;left: 1000px;top: 50px;"
         >增加检验小组</el-button>
         <el-pagination 
@@ -20,7 +20,7 @@
           background  
           layout="prev, pager, next"  
           v-model:current-page="state.page" 
-          :page-count="state.totalpages" 
+          :page-count="state.totalpage" 
           @change="team_show" 
         />
       </div>
@@ -36,72 +36,130 @@
           <el-table-column prop="note" label="其他说明" min-width="350" />
           <el-table-column label="操作" min-width="100">
             <template #default="scope">
-              <el-button size="small" type="primary" @click="editbox_openeditbox(scope.row)">编辑</el-button>
+              <el-button size="small" type="primary" @click="edit_drawer(scope.row)">编辑</el-button>
               <el-button size="small" type="danger" @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>team_del(scope.row.id)})">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
     </div>
-    <team_editbox ref="editboxRef"></team_editbox>
+
+
+    <el-drawer v-model="state.drawer" direction="rtl" size="30%" >
+      <template #header>
+      <span >检验小组</span>
+    </template>
+      <template #footer>
+      <div style="flex: auto">
+        <el-button  size="large" type="warning" v-show="state.updatebutton_show"   @click="team_update"  :disabled="state.updatebutton_disable" >修改</el-button>
+        <el-button  size="large" type="success" v-show="state.addbutton_show"  @click="team_add"  :disabled="state.addbutton_disable">增加</el-button>
+        <el-button  size="large" type="primary"  @click="state.drawer=false">关闭</el-button>
+      </div>
+    </template>
+    <template #default>
+      <div id="content1">
+        <p>检验小组名称</p>  
+        <el-input v-model="formData.name" style="width: 300px" placeholder="检验小组名称"  />
+        <p>联系电话</p>  
+        <el-input v-model="formData.phone" style="width: 300px" placeholder="填写电话"  />
+      </div>
+      <div id="content2">
+        <p>其他说明</p>  
+        <el-input v-model="formData.note" style="width: 300px" placeholder="" />
+      </div>
+    </template>
+    </el-drawer>
+
+
+
+
+
 </template>
 <script setup>
 import { ref, onMounted, reactive, onUnmounted } from 'vue'
-import team_editbox from '@/components/team_editbox.vue'
-import { api_team_show,api_team_del} from '@/api/team.js'
+import { api_team_show,api_team_del,api_team_update,api_team_add} from '@/api/team.js'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 
 
-const editboxRef = ref(null)
 // 状态管理
 const state = reactive({
   name: '',    // 输入搜索名称
   tableData: [],         // 表格数据，初始化为空数组
   total: 0,        // 总数
   pagesize: 10,    // 每页条数
-  totalpages: 1,   // 总页数
+  totalpage: 1,   // 总页数
   page: 1,       // 当前页
-  total_pages: 1,        // 总页
+  drawer:false, 
+  editbox_allowedit:false,
+  updatebutton_disable:true,
+  addbutton_disable:true,
+  addbutton_show:false,
+  updatebutton_show:false,
 })
 
+const formData = reactive({
+  id:null,
+  name: '',
+  phone: '',
+  note:'',
+})
 
-
-function editbox_openaddbox() {
-    editboxRef.value.openaddbox()
+async function add_drawer(){
+  state.addbutton_disable=false
+  state.addbutton_show=true
+  state.updatebutton_show=false
+  formData.id=null
+  formData.name=''
+  formData.phone=''
+  formData.note=''
+  state.drawer=true
 }
 
-function editbox_openeditbox(editdate) {
-    editboxRef.value.openeditbox(editdate)  
+async function edit_drawer(row){
+  state.updatebutton_disable=false
+  state.addbutton_disable=true
+  state.addbutton_show=false
+  state.updatebutton_show=true
+  formData.id=row.id
+  formData.name=row.name
+  formData.phone=row.phone
+  formData.note=row.note
+  state.drawer=true
 }
-
 async function team_show() {
-    api_team_show(state)
-        .then(function(data) {
-            state.tableData = data.data
-            state.total = data.total
-            state.pagesize = data.pagesize
-            state.totalpages = data.totalpages
-        })
-
+    const data = await api_team_show(state)
+    state.tableData = data.data
+    state.total = data.total
+    state.pagesize = data.pagesize
+    state.totalpage = data.totalPage
 }
 
 async function team_del(id){
-  api_team_del(id).then(data=>{
-    eventBus.emit(EVENT_TYPES.TEAM_UPDATED)
+    await api_team_del(id)
+    await team_show()
     eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
-    })
-
 }
+
+async function team_update() {
+    await api_team_update(formData)
+    state.drawer = false
+    await team_show()
+}
+
+async function team_add() {
+    await api_team_add(formData)
+    state.drawer = false
+    await team_show()
+}
+
+
+
 
 // 生命周期钩子
 onMounted(() => {
     team_show()
-
-    eventBus.on(EVENT_TYPES.TEAM_UPDATED,team_show)
 })
 
-onUnmounted(() => {
-  eventBus.off(EVENT_TYPES.TEAM_UPDATED)
-})
+
 </script >
 <style scoped>
 

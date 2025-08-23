@@ -2,7 +2,7 @@ import { myrequest } from './request'
 
 export let api_lot_show=(params)=>{
     return myrequest.get('/lot/show/',{
-        searchlot:params.searchlot,
+        name:params.name,
         page:params.page,
         pagesize:params.pagesize
                 })
@@ -20,10 +20,10 @@ export let api_lot_del=(id)=>{
 export let api_lot_update=(body)=>{
     return myrequest.put('/lot/update/',{
         id:body.id,
-        name:body.name,
         reagentid:body.reagentid,
-        expiration_date:body.expiration_date,
-        using:body.using
+        name:body.name,
+        expirationdate:body.expirationdate,
+        active:body.active
                 })
 }
 
@@ -31,8 +31,8 @@ export let api_lot_add=(body)=>{
     return myrequest.post('/lot/add/',{
         name:body.name,
         reagentid:body.reagentid,
-        expiration_date:body.expiration_date,
-        using:body.using
+        expirationdate:body.expirationdate,
+        active:body.active
                 })
 }
 

@@ -18,7 +18,7 @@ export let api_user_del=(id)=>{
 export let api_user_add=(body)=>{
     return myrequest.post('/user/add/',{
         "username":body.username,
-        "password":body.password,
+        "passord":body.password,
         "role":body.role,
         "teamid":body.teamid
     })

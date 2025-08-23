@@ -25,7 +25,7 @@ export const format_YYYYMMDDHHmm_iso=(date)=>{ // 格式化日期时间 从YYYY-
     return ""
   }
   else{
-    return dayjs(date).utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    return dayjs(date).format('YYYY-MM-DDTHH:mm:ss.SSS')
   }
 }
 

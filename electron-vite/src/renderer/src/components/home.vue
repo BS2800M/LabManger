@@ -18,7 +18,7 @@
 
 <script setup>
 import {ref,onMounted, reactive} from 'vue'
-import { api_inventory_show } from '@/api/inventory'
+import { api_inventory_dashboard } from '@/api/inventory'
 
 let allprinter = ref([])
 let select_printerid=ref()
@@ -33,18 +33,17 @@ let dashbord=reactive({
 
 
 async function readprinters(){ 
-  let data=await myapi.read_conf()
-  let printerlist=data.printerlist
-  let i
-  for (i in printerlist){
-    allprinter.value.push({
-      label:printerlist[i].name,
-      value:i
+    let data = await myapi.read_conf(null)
+    let printerlist = data.printerlist
+    let i
+    for (i in printerlist){
+        allprinter.value.push({
+            label: printerlist[i].name,
+            value: i
+        })
     }
-    )
-  }
-  select_printerid.value=data.select_printerid
-  allow_print.value=data.allow_print
+    select_printerid.value = data.select_printerid
+    allow_print.value = data.allow_print
 }
 
 
@@ -56,21 +55,18 @@ function saveprinter_conf(){
 }
 
 async function readdashbord(){
-  let state={
-  inputsearchname: '',    // 输入搜索名称
-  page: 1,       // 当前页
-  totalpages: 1,        // 总页
-  pagesize:13
-  }
-  let data=await api_inventory_show(state)
-  dashbord.total=data.dashbord.total
-  dashbord.warning_totalnum=data.dashbord.warning_totalnum
-  dashbord.warning_numnum=data.dashbord.warning_numnum
-  dashbord.warning_expirnum=data.dashbord.warning_expirnum
+    let data = await api_inventory_dashboard()
+    dashbord.total = data.data.totalNum
+    dashbord.warning_totalnum = data.data.warningTotalNum
+    dashbord.warning_numnum = data.data.warningNumNum
+    dashbord.warning_expirnum = data.data.warningExpNum
 }
 
-onMounted(readprinters)
-onMounted(readdashbord)
+onMounted(()=>{
+  readprinters()
+  readdashbord()
+})
+
 </script>
 <style scoped>
 #background{

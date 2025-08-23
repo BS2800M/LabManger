@@ -2,7 +2,7 @@
 <div id="background" :style="null">
   <div id="background2">
   <p id="title" style=" position:absolute; left:200px;top:0px;">快速出库</p>
-  <el-input v-model="formData.barcodenumber" style=" position:absolute;width: 700px;height:50px; left:200px;top:100px;" placeholder="快速录入唯一试剂条码号" @keyup.enter="operation_outbound"/>
+  <el-input id="input_barcodenumber" v-model="formData.barcodenumber" style=" position:absolute;width: 700px;height:50px; left:200px;top:100px;font-size: 18px;" placeholder="快速录入唯一试剂条码号" @keyup.enter="operation_outbound"/>
   <button id="outbound" @click="operation_outbound">
         <span>出库</span>
         <svg class="icon" fill="currentColor" aria-hidden="true"> <use xlink:href="#icon-chuku"></use></svg>
@@ -21,15 +21,23 @@
             placeholder="搜索试剂名称"
         />
             </div>
-            <span  style=" position:absolute;left:910px;top:240px;" >数量</span>
+            <span  style=" position:absolute;left:620px;top:230px;" >数量</span>
             <el-input-number 
                 class="searchinput"  
                 v-model="formData.number" 
                 :min="1" 
                 :max="9999" 
                 placeholder="0" 
-                style="width:150px;position:absolute;left:960px;top:240px" 
+                style="width:150px;position:absolute;left:670px;top:230px" 
                 @change="get_id"  
+            />
+
+
+            <span style=" position:absolute;width:150px;left:850px;top:230px; ">注释</span>
+            <el-input 
+            style="position:absolute;width:200px;left:900px;top:230px;"
+            v-model="formData.note" 
+            placeholder="可填写注释" 
             />
             <el-button 
                 type="success"  
@@ -47,10 +55,11 @@
             header-cell-class-name="rowstyle"
             height="320"
         >
-        <el-table-column prop="reagentid" label="试剂id" sortable min-width="200" show-overflow-tooltip/>
+
         <el-table-column prop="reagentname" label="试剂名字" min-width="300" show-overflow-tooltip/>
         <el-table-column prop="lot" label="批号" min-width="200" show-overflow-tooltip/>
         <el-table-column prop="number" label="数量" min-width="100" show-overflow-tooltip/>  
+        <el-table-column prop="note" label="注释" min-width="100" show-overflow-tooltip/>
         <el-table-column label="操作" min-width="100">
             <template #default="scope">
                 <el-button size="small" type="danger" @click="delete_outbound(scope.row.rowsid)">删除</el-button>
@@ -73,7 +82,7 @@
 import { ElMessage } from 'element-plus'
 import { h } from 'vue'
 import 'element-plus/dist/index.css'
-import {ref,onMounted,reactive} from 'vue'
+import {reactive} from 'vue'
 import { api_operation_outbound,api_operation_special_outbound} from '../api/operation';
 import { api_reagent_showall } from '@/api/reagent'
 import { api_lot_showall } from '@/api/lot'
@@ -87,8 +96,6 @@ const formData = reactive({
     barcodenumber:'',
     number:1,//出库数量
     editbox_disablebutton: true, // 是否禁用按钮 默认禁用
-    reagent_selectvalue: null, // 选择试剂下拉菜单对应的绑定值
-    lot_selectvalue: null, // 选择批号下拉菜单对应的绑定值
     reagentid: null, // 选择试剂下拉菜单对应的id
     lotid: null, // 选择批号下拉菜单对应的id
     tableData: [], // 表格数据  
@@ -106,25 +113,25 @@ let tree=reactive({
     bufferdata:[]
 })
 
-function operation_outbound(){
-  api_operation_outbound(formData)
-  .then(data=>{
-        formData.barcodenumber=""
-        const warningKeyWord=["库存不足","已经出库","条码不存在","已经出库"]
+async function operation_outbound(){
+    try {
+        const data = await api_operation_outbound(formData)
+        formData.barcodenumber = ""
+        const warningKeyWord = ["库存不足", "已经出库", "条码未进行入库"]
         ElMessage({
-          type: warningKeyWord.some(item => data.data.msg.includes(item)) ? "warning" : "success",
-          message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-          h('span', null, data.data.msg)]),
+            type: warningKeyWord.some(item => data.message.includes(item)) ? "warning" : "success",
+            message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+                h('span', null, data.message)
+            ]),
         })
-  })
-  .catch(err=>{
-    ElMessage({
-        type: "error",
-          message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-          h('span', null, err)]),
+    } catch (err) {
+        ElMessage({
+            type: "error",
+            message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+                h('span', null, err)
+            ]),
         })
-
-                })
+    }
 }
 
 
@@ -141,59 +148,58 @@ function ready_operation_special_outbound(){
         lotid: formData.lotid,
         lot: formData.lot,
         number: formData.number,
+        note: formData.note,
     })
 }
 
-function operation_special_outbound(){
-  api_operation_special_outbound(formData.tableData)
-  .then(data=>{
+async function operation_special_outbound(){
+    const data = await api_operation_special_outbound(formData.tableData)
     formData.tableData = []
-    ElMessage({
-      type: data.msg.includes("库存不足") ? "warning" : "success",
-      message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-      h('span', null, data.msg)]),
-    })
-  })
+    for (let i in data.message) {
+        ElMessage({
+            type: data.message[i].includes("库存不足") ? "warning" : "success",
+            message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+                h('span', null, data.message[i])
+            ]),
+        })
+    }
 }
 
 function delete_outbound(rowsid) {
     formData.tableData = formData.tableData.filter(item => item.rowsid !== rowsid)
 }
 
-function load_tree(node, resolve){
-
-if (node.level===0){
-    api_reagent_showall().then(data=>{
-    let reagents=[]
-    for (let i in data.data){
-        reagents.push({label:data.data[i].name,
-            id:data.data[i].id,
-            value:++tree.value,
-            isLeaf:false
-        })
-    } 
-    resolve(reagents)
-})
-}
-if (node.level===1){
-    let bufferparmas={reagentid:node.data.id}
-    api_lot_showall(bufferparmas).then(data=>{
-        let lots=[]
-        for (let i in data.data){
-        lots.push({label:data.data[i].name,
-            id:data.data[i].id,
-            value:++tree.value,
-            isLeaf:true,
-            reagentname:node.data.label,
-            reagentid:node.data.id
-        })
+async function load_tree(node, resolve){
+    if (node.level === 0) {
+        const data = await api_reagent_showall()
+        let reagents = []
+        for (let i in data.data) {
+            reagents.push({
+                label: data.data[i].name,
+                id: data.data[i].id,
+                value: ++tree.value,
+                isLeaf: false
+            })
+        }
+        resolve(reagents)
     }
-    resolve(lots)
-    tree.bufferdata.push(...lots)
-
-
-    })
-}
+    if (node.level === 1) {
+        let bufferparmas = { reagentid: node.data.id }
+        const data = await api_lot_showall(bufferparmas)
+        let lots = []
+        for (let i in data.data) {
+            lots.push({
+                label: data.data[i].name,
+                id: data.data[i].id,
+                value: ++tree.value,
+                isLeaf: true,
+                reagentname: node.data.label,
+                reagentid: node.data.id
+            })
+        }
+        resolve(lots)
+        tree.bufferdata.push(...lots)
+    }
 }
 
 function get_id(selectedValue){
@@ -263,12 +269,13 @@ formData.editbox_disablebutton=true
     left:250px;
     top:200px;
   }
-  .el-input{
+
+    #input_barcodenumber {
     position: absolute;
     top: 130px;
     left: 250px;
     font-weight: 100;
-    font-size: large;
+    font-size: large !important;
   }
   #response_message{
     position: absolute;

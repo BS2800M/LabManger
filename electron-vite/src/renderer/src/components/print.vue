@@ -14,7 +14,7 @@ import JsBarcode from 'jsbarcode';
 import { my } from 'element-plus/es/locale/index.mjs';
 let reagentname=ref("no data")
 let lot=ref("no data")
-let barcodenumber='99999999'
+let barcodeNumber='99999999'
 let options = {
   fontSize: 12,
   format: 'CODE39',
@@ -32,8 +32,8 @@ async function loadstart(){
     for(let i in args){
       reagentname.value=args[i].reagentname
       lot.value=args[i].lotname
-      barcodenumber=args[i].barcodenumber
-      JsBarcode('.barcode', barcodenumber,options)
+      barcodeNumber=args[i].barcodeNumber
+      JsBarcode('.barcode', barcodeNumber,options)
       await delay(1000)
       myapi.print()
         }

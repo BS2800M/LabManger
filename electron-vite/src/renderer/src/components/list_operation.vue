@@ -3,20 +3,20 @@
         <div id="background2">
             <el-input 
                 style="left:200px;top:10px;width:250px;" 
-                v-model="state.reagentname" 
+                v-model="state.reagentName" 
                 placeholder="试剂名称" 
                 @input="operation_show" 
                 
             />
             <el-input 
                 style="left:210px;top:10px;width:250px;" 
-                v-model="state.barcodenumber" 
+                v-model="state.barcodeNumber" 
                 placeholder="条码号" 
                 @input="operation_show" 
             />
             <el-config-provider :locale="zhCn">
                 <el-date-picker 
-                    v-model="state.searchlater_show" 
+                    v-model="state.starttime_show" 
                     style="left:220px;top:10px;width:150px;" 
                     type="date"
                     placeholder="选择开始日期" 
@@ -27,7 +27,7 @@
             </el-config-provider>
             <el-config-provider :locale="zhCn">
                 <el-date-picker 
-                    v-model="state.searchearlier_show" 
+                    v-model="state.endtime_show" 
                     style="left:230px;top:10px;width:150px;" 
                     type="date"
                     placeholder="选择结束日期" 
@@ -40,7 +40,7 @@
                 background 
                 layout="prev, pager, next"  
                 v-model:current-page="state.page" 
-                :page-count="state.totalpages" 
+                :page-count="state.totalpage" 
                 @change="operation_show" 
                 style= " position:absolute;left:200px;top:50px;"
             />
@@ -68,12 +68,13 @@
             row-class-name="rowstyle"
             header-cell-class-name="rowstyle"
         >
-            <el-table-column prop="creation_time" label="时间" sortable min-width="120" :formatter="formatDateColumn" show-overflow-tooltip/>
-            <el-table-column prop="reagentname" label="试剂名称" min-width="100" show-overflow-tooltip/>
-            <el-table-column prop="lotname" label="批号" min-width="100" show-overflow-tooltip/>
-            <el-table-column prop="operation_action" label="动作" min-width="80" show-overflow-tooltip/>
-            <el-table-column prop="barcodenumber" label="条码号" min-width="100" show-overflow-tooltip/>
-            <el-table-column prop="username" label="用户" min-width="100" show-overflow-tooltip/>
+            <el-table-column prop="createTime" label="时间" sortable min-width="150" :formatter="formatDateColumn" show-overflow-tooltip/>
+            <el-table-column prop="reagentName" label="试剂名称" min-width="100" show-overflow-tooltip/>
+            <el-table-column prop="lotName" label="批号" min-width="100" show-overflow-tooltip/>
+            <el-table-column prop="action" label="动作" min-width="80" show-overflow-tooltip/>
+            <el-table-column prop="barcodeNumber" label="条码号" min-width="100" show-overflow-tooltip/>
+            <el-table-column prop="note" label="注释" min-width="80" show-overflow-tooltip/>
+            <el-table-column prop="userName" label="用户" min-width="100" show-overflow-tooltip/>
             <el-table-column label="操作" min-width="150">
                 <template #default="scope">
                     <el-button size="small" type="primary" @click="barcodeprint(scope.row)">补打条码</el-button>
@@ -99,15 +100,15 @@
 
   // 状态管理
   const state = reactive({
-    reagentname: '',    // 输入搜索名称
-    barcodenumber: '' ,    // 条码号
-    searchlater: "",  // 搜索开始时间(iso)
-    searchearlier: "",    // 搜索结束时间(iso)
+    reagentName: '',    // 输入搜索名称
+    barcodeNumber: '' ,    // 条码号
+    starttime: "",  // 搜索开始时间(iso)
+    endtime: "",    // 搜索结束时间(iso)
     page: 1,       // 当前页
-    totalpages: 1,        // 总页
+    totalpage: 1,        // 总页
     pagesize:13,
-    searchlater_show:getnowtime_previousmonth(),
-    searchearlier_show:getnowtime()
+    starttime_show:getnowtime_previousmonth(),
+    endtime_show:getnowtime()
   })
 
   let tableData=ref(null)
@@ -125,16 +126,12 @@ onUnmounted(() => {
   eventBus.off(EVENT_TYPES.OPERATION_UPDATED)
 })
 async function operation_show(){
-    state.searchlater=format_YYYYMMDDHHmm_iso(state.searchlater_show)
-    state.searchearlier=format_YYYYMMDDHHmm_iso(state.searchearlier_show)
-    api_operation_show(state) 
-    .then(data=>{
-      tableData.value=data.data
-      state.totalpages=data.totalpages
-      state.page=data.page
-
- } )
-
+    state.starttime = format_YYYYMMDDHHmm_iso(state.starttime_show)
+    state.endtime = format_YYYYMMDDHHmm_iso(state.endtime_show)
+    const data = await api_operation_show(state)
+    tableData.value = data.data
+    state.totalpage = data.totalPage
+    state.page = data.page
 }
   function barcodeprint(data){
     let printdatalist=[]
@@ -142,14 +139,12 @@ async function operation_show(){
     myapi.gotoprint(printdatalist)
   }      
   async function operation_del(id){
-    api_operation_del(id).then(data=>{
-      eventBus.emit(EVENT_TYPES.OPERATION_UPDATED)
-      eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
-    })
-
+    await api_operation_del(id)
+    eventBus.emit(EVENT_TYPES.OPERATION_UPDATED)
+    eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
   }
   async  function exportToExcel() {
-    state.pagesize = 9000000 // 设置为最大值
+    state.pagesize = 1000 // 设置为最大值
 
     let result = await api_operation_show(state)
     state.pagesize = 10 // 恢复默认值
@@ -157,12 +152,13 @@ async function operation_show(){
     let exportData = result.data || []
     // 准备导出数据
     exportData = exportData.map(item => ({
-      '时间': formatDateColumn(null, null, item.creation_time),
-      '试剂名称': item.reagentname,
-      '批号': item.lotname,
-      '动作': item.operation_action,
-      '用户': item.username,
-      '条码号': item.barcodenumber
+      '时间': formatDateColumn(null, null, item.createTime),
+      '试剂名称': item.reagentName,
+      '批号': item.lotName,
+      '动作': item.action,
+      '用户': item.userName,
+      '条码号': item.barcodeNumber,
+      '注释': item.note
     }))
 
     // 使用 exceljs 创建工作簿和工作表
@@ -176,7 +172,8 @@ async function operation_show(){
       { header: '批号', key: '批号', width: 20 },
       { header: '动作', key: '动作', width: 10 },
       { header: '用户', key: '用户', width: 10 },
-      { header: '条码号', key: '条码号', width: 20 }
+      { header: '条码号', key: '条码号', width: 20 },
+      { header: '注释', key: '注释', width: 40 }
     ]
 
     // 添加数据行
