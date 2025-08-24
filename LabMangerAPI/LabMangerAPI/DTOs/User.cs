@@ -1,9 +1,10 @@
 ﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 using System.ComponentModel.DataAnnotations;
-using LabMangerAPI.SugarSql;
+using LabMangerAPI.Models;
+using LabMangerAPI.DTOs.Common;
 
-namespace LabMangerAPI.RequestType;
+namespace LabMangerAPI.DTOs;
 
 
 
@@ -16,21 +17,18 @@ namespace LabMangerAPI.RequestType;
             public string UserName { get; init; } = null!;
             /// 密码
             public string PassWord { get; set; } = "";
-            [Range(1, int.MaxValue, ErrorMessage = "非法id")] public int TeamId { get; set; } = 0;
+            [Range(1, int.MaxValue, ErrorMessage = "非法id")]
+            public int TeamId { get; set; } = 0;
             ///角色
-            [Required(ErrorMessage = "角色必须填写")] public required string Role { get; set; } 
+            [Required(ErrorMessage = "角色必须填写")] public  string Role { get; set; } =null!;
 
         }
     
         /// 查询用户的请求模型
-        public class Show
+        public class Show : SearchablePaginationDto
         {
             /// 搜索的用户名称 支持模糊搜索
             public string? Name { get; set; } = "";
-            /// 页码
-            [Range(1, int.MaxValue, ErrorMessage = "页码必须大于0")] public int Page { get; set; } = 1;
-            /// 每页大小
-            [Range(1, 1000, ErrorMessage = "每页大小必须在1-1000之间")] public int PageSize { get; set; } = 10;
         }
     
         /// 更新用户的请求模型
@@ -61,20 +59,12 @@ namespace LabMangerAPI.RequestType;
 
     public class ResponseUser
     {
-        public class Add
+        public class Add : ApiResponse<User>
         {
-            public int Status { get; set; } = -1;
-            public string Message {get;set;} = "";
-            public User? Data { get; set; } 
         }
 
-        public class Show
+        public class Show : PaginatedResponse<ShowData>
         {
-            public int Status { get; set; } = -1;
-            public string Message {get;set;} = "";
-            public List<ShowData>? Data { get; set; } 
-            public int TotalPage {get;set;}
-            public int TotalCount {get;set;}
         }
 
         public class ShowData
@@ -88,15 +78,11 @@ namespace LabMangerAPI.RequestType;
 
         }
 
-        public class Update
+        public class Update : ApiResponse<User>
         {
-            public int Status { get; set; } = -1;
-            public string Message {get;set;} = "";
-            public User? Data {get;set;}
         }
-        public class Del{
-            public int Status { get; set; } = -1;
-            public string Message {get;set;} = "";
+        public class Del : ApiResponse
+        {
         }
 
     }

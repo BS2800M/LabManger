@@ -1,9 +1,10 @@
 ﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 using System.ComponentModel.DataAnnotations;
-using LabMangerAPI.SugarSql;
+using LabMangerAPI.Models;
+using LabMangerAPI.DTOs.Common;
 
-namespace LabMangerAPI.RequestType;
+namespace LabMangerAPI.DTOs;
 
 
 /// 添加批号的请求模型
@@ -18,19 +19,12 @@ public class RequestLot
     }
 
     /// 查询批号的请求模型
-    public class Show
+    public class Show : SearchablePaginationDto
     {
 
         /// 搜索的批号名称 支持模糊搜索
         public string? Name { get; set; } = "";
 
-        /// 页码
-        [Range(1, int.MaxValue, ErrorMessage = "页码必须大于0")]
-        public int Page { get; set; } = 1;
-
-        /// 每页大小
-        [Range(1, 1000, ErrorMessage = "每页大小必须在1-1000之间")]
-        public int PageSize { get; set; } = 10;
     }
 
     public class Update
@@ -58,11 +52,8 @@ public class ResponseLot
 {
 
 
-    public class Add
+    public class Add : ApiResponse<Lot>
     {
-        public int Status { get; set; } = -1;
-        public string Message { get; set; } = "";
-        public Lot? Data { get; set; }
     }
     public class ShowData
     {
@@ -74,34 +65,22 @@ public class ResponseLot
         
         public DateTime ExpirationDate { get; set; } = DateTime.Now;
         
-
-        
         public int TeamId { get; set; } 
 
         public string ReagentName { get; set; } = "";
     }
-    public class Show
+    public class Show : PaginatedResponse<ShowData>
     {
-        public int Status { get; set; } = -1;
-        public string Message { get; set; } = "";
-        public List<ShowData>? Data { get; set; }
-        public int TotalPage { get; set; }
-        public int TotalCount { get; set; }
     }
 
 
 
-    public class Update
+    public class Update : ApiResponse<Lot>
     {
-        public int Status { get; set; } = -1;
-        public string Message { get; set; } = "";
-        public Lot? Data { get; set; }
     }
 
-    public class Del
+    public class Del : ApiResponse
     {
-        public int Status { get; set; } = -1;
-        public string Message { get; set; } = "";
     }
     
     public class ShowAllData
@@ -110,11 +89,9 @@ public class ResponseLot
         public string Name { get; set; } = "";
     }
 
-    public class ShowAll
+    public class ShowAll : ApiResponse<List<ShowAllData>>
     {
-        public int Status { get; set; } = -1;
-        public string Message { get; set; } = "";
-        public List<ShowAllData>? Data { get; set; }
+
 
     }
 }    

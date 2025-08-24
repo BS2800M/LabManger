@@ -1,5 +1,5 @@
 ﻿using LabMangerAPI.Service;
-using LabMangerAPI.RequestType;
+using LabMangerAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using LabMangerAPI.Validator;

@@ -1,6 +1,6 @@
-﻿using LabMangerAPI.RequestType;
-
-using LabMangerAPI.SugarSql;
+﻿using LabMangerAPI.DTOs;
+using LabMangerAPI.Data;
+using LabMangerAPI.Models;
 using System.Text;
 using System.Security.Cryptography;
 using System.IdentityModel.Tokens.Jwt;

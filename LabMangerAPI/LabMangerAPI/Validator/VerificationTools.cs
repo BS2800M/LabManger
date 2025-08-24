@@ -1,7 +1,8 @@
 ﻿
 using SqlSugar;
+using LabMangerAPI.Data;
+using LabMangerAPI.Models;
 namespace LabMangerAPI.Validator;
-using SugarSql;
 
 
 public static class ScopeVerification

@@ -1,5 +1,5 @@
 ---
-title: 个人项目
+title: c# 改版
 language_tabs:
   - shell: Shell
   - http: HTTP
@@ -19,16 +19,82 @@ generator: "@tarslib/widdershins v4.0.30"
 
 ---
 
-# 个人项目
+# c# 改版
 
 Base URLs:
 
 # Authentication
 
-* API Key (token)
-    - Parameter Name: **token**, in: header. 
+- HTTP Authentication, scheme: bearer
+
+- HTTP Authentication, scheme: bearer
 
 # 需要鉴权
+
+## POST 小组添加
+
+POST /team/add/
+
+> Body 请求参数
+
+```json
+{
+  "name": "生化小组",
+  "phone": "5080",
+  "note": "注释",
+  "active": true
+}
+```
+
+### 请求参数
+
+|名称|位置|类型|必选|说明|
+|---|---|---|---|---|
+|Authorization|header|string| 否 |none|
+|body|body|object| 否 |none|
+|» name|body|string| 是 |名称|
+|» phone|body|string| 是 |none|
+|» note|body|string| 是 |none|
+|» active|body|boolean| 是 |none|
+
+> 返回示例
+
+> 200 Response
+
+```json
+{
+  "status": 0,
+  "message": "成功",
+  "data": {
+    "id": 3,
+    "name": "生化小组",
+    "phone": "5080",
+    "note": "注释",
+    "active": true
+  }
+}
+```
+
+### 返回结果
+
+|状态码|状态码含义|说明|数据模型|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
+
+### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» status|integer|true|none||状态|
+|» message|string|true|none||none|
+|» data|object|true|none||none|
+|»» id|integer|true|none||none|
+|»» name|string|true|none||none|
+|»» phone|string|true|none||none|
+|»» note|string|true|none||none|
+|»» active|boolean|true|none||none|
 
 ## GET 小组列出
 
@@ -56,27 +122,32 @@ GET /team/show/
 ```json
 {
   "status": 0,
-  "msg": "成功",
+  "message": "成功",
   "data": [
+    {
+      "id": 3,
+      "name": "生化小组",
+      "phone": "5080",
+      "note": "注释",
+      "active": true
+    },
     {
       "id": 2,
       "name": "临建小组",
-      "using": true,
-      "phone": "1000",
-      "note": ""
+      "phone": "052 2037 4386",
+      "note": "ullamco labore ut",
+      "active": true
     },
     {
       "id": 1,
-      "name": "免疫小组",
-      "using": true,
+      "name": "生化小组",
       "phone": "052 2037 4386",
-      "note": "ullamco labore ut"
+      "note": "ullamco labore ut",
+      "active": true
     }
   ],
-  "total": 2,
-  "page": 1,
-  "pagesize": 10,
-  "totalpages": 1
+  "totalPage": 1,
+  "totalCount": 3
 }
 ```
 
@@ -93,70 +164,15 @@ GET /team/show/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|[object]|true|none||none|
 |»» id|integer|true|none||none|
 |»» name|string|true|none||none|
-|»» using|boolean|true|none||none|
 |»» phone|string|true|none||none|
 |»» note|string|true|none||none|
-|» total|integer|true|none||none|
-|» page|integer|true|none||none|
-|» pagesize|integer|true|none||none|
-|» totalpages|integer|true|none||none|
-
-## POST 小组添加
-
-POST /team/add/
-
-> Body 请求参数
-
-```json
-{
-  "name": "生化小组",
-  "phone": "052 2037 4386",
-  "note": "ullamco labore ut",
-  "using": true
-}
-```
-
-### 请求参数
-
-|名称|位置|类型|必选|说明|
-|---|---|---|---|---|
-|body|body|object| 否 |none|
-|» name|body|string| 是 |名称|
-|» phone|body|string| 是 |none|
-|» note|body|string| 是 |none|
-|» using|body|boolean| 是 |none|
-
-> 返回示例
-
-> 200 Response
-
-```json
-{
-  "status": 0,
-  "msg": "成功",
-  "data": {}
-}
-```
-
-### 返回结果
-
-|状态码|状态码含义|说明|数据模型|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
-
-### 返回数据结构
-
-状态码 **200**
-
-|名称|类型|必选|约束|中文名|说明|
-|---|---|---|---|---|---|
-|» status|integer|true|none||状态|
-|» msg|string|true|none||none|
-|» data|object|true|none||none|
+|»» active|boolean|true|none||none|
+|» totalPage|integer|true|none||none|
+|» totalCount|integer|true|none||none|
 
 ## PUT 小组修改
 
@@ -192,8 +208,14 @@ PUT /team/update/
 ```json
 {
   "status": 0,
-  "msg": "成功",
-  "data": {}
+  "message": "成功",
+  "data": {
+    "id": 1,
+    "name": "免疫小组",
+    "phone": "5084",
+    "note": "修改后",
+    "active": true
+  }
 }
 ```
 
@@ -210,8 +232,13 @@ PUT /team/update/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|object|true|none||none|
+|»» id|integer|true|none||none|
+|»» name|string|true|none||none|
+|»» phone|string|true|none||none|
+|»» note|string|true|none||none|
+|»» active|boolean|true|none||none|
 
 ## PUT 小组删除
 
@@ -239,8 +266,7 @@ PUT /team/del/
 ```json
 {
   "status": 0,
-  "msg": "成功",
-  "data": {}
+  "message": "成功"
 }
 ```
 
@@ -257,8 +283,7 @@ PUT /team/del/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
-|» data|object|true|none||none|
+|» message|string|true|none||none|
 
 ## POST 增加用户
 
@@ -281,8 +306,8 @@ POST /user/add/
 |body|body|object| 否 |none|
 |» username|body|string| 是 |none|
 |» password|body|string| 是 |none|
-|» permission|body|string| 是 |none|
-|» teamid|body|number| 是 |none|
+|» teamid|body|integer| 是 |none|
+|» role|body|string| 是 |none|
 
 > 返回示例
 
@@ -291,7 +316,15 @@ POST /user/add/
 ```json
 {
   "status": 0,
-  "msg": "成功添加用户"
+  "message": "成功",
+  "data": {
+    "id": 2,
+    "userName": "管理员",
+    "passWord": "*",
+    "role": "admin",
+    "active": true,
+    "teamId": 1
+  }
 }
 ```
 
@@ -308,7 +341,141 @@ POST /user/add/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||none|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
+|» data|object|true|none||none|
+|»» id|integer|true|none||none|
+|»» userName|string|true|none||none|
+|»» passWord|string|true|none||none|
+|»» role|string|true|none||none|
+|»» active|boolean|true|none||none|
+|»» teamId|integer|true|none||none|
+
+## GET 用户列出
+
+GET /user/show/
+
+### 请求参数
+
+|名称|位置|类型|必选|说明|
+|---|---|---|---|---|
+|name|query|string| 否 |none|
+|page|query|integer| 否 |none|
+|pagesize|query|integer| 否 |none|
+
+> 返回示例
+
+> 200 Response
+
+```json
+{
+  "status": 0,
+  "message": "成功",
+  "data": [
+    {
+      "id": 1,
+      "userName": "管理员2",
+      "teamId": 0,
+      "role": "admin",
+      "teamName": "免疫小组"
+    }
+  ],
+  "totalPage": 1,
+  "totalCount": 1
+}
+```
+
+### 返回结果
+
+|状态码|状态码含义|说明|数据模型|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
+
+### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» status|integer|true|none||none|
+|» message|string|true|none||none|
+|» data|[object]|true|none||none|
+|»» id|integer|false|none||none|
+|»» userName|string|false|none||none|
+|»» teamId|integer|false|none||none|
+|»» role|string|false|none||none|
+|»» teamName|string|false|none||none|
+|» totalPage|integer|true|none||none|
+|» totalCount|integer|true|none||none|
+
+## PUT 修改用户
+
+PUT /user/update/
+
+> Body 请求参数
+
+```json
+{
+  "id": 1,
+  "username": "admin",
+  "password": "10086",
+  "teamid": 1,
+  "role": "admin",
+  "active": true
+}
+```
+
+### 请求参数
+
+|名称|位置|类型|必选|说明|
+|---|---|---|---|---|
+|body|body|object| 否 |none|
+|» id|body|integer| 是 |none|
+|» username|body|string| 是 |none|
+|» password|body|string| 是 |none|
+|» teamid|body|number| 是 |none|
+|» role|body|string| 是 |none|
+|» active|body|boolean| 是 |none|
+
+> 返回示例
+
+> 200 Response
+
+```json
+{
+  "status": 0,
+  "message": "成功",
+  "data": {
+    "id": 1,
+    "userName": "管理员2",
+    "passWord": "*",
+    "role": "admin",
+    "active": true,
+    "teamId": 1
+  }
+}
+```
+
+### 返回结果
+
+|状态码|状态码含义|说明|数据模型|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
+
+### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» status|integer|true|none||none|
+|» message|string|true|none||none|
+|» data|object|true|none||none|
+|»» id|integer|true|none||none|
+|»» userName|string|true|none||none|
+|»» passWord|string|true|none||none|
+|»» role|string|true|none||none|
+|»» active|boolean|true|none||none|
+|»» teamId|integer|true|none||none|
 
 ## PUT 删除用户
 
@@ -336,7 +503,7 @@ PUT /user/del/
 ```json
 {
   "status": 0,
-  "msg": "成功添加用户"
+  "message": "成功"
 }
 ```
 
@@ -353,7 +520,7 @@ PUT /user/del/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||none|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 
 ## POST 试剂添加
 
@@ -365,13 +532,14 @@ POST /reagent/add/
 {
   "name": "ALT",
   "specifications": "盒",
-  "warn_number": 0,
+  "warnnumber": 0,
   "price": 400,
-  "storage_condition": "2-6度",
-  "teamid": 1,
-  "warn_days": 0,
-  "using": true,
-  "generate_lot": true
+  "storagecondition": "2-8度",
+  "warndays": 1,
+  "active": true,
+  "generatelot": true,
+  "manufacturer": "迈瑞",
+  "note": "注释"
 }
 ```
 
@@ -382,13 +550,14 @@ POST /reagent/add/
 |body|body|object| 否 |none|
 |» name|body|string| 是 |none|
 |» specifications|body|string| 是 |none|
-|» warn_number|body|integer| 是 |none|
+|» warnnumber|body|integer| 是 |none|
 |» price|body|integer| 是 |none|
-|» storage_condition|body|string| 是 |none|
-|» teamid|body|integer| 是 |none|
-|» warn_days|body|integer| 是 |none|
-|» using|body|boolean| 是 |none|
-|» generate_lot|body|boolean| 是 |none|
+|» storgecondition|body|string| 是 |none|
+|» warndays|body|integer| 是 |none|
+|» active|body|boolean| 是 |none|
+|» generatelot|body|boolean| 是 |none|
+|» manufacturer|body|string| 是 |none|
+|» note|body|string| 是 |none|
 
 > 返回示例
 
@@ -397,8 +566,21 @@ POST /reagent/add/
 ```json
 {
   "status": 0,
-  "msg": "成功",
-  "data": {}
+  "message": "添加成功",
+  "data": {
+    "id": 9,
+    "name": "ALT",
+    "specifications": "盒",
+    "price": 400,
+    "storgeCondition": "2-8度",
+    "active": true,
+    "manufacturer": "迈瑞",
+    "note": "注释",
+    "warnNumber": 0,
+    "warnDays": 1,
+    "createTime": "2025-08-17T12:36:29.3030882+08:00",
+    "teamId": 1
+  }
 }
 ```
 
@@ -415,8 +597,20 @@ POST /reagent/add/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|object|true|none||none|
+|»» id|integer|true|none||none|
+|»» name|string|true|none||none|
+|»» specifications|string|true|none||none|
+|»» price|integer|true|none||none|
+|»» storgeCondition|string|true|none||none|
+|»» active|boolean|true|none||none|
+|»» manufacturer|string|true|none||none|
+|»» note|string|true|none||none|
+|»» warnNumber|integer|true|none||none|
+|»» warnDays|integer|true|none||none|
+|»» createTime|string|true|none||none|
+|»» teamId|integer|true|none||none|
 
 ## GET 试剂列出 
 
@@ -435,6 +629,7 @@ GET /reagent/show/
 |name|query|string| 否 |none|
 |page|query|integer| 否 |none|
 |pagesize|query|integer| 否 |none|
+|Authorization|header|string| 否 |none|
 |body|body|object| 否 |none|
 
 > 返回示例
@@ -444,37 +639,67 @@ GET /reagent/show/
 ```json
 {
   "status": 0,
-  "msg": "成功",
+  "message": "查询成功",
   "data": [
     {
-      "id": 2,
-      "name": "CD80",
+      "id": 10,
+      "name": "ALT",
       "specifications": "盒",
-      "warn_number": 0,
       "price": 400,
-      "creation_time": "2025-06-06T12:41:13.293Z",
-      "storage_condition": "2-6度",
-      "teamid": 1,
-      "using": true,
-      "warn_days": 0
+      "storgeCondition": "2-8度",
+      "active": true,
+      "manufacturer": "迈瑞",
+      "note": "注释",
+      "warnNumber": 0,
+      "warnDays": 1,
+      "createTime": "2025-08-17T12:36:58.4946594",
+      "teamId": 1
     },
     {
-      "id": 1,
-      "name": "ASO试剂",
-      "specifications": "箱",
-      "warn_number": 2,
-      "price": 1000,
-      "creation_time": "2025-06-06T11:24:22.088Z",
-      "storage_condition": "常温",
-      "teamid": 1,
-      "using": true,
-      "warn_days": 0
+      "id": 9,
+      "name": "ALT",
+      "specifications": "盒",
+      "price": 400,
+      "storgeCondition": "2-8度",
+      "active": true,
+      "manufacturer": "迈瑞",
+      "note": "注释",
+      "warnNumber": 0,
+      "warnDays": 1,
+      "createTime": "2025-08-17T12:36:29.3030882",
+      "teamId": 1
+    },
+    {
+      "id": 8,
+      "name": "ALP",
+      "specifications": "盒",
+      "price": 400,
+      "storgeCondition": "",
+      "active": true,
+      "manufacturer": "",
+      "note": "",
+      "warnNumber": 0,
+      "warnDays": 0,
+      "createTime": "2025-08-13T21:44:00.0800961",
+      "teamId": 1
+    },
+    {
+      "id": 7,
+      "name": "ALT",
+      "specifications": "盒",
+      "price": 400,
+      "storgeCondition": "",
+      "active": true,
+      "manufacturer": "",
+      "note": "",
+      "warnNumber": 0,
+      "warnDays": 0,
+      "createTime": "2025-08-13T20:51:22.8495192",
+      "teamId": 1
     }
   ],
-  "total": 2,
-  "page": 1,
-  "pagesize": 10,
-  "totalpages": 1
+  "totalPage": 1,
+  "totalCount": 4
 }
 ```
 
@@ -491,22 +716,22 @@ GET /reagent/show/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|[object]|true|none||none|
 |»» id|integer|true|none||none|
 |»» name|string|true|none||none|
 |»» specifications|string|true|none||none|
-|»» warn_number|integer|true|none||none|
 |»» price|integer|true|none||none|
-|»» creation_time|string|true|none||none|
-|»» storage_condition|string|true|none||none|
-|»» teamid|integer|true|none||none|
-|»» using|boolean|true|none||none|
-|»» warn_days|integer|true|none||none|
-|» total|integer|true|none||none|
-|» page|integer|true|none||none|
-|» pagesize|integer|true|none||none|
-|» totalpages|integer|true|none||none|
+|»» storgeCondition|string|true|none||none|
+|»» active|boolean|true|none||none|
+|»» manufacturer|string|true|none||none|
+|»» note|string|true|none||none|
+|»» warnNumber|integer|true|none||none|
+|»» warnDays|integer|true|none||none|
+|»» createTime|string|true|none||none|
+|»» teamId|integer|true|none||none|
+|» totalPage|integer|true|none||none|
+|» totalCount|integer|true|none||none|
 
 ## PUT 试剂修改
 
@@ -516,15 +741,16 @@ PUT /reagent/update/
 
 ```json
 {
-  "id": 1,
+  "id": 9,
   "name": "ASO试剂",
   "specifications": "箱",
-  "warn_number": 2,
+  "warnnumber": 0,
   "price": 1000,
-  "storage_condition": "常温",
-  "teamid": 1,
+  "storageCondition": "常温28",
   "warn_days": 0,
-  "using": true
+  "active": true,
+  "manufacturer": "迈瑞",
+  "note": "注释"
 }
 ```
 
@@ -532,15 +758,18 @@ PUT /reagent/update/
 
 |名称|位置|类型|必选|说明|
 |---|---|---|---|---|
+|Authorization|header|string| 否 |Bearer {{token}}|
 |body|body|object| 否 |none|
 |» id|body|integer| 否 |ID 编号|
 |» name|body|string| 是 |名称|
 |» specifications|body|string| 是 |none|
-|» warn_number|body|integer| 是 |none|
+|» warnnumber|body|integer| 是 |none|
 |» price|body|integer| 是 |none|
-|» storage_condition|body|string| 是 |none|
+|» StorgeCondition|body|string| 是 |none|
 |» warn_days|body|integer| 是 |none|
-|» using|body|boolean| 是 |none|
+|» active|body|boolean| 是 |none|
+|» manufacturer|body|string| 是 |none|
+|» note|body|string| 是 |none|
 
 > 返回示例
 
@@ -549,8 +778,21 @@ PUT /reagent/update/
 ```json
 {
   "status": 0,
-  "msg": "成功",
-  "data": {}
+  "message": "更新成功",
+  "data": {
+    "id": 10,
+    "name": "ASO试剂",
+    "specifications": "箱",
+    "price": 1000,
+    "storgeCondition": "常温",
+    "active": true,
+    "manufacturer": "迈瑞",
+    "note": "注释",
+    "warnNumber": 0,
+    "warnDays": 0,
+    "createTime": "2025-08-17T12:39:58.6364337+08:00",
+    "teamId": 1
+  }
 }
 ```
 
@@ -567,8 +809,20 @@ PUT /reagent/update/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|object|true|none||none|
+|»» id|integer|true|none||none|
+|»» name|string|true|none||none|
+|»» specifications|string|true|none||none|
+|»» price|integer|true|none||none|
+|»» storgeCondition|string|true|none||none|
+|»» active|boolean|true|none||none|
+|»» manufacturer|string|true|none||none|
+|»» note|string|true|none||none|
+|»» warnNumber|integer|true|none||none|
+|»» warnDays|integer|true|none||none|
+|»» createTime|string|true|none||none|
+|»» teamId|integer|true|none||none|
 
 ## PUT 试剂删除
 
@@ -596,8 +850,7 @@ PUT /reagent/del/
 ```json
 {
   "status": 0,
-  "msg": "成功",
-  "data": {}
+  "message": "删除成功"
 }
 ```
 
@@ -614,68 +867,7 @@ PUT /reagent/del/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
-|» data|object|true|none||none|
-
-## GET 试剂所有列出
-
-GET /reagent/showall/
-
-> Body 请求参数
-
-```json
-{}
-```
-
-### 请求参数
-
-|名称|位置|类型|必选|说明|
-|---|---|---|---|---|
-|teamid|query|integer| 否 |none|
-|body|body|object| 否 |none|
-
-> 返回示例
-
-> 200 Response
-
-```json
-{
-  "status": 0,
-  "msg": "成功",
-  "data": [
-    {
-      "id": 3,
-      "name": "CD80"
-    },
-    {
-      "id": 2,
-      "name": "CD80"
-    },
-    {
-      "id": 1,
-      "name": "ASO试剂"
-    }
-  ]
-}
-```
-
-### 返回结果
-
-|状态码|状态码含义|说明|数据模型|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
-
-### 返回数据结构
-
-状态码 **200**
-
-|名称|类型|必选|约束|中文名|说明|
-|---|---|---|---|---|---|
-|» status|integer|true|none||状态|
-|» msg|string|true|none||none|
-|» data|[object]|true|none||none|
-|»» id|integer|true|none||ID 编号|
-|»» name|string|true|none||名称|
+|» message|string|true|none||none|
 
 ## POST 批号添加
 
@@ -686,9 +878,9 @@ POST /lot/add/
 ```json
 {
   "name": "LOT10086",
-  "reagentid": 1,
-  "expiration_date": "2025-06-05T15:12:32.540Z",
-  "using": true
+  "reagentid": 10,
+  "expirationdate": "2025-09-05T15:12:32.540Z",
+  "active": true
 }
 ```
 
@@ -699,8 +891,8 @@ POST /lot/add/
 |body|body|object| 否 |none|
 |» name|body|string| 是 |名称|
 |» reagentid|body|integer| 是 |none|
-|» expiration_date|body|string(date-time)| 是 |none|
-|» using|body|boolean| 是 |none|
+|» expirationdate|body|string(time)| 是 |none|
+|» active|body|boolean| 是 |none|
 
 > 返回示例
 
@@ -709,8 +901,16 @@ POST /lot/add/
 ```json
 {
   "status": 0,
-  "msg": "成功",
-  "data": {}
+  "message": "添加成功",
+  "data": {
+    "id": 9,
+    "name": "LOT10086",
+    "reagentId": 10,
+    "expirationDate": "2025-09-05T15:12:32.54Z",
+    "active": true,
+    "teamId": 1,
+    "reagent": null
+  }
 }
 ```
 
@@ -727,8 +927,15 @@ POST /lot/add/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|object|true|none||none|
+|»» id|integer|true|none||none|
+|»» name|string|true|none||none|
+|»» reagentId|integer|true|none||none|
+|»» expirationDate|string|true|none||none|
+|»» active|boolean|true|none||none|
+|»» teamId|integer|true|none||none|
+|»» reagent|null|true|none||none|
 
 ## GET 批号列出
 
@@ -749,7 +956,7 @@ GET /lot/show/
 
 |名称|位置|类型|必选|说明|
 |---|---|---|---|---|
-|reagentname|query|string| 否 |none|
+|name|query|string| 否 |none|
 |page|query|integer| 否 |none|
 |pagesize|query|integer| 否 |none|
 |body|body|object| 否 |none|
@@ -761,22 +968,65 @@ GET /lot/show/
 ```json
 {
   "status": 0,
-  "msg": "成功",
+  "message": "查询成功",
   "data": [
     {
-      "id": 16,
-      "name": "测试LOT",
-      "expiration_date": "2025-06-05T15:12:32.540Z",
-      "creation_time": "2025-06-07T04:17:02.018Z",
-      "reagentid": 1,
-      "reagentname": "ASO试剂",
-      "using": true
+      "id": 9,
+      "name": "LOT10086",
+      "reagentId": 10,
+      "expirationDate": "2025-09-05T15:12:32.54",
+      "active": true,
+      "teamId": 1,
+      "reagentName": "ASO试剂"
+    },
+    {
+      "id": 8,
+      "name": "LOT10086",
+      "reagentId": 10,
+      "expirationDate": "2028-08-17T12:52:13.5103772",
+      "active": true,
+      "teamId": 1,
+      "reagentName": "ASO试剂"
+    },
+    {
+      "id": 7,
+      "name": "默认ALT",
+      "reagentId": 10,
+      "expirationDate": "2026-06-17T12:36:58.5261165",
+      "active": true,
+      "teamId": 1,
+      "reagentName": "ASO试剂"
+    },
+    {
+      "id": 6,
+      "name": "默认ALT",
+      "reagentId": 9,
+      "expirationDate": "2026-06-17T12:36:29.3636027",
+      "active": true,
+      "teamId": 1,
+      "reagentName": "ALT"
+    },
+    {
+      "id": 5,
+      "name": "默认ALP",
+      "reagentId": 8,
+      "expirationDate": "2026-06-13T21:44:00.1168708",
+      "active": true,
+      "teamId": 1,
+      "reagentName": "ALP"
+    },
+    {
+      "id": 4,
+      "name": "默认ALT",
+      "reagentId": 7,
+      "expirationDate": "2026-06-13T20:51:22.8652506",
+      "active": true,
+      "teamId": 1,
+      "reagentName": "ALT"
     }
   ],
-  "total": 1,
-  "page": 1,
-  "pagesize": 10,
-  "totalpages": 1
+  "totalPage": 1,
+  "totalCount": 6
 }
 ```
 
@@ -793,19 +1043,17 @@ GET /lot/show/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|[object]|true|none||none|
-|»» id|integer|false|none||none|
-|»» name|string|false|none||none|
-|»» expiration_date|string|false|none||none|
-|»» creation_time|string|false|none||none|
-|»» reagentid|integer|false|none||none|
-|»» reagentname|string|false|none||none|
-|»» using|boolean|false|none||none|
-|» total|integer|true|none||none|
-|» page|integer|true|none||none|
-|» pagesize|integer|true|none||none|
-|» totalpages|integer|true|none||none|
+|»» id|integer|true|none||none|
+|»» name|string|true|none||none|
+|»» reagentId|integer|true|none||none|
+|»» expirationDate|string|true|none||none|
+|»» active|boolean|true|none||none|
+|»» teamId|integer|true|none||none|
+|»» reagentName|string|true|none||none|
+|» totalPage|integer|true|none||none|
+|» totalCount|integer|true|none||none|
 
 ## PUT 批号修改
 
@@ -831,8 +1079,7 @@ PUT /lot/update/
 |» id|body|integer| 是 |none|
 |» name|body|string| 是 |名称|
 |» reagentid|body|integer| 是 |none|
-|» expiration_date|body|string(date-time)| 是 |none|
-|» using|body|boolean| 是 |none|
+|» expirationdate|body|string| 是 |none|
 
 > 返回示例
 
@@ -841,8 +1088,16 @@ PUT /lot/update/
 ```json
 {
   "status": 0,
-  "msg": "成功",
-  "data": {}
+  "message": "更新成功",
+  "data": {
+    "id": 9,
+    "name": "LOT修改后",
+    "reagentId": 20,
+    "expirationDate": "2025-06-05T15:12:32.54Z",
+    "active": true,
+    "teamId": 1,
+    "reagent": null
+  }
 }
 ```
 
@@ -859,12 +1114,19 @@ PUT /lot/update/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|object|true|none||none|
+|»» id|integer|true|none||none|
+|»» name|string|true|none||none|
+|»» reagentId|integer|true|none||none|
+|»» expirationDate|string|true|none||none|
+|»» active|boolean|true|none||none|
+|»» teamId|integer|true|none||none|
+|»» reagent|null|true|none||none|
 
 ## PUT 批号删除
 
-PUT /lot/delete/
+PUT /lot/del/
 
 > Body 请求参数
 
@@ -888,8 +1150,7 @@ PUT /lot/delete/
 ```json
 {
   "status": 0,
-  "msg": "成功",
-  "data": {}
+  "message": "删除成功"
 }
 ```
 
@@ -906,8 +1167,70 @@ PUT /lot/delete/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
-|» data|object|true|none||none|
+|» message|string|true|none||none|
+
+## GET 试剂所有列出
+
+GET /reagent/showall/
+
+> Body 请求参数
+
+```json
+{}
+```
+
+### 请求参数
+
+|名称|位置|类型|必选|说明|
+|---|---|---|---|---|
+|body|body|object| 否 |none|
+
+> 返回示例
+
+> 200 Response
+
+```json
+{
+  "status": 0,
+  "message": "查询成功",
+  "data": [
+    {
+      "id": 10,
+      "name": "ASO试剂"
+    },
+    {
+      "id": 9,
+      "name": "ALT"
+    },
+    {
+      "id": 8,
+      "name": "ALP"
+    },
+    {
+      "id": 7,
+      "name": "ALT"
+    }
+  ]
+}
+```
+
+### 返回结果
+
+|状态码|状态码含义|说明|数据模型|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
+
+### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» status|integer|true|none||状态|
+|» message|string|true|none||none|
+|» data|[object]|true|none||none|
+|»» id|integer|true|none||ID 编号|
+|»» name|string|true|none||名称|
 
 ## GET 批号所有列出
 
@@ -933,11 +1256,15 @@ GET /lot/showall/
 ```json
 {
   "status": 0,
-  "msg": "成功",
+  "message": "查询成功",
   "data": [
     {
-      "id": 2,
+      "id": 8,
       "name": "LOT10086"
+    },
+    {
+      "id": 7,
+      "name": "默认ALT"
     }
   ]
 }
@@ -956,10 +1283,10 @@ GET /lot/showall/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|[object]|true|none||none|
-|»» id|integer|false|none||ID 编号|
-|»» name|string|false|none||名称|
+|»» id|integer|true|none||ID 编号|
+|»» name|string|true|none||名称|
 
 ## POST 入库
 
@@ -971,10 +1298,10 @@ POST /operation/inbound/
 {
   "inboundlist": [
     {
-      "reagentid": 1,
-      "lotid": 1,
+      "reagentid": 10,
+      "lotid": 9,
       "number": 5,
-      "userid": 2
+      "note": "注释"
     }
   ]
 }
@@ -986,9 +1313,10 @@ POST /operation/inbound/
 |---|---|---|---|---|
 |body|body|object| 否 |none|
 |» inboundlist|body|[object]| 是 |none|
-|»» reagentid|body|integer| 是 |none|
-|»» lotid|body|integer| 是 |none|
-|»» number|body|integer| 是 |none|
+|»» reagentid|body|integer| 否 |none|
+|»» lotid|body|integer| 否 |none|
+|»» number|body|integer| 否 |none|
+|»» note|body|string| 是 |none|
 
 > 返回示例
 
@@ -996,63 +1324,55 @@ POST /operation/inbound/
 
 ```json
 {
-  "status": 0,
-  "msg": "入库成功",
+  "status": 1,
+  "message": [
+    "ASO试剂库存更新成功"
+  ],
   "data": [
     {
-      "id": 76,
-      "reagentid": 2,
-      "lotid": 2,
-      "reagentname": "CD80",
-      "lotname": "LOT10086",
-      "barcodenumber": "1000076",
-      "operation_action": "inbound",
-      "using": true,
-      "username": "夕俊杰"
+      "id": 403,
+      "reagentName": "ASO试剂",
+      "lotname": "LOT修改后",
+      "note": "注释",
+      "barcodeNumber": "100402",
+      "userName": "管理员2",
+      "action": "inbound"
     },
     {
-      "id": 77,
-      "reagentid": 2,
-      "lotid": 2,
-      "reagentname": "CD80",
-      "lotname": "LOT10086",
-      "barcodenumber": "1000077",
-      "operation_action": "inbound",
-      "using": true,
-      "username": "夕俊杰"
+      "id": 404,
+      "reagentName": "ASO试剂",
+      "lotname": "LOT修改后",
+      "note": "注释",
+      "barcodeNumber": "100403",
+      "userName": "管理员2",
+      "action": "inbound"
     },
     {
-      "id": 78,
-      "reagentid": 2,
-      "lotid": 2,
-      "reagentname": "CD80",
-      "lotname": "LOT10086",
-      "barcodenumber": "1000078",
-      "operation_action": "inbound",
-      "using": true,
-      "username": "夕俊杰"
+      "id": 405,
+      "reagentName": "ASO试剂",
+      "lotname": "LOT修改后",
+      "note": "注释",
+      "barcodeNumber": "100404",
+      "userName": "管理员2",
+      "action": "inbound"
     },
     {
-      "id": 79,
-      "reagentid": 2,
-      "lotid": 2,
-      "reagentname": "CD80",
-      "lotname": "LOT10086",
-      "barcodenumber": "1000079",
-      "operation_action": "inbound",
-      "using": true,
-      "username": "夕俊杰"
+      "id": 406,
+      "reagentName": "ASO试剂",
+      "lotname": "LOT修改后",
+      "note": "注释",
+      "barcodeNumber": "100405",
+      "userName": "管理员2",
+      "action": "inbound"
     },
     {
-      "id": 80,
-      "reagentid": 2,
-      "lotid": 2,
-      "reagentname": "CD80",
-      "lotname": "LOT10086",
-      "barcodenumber": "1000080",
-      "operation_action": "inbound",
-      "using": true,
-      "username": "夕俊杰"
+      "id": 407,
+      "reagentName": "ASO试剂",
+      "lotname": "LOT修改后",
+      "note": "注释",
+      "barcodeNumber": "100406",
+      "userName": "管理员2",
+      "action": "inbound"
     }
   ]
 }
@@ -1071,15 +1391,15 @@ POST /operation/inbound/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|[string]|true|none||none|
 |» data|[object]|true|none||none|
-|»» reagentid|integer|true|none||none|
-|»» lotid|integer|true|none||none|
-|»» using|boolean|true|none||none|
-|»» username|string|true|none||none|
-|»» barcodenumber|string|true|none||none|
-|»» reagentname|string|true|none||none|
+|»» id|integer|true|none||none|
+|»» reagentName|string|true|none||none|
 |»» lotname|string|true|none||none|
+|»» note|string|true|none||none|
+|»» barcodeNumber|string|true|none||none|
+|»» userName|string|true|none||none|
+|»» action|string|true|none||none|
 
 ## POST 出库
 
@@ -1088,7 +1408,9 @@ POST /operation/outbound/
 > Body 请求参数
 
 ```json
-"{\r\n    \"barcodenumber\": \"1000070\",\r\n}"
+{
+  "barcodenumber": "1000070"
+}
 ```
 
 ### 请求参数
@@ -1104,8 +1426,8 @@ POST /operation/outbound/
 
 ```json
 {
-  "status": 0,
-  "msg": "出库成功"
+  "status": 1,
+  "message": "ASO试剂库存更新成功"
 }
 ```
 
@@ -1122,7 +1444,7 @@ POST /operation/outbound/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 
 ## POST 特殊出库
 
@@ -1132,9 +1454,13 @@ POST /operation/special_outbound/
 
 ```json
 {
-  "reagentid": 1,
-  "lotid": 1,
-  "number": 2
+  "outboundlist": [
+    {
+      "reagentid": 10,
+      "lotid": 9,
+      "number": 1
+    }
+  ]
 }
 ```
 
@@ -1144,16 +1470,19 @@ POST /operation/special_outbound/
 |---|---|---|---|---|
 |body|body|object| 否 |none|
 |» outboundlist|body|[object]| 是 |none|
-|»» reagentid|body|integer| 是 |none|
-|»» lotid|body|integer| 是 |none|
-|»» number|body|integer| 是 |none|
+|»» reagentid|body|integer| 否 |none|
+|»» lotid|body|integer| 否 |none|
+|»» number|body|integer| 否 |none|
+|»» n|body|string| 是 |none|
 
 > 返回示例
 
 ```json
 {
-  "status": 0,
-  "msg": "出库成功"
+  "status": 1,
+  "message": [
+    "ASO试剂库存更新成功"
+  ]
 }
 ```
 
@@ -1177,7 +1506,52 @@ POST /operation/special_outbound/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||状态|
-|» msg|string|true|none||none|
+|» message|[string]|true|none||none|
+
+## PUT 操作删除
+
+PUT /operation/del/
+
+> Body 请求参数
+
+```json
+{
+  "id": 2
+}
+```
+
+### 请求参数
+
+|名称|位置|类型|必选|说明|
+|---|---|---|---|---|
+|body|body|object| 否 |none|
+|» id|body|integer| 否 |ID 编号|
+
+> 返回示例
+
+> 200 Response
+
+```json
+{
+  "status": 1,
+  "message": "成功"
+}
+```
+
+### 返回结果
+
+|状态码|状态码含义|说明|数据模型|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
+
+### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» status|integer|true|none||状态|
+|» message|string|true|none||none|
 
 ## GET 列出操作
 
@@ -1188,96 +1562,122 @@ GET /operation/show/
 |名称|位置|类型|必选|说明|
 |---|---|---|---|---|
 |reagentname|query|string| 否 |none|
-|searchlater|query|string(date-time)| 否 |none|
-|searchearlier|query|string(date-time)| 否 |none|
-|barcodenumber|query|string| 否 |none|
+|starttime|query|string(date-time)| 否 |none|
+|endtime|query|string(date-time)| 否 |none|
 |page|query|integer| 否 |none|
 |pagesize|query|integer| 否 |none|
+|barcodenumber|query|string| 否 |none|
 
 > 返回示例
 
 ```json
 {
-  "status": 0,
-  "msg": "成功",
+  "status": 1,
+  "message": "成功",
   "data": [
     {
-      "id": 6,
-      "reagentid": 1,
-      "lotid": 16,
-      "reagentname": "ASO试剂",
-      "lotname": "测试LOT",
-      "barcodenumber": "unknown",
-      "operation_action": "s_outbound",
-      "using": true,
-      "userid": 2,
-      "username": "测试用户"
+      "id": 518,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100517",
+      "userName": "管理员2",
+      "action": "specialoutbound"
     },
     {
-      "id": 5,
-      "reagentid": 1,
-      "lotid": 16,
-      "reagentname": "ASO试剂",
-      "lotname": "测试LOT",
-      "barcodenumber": "1000005",
-      "operation_action": "inbound",
-      "using": true,
-      "userid": 2,
-      "username": "测试用户"
+      "id": 517,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100516",
+      "userName": "管理员2",
+      "action": "specialoutbound"
     },
     {
-      "id": 4,
-      "reagentid": 1,
-      "lotid": 16,
-      "reagentname": "ASO试剂",
-      "lotname": "测试LOT",
-      "barcodenumber": "1000004",
-      "operation_action": "inbound",
-      "using": true,
-      "userid": 2,
-      "username": "测试用户"
+      "id": 516,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100515",
+      "userName": "管理员2",
+      "action": "specialoutbound"
     },
     {
-      "id": 3,
-      "reagentid": 1,
-      "lotid": 16,
-      "reagentname": "ASO试剂",
-      "lotname": "测试LOT",
-      "barcodenumber": "1000003",
-      "operation_action": "inbound",
-      "using": true,
-      "userid": 2,
-      "username": "测试用户"
+      "id": 515,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100514",
+      "userName": "管理员2",
+      "action": "specialoutbound"
     },
     {
-      "id": 2,
-      "reagentid": 1,
-      "lotid": 16,
-      "reagentname": "ASO试剂",
-      "lotname": "测试LOT",
-      "barcodenumber": "1000002",
-      "operation_action": "inbound",
-      "using": true,
-      "userid": 2,
-      "username": "测试用户"
+      "id": 514,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100513",
+      "userName": "管理员2",
+      "action": "specialoutbound"
     },
     {
-      "id": 1,
-      "reagentid": 1,
-      "lotid": 16,
-      "reagentname": "ASO试剂",
-      "lotname": "测试LOT",
-      "barcodenumber": "1000001",
-      "operation_action": "inbound",
-      "using": true,
-      "userid": 2,
-      "username": "测试用户"
+      "id": 513,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100512",
+      "userName": "管理员2",
+      "action": "specialoutbound"
+    },
+    {
+      "id": 512,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100511",
+      "userName": "管理员2",
+      "action": "specialoutbound"
+    },
+    {
+      "id": 511,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100510",
+      "userName": "管理员2",
+      "action": "specialoutbound"
+    },
+    {
+      "id": 510,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100509",
+      "userName": "管理员2",
+      "action": "specialoutbound"
+    },
+    {
+      "id": 509,
+      "createTime": "2025-08-19T23:45:35.286",
+      "reagentName": "90",
+      "lotName": "122222",
+      "note": "",
+      "barcodeNumber": "100508",
+      "userName": "管理员2",
+      "action": "specialoutbound"
     }
   ],
-  "total": 6,
-  "page": 1,
-  "pagesize": 10,
-  "totalpages": 1
+  "totalPage": 13,
+  "totalCount": 121
 }
 ```
 
@@ -1366,88 +1766,20 @@ GET /operation/show/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||none|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|[object]|true|none||none|
 |»» id|integer|true|none||none|
-|»» reagentid|integer|true|none||none|
-|»» lotid|integer|true|none||none|
-|»» reagentname|string|true|none||none|
-|»» lotname|string|true|none||none|
-|»» barcodenumber|string|true|none||none|
-|»» operation_action|string|true|none||none|
-|»» using|boolean|true|none||none|
-|»» userid|integer|true|none||none|
-|»» username|string|true|none||none|
-|» total|integer|true|none||none|
-|» page|integer|true|none||none|
-|» pagesize|integer|true|none||none|
-|» totalpages|integer|true|none||none|
+|»» createTime|string|true|none||none|
+|»» reagentName|string|true|none||none|
+|»» lotName|string|true|none||none|
+|»» note|string|true|none||none|
+|»» barcodeNumber|string|true|none||none|
+|»» userName|string|true|none||none|
+|»» action|string|true|none||none|
+|» totalPage|integer|true|none||none|
+|» totalCount|integer|true|none||none|
 
-## PUT 操作删除
-
-PUT /operation/del/
-
-> Body 请求参数
-
-```json
-{
-  "id": 2
-}
-```
-
-### 请求参数
-
-|名称|位置|类型|必选|说明|
-|---|---|---|---|---|
-|body|body|object| 否 |none|
-|» id|body|integer| 否 |ID 编号|
-
-> 返回示例
-
-> 200 Response
-
-```json
-{
-  "status": 0,
-  "msg": "成功",
-  "data": {
-    "id": 2,
-    "reagentid": 2,
-    "lotid": 2,
-    "operation_action": "inbound",
-    "creation_time": "2025-06-06T14:32:34.329Z",
-    "using": false,
-    "barcodenumber": "10002",
-    "username": "夕俊杰"
-  }
-}
-```
-
-### 返回结果
-
-|状态码|状态码含义|说明|数据模型|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
-
-### 返回数据结构
-
-状态码 **200**
-
-|名称|类型|必选|约束|中文名|说明|
-|---|---|---|---|---|---|
-|» status|integer|true|none||状态|
-|» msg|string|true|none||none|
-|» data|object|true|none||none|
-|»» id|integer|true|none||none|
-|»» reagentid|integer|true|none||none|
-|»» lotid|integer|true|none||none|
-|»» operation_action|string|true|none||none|
-|»» creation_time|string|true|none||none|
-|»» using|boolean|true|none||none|
-|»» barcodenumber|string|true|none||none|
-|»» username|string|true|none||none|
-
-## GET 库存列出
+## GET 统计列出
 
 GET /inventory/show/
 
@@ -1457,7 +1789,7 @@ GET /inventory/show/
 |---|---|---|---|---|
 |page|query|integer| 否 |none|
 |pagesize|query|number| 否 |none|
-|only_warn|query|boolean| 否 |none|
+|reagentname|query|string| 否 |none|
 
 > 返回示例
 
@@ -1466,25 +1798,44 @@ GET /inventory/show/
 ```json
 {
   "status": 0,
-  "msg": "成功",
+  "message": "查询成功",
   "data": [
     {
-      "id": 1,
-      "reagentid": 16,
-      "lotid": 42,
-      "reagentname": "测试试剂",
-      "lotname": "测试批号",
-      "inventory_number": 0,
-      "last_outbound_time": "2025-06-09T10:59:29.205Z",
-      "warn_time": "2025-06-09T10:59:29.205Z",
-      "lastweek_outbound_number": 0,
-      "warn_number": 0
+      "id": 9,
+      "reagentName": "90",
+      "lotName": "122222",
+      "number": 1,
+      "reagentWarnNumber": 0,
+      "lotExpirationDate": "2025-08-21T15:59:59",
+      "specifications": "",
+      "warning": "",
+      "warnNumber": 0
+    },
+    {
+      "id": 8,
+      "reagentName": "90",
+      "lotName": "默认90",
+      "number": 1,
+      "reagentWarnNumber": 0,
+      "lotExpirationDate": "2026-06-19T22:53:44.7688877",
+      "specifications": "",
+      "warning": "",
+      "warnNumber": 0
+    },
+    {
+      "id": 4,
+      "reagentName": "ALT1",
+      "lotName": "默认ALT",
+      "number": 0,
+      "reagentWarnNumber": 0,
+      "lotExpirationDate": "2026-06-17T12:36:29.3636027",
+      "specifications": "盒1",
+      "warning": "number",
+      "warnNumber": 0
     }
   ],
-  "total": 1,
-  "page": 1,
-  "pagesize": 10,
-  "totalpages": 1
+  "totalPage": 1,
+  "totalCount": 3
 }
 ```
 
@@ -1501,26 +1852,23 @@ GET /inventory/show/
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
 |» status|integer|true|none||none|
-|» msg|string|true|none||none|
+|» message|string|true|none||none|
 |» data|[object]|true|none||none|
-|»» id|integer|false|none||none|
-|»» reagentid|integer|false|none||none|
-|»» lotid|integer|false|none||none|
-|»» reagentname|string|false|none||none|
-|»» lotname|string|false|none||none|
-|»» inventory_number|integer|false|none||none|
-|»» last_outbound_time|string|false|none||none|
-|»» warn_time|string|false|none||none|
-|»» lastweek_outbound_number|integer|false|none||none|
-|»» warn_number|integer|false|none||none|
-|» total|integer|true|none||none|
-|» page|integer|true|none||none|
-|» pagesize|integer|true|none||none|
-|» totalpages|integer|true|none||none|
+|»» id|integer|true|none||none|
+|»» reagentName|string|true|none||none|
+|»» lotName|string|true|none||none|
+|»» number|integer|true|none||none|
+|»» reagentWarnNumber|integer|true|none||none|
+|»» lotExpirationDate|string|true|none||none|
+|»» specifications|string|true|none||none|
+|»» warning|string|true|none||none|
+|»» warnNumber|integer|true|none||none|
+|» totalPage|integer|true|none||none|
+|» totalCount|integer|true|none||none|
 
 ## PUT 验证库存
 
-PUT /inventory/audit/
+PUT /inventory/auditall/
 
 > Body 请求参数
 
@@ -1539,7 +1887,10 @@ PUT /inventory/audit/
 > 200 Response
 
 ```json
-{}
+{
+  "status": 0,
+  "message": "成功"
+}
 ```
 
 ### 返回结果
@@ -1549,6 +1900,54 @@ PUT /inventory/audit/
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
 
 ### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» status|integer|true|none||none|
+|» message|string|true|none||none|
+
+## GET 主界面板子
+
+GET /inventory/dashboard/
+
+> 返回示例
+
+> 200 Response
+
+```json
+{
+  "status": 0,
+  "message": "成功",
+  "data": {
+    "totalNum": 2,
+    "warningTotalNum": 0,
+    "warningNumNum": 2,
+    "warningExpNum": 0
+  }
+}
+```
+
+### 返回结果
+
+|状态码|状态码含义|说明|数据模型|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
+
+### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» status|integer|true|none||none|
+|» message|string|true|none||none|
+|» data|object|true|none||none|
+|»» totalNum|integer|true|none||none|
+|»» warningTotalNum|integer|true|none||none|
+|»» warningNumNum|integer|true|none||none|
+|»» warningExpNum|integer|true|none||none|
 
 ## GET 导出专用表格接口
 
@@ -1674,16 +2073,26 @@ GET /operation/show_exportToExcel/
 
 # 登录登出
 
-## GET 登录
+## POST 登录
 
-GET /loginout/login/
+POST /signinout/signin/
+
+> Body 请求参数
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
 
 ### 请求参数
 
 |名称|位置|类型|必选|说明|
 |---|---|---|---|---|
-|username|query|string| 否 |none|
-|password|query|string| 否 |none|
+|body|body|object| 否 |none|
+|» username|body|string| 是 |none|
+|» password|body|string| 是 |none|
 
 > 返回示例
 
@@ -1703,13 +2112,13 @@ GET /loginout/login/
 
 ## GET 登出
 
-GET /loginout/logout/
+GET /signinout/signout
 
 ### 请求参数
 
 |名称|位置|类型|必选|说明|
 |---|---|---|---|---|
-|username|query|string| 否 |none|
+|Authorization|header|string| 否 |none|
 
 > 返回示例
 

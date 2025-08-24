@@ -3,7 +3,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace LabMangerAPI.RequestType;
+namespace LabMangerAPI.DTOs;
 
 
     /// 登录用户的请求模型

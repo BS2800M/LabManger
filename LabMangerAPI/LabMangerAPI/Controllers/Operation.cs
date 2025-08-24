@@ -1,6 +1,6 @@
 ﻿namespace LabMangerAPI.Controllers;
 
-using RequestType;
+using LabMangerAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Validator;   
 using Microsoft.AspNetCore.Authorization;

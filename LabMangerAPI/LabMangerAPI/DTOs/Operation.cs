@@ -2,9 +2,9 @@
 
 
 using System.ComponentModel.DataAnnotations;
+using LabMangerAPI.DTOs.Common;
 
-
-namespace LabMangerAPI.RequestType;
+namespace LabMangerAPI.DTOs;
 
 public class RequestOperation
 {
@@ -37,19 +37,12 @@ public class RequestOperation
         public String Note { get; set; } = "";
     }
 
-    public class Show
+    public class Show : TimeRangePaginationDto
     {
         /// 搜索的试剂名称 支持模糊搜索
         public string? ReagentName { get; set; } = "";
         
         public string? BarcodeNumber { get; set; } = "";
-        public DateTime? StartTime { get; set; }
-        public DateTime? EndTime { get; set; }
-        /// 页码
-        [Range(1, int.MaxValue, ErrorMessage = "页码必须大于0")] public int Page { get; set; } = 1;
-
-        /// 每页大小
-        [Range(1, 1000, ErrorMessage = "每页大小必须在1-1000之间")] public int PageSize { get; set; } = 10;
     }
 
     public class Del
@@ -97,13 +90,8 @@ public class ResponseOperation
         public List<string> Message { get; set; } =new List<string>();
 
     }
-    public class Show
+    public class Show : PaginatedResponse<ShowData>
     {
-        public int Status { get; set; } = -1;
-        public string Message { get; set; } = "";
-        public List<ShowData>? Data { get; set; } 
-        public int TotalPage { get; set; }
-        public int TotalCount { get; set; }
 
     }
     public class ShowData
@@ -120,10 +108,8 @@ public class ResponseOperation
         
     }
     
-    public class Del
+    public class Del : ApiResponse
     {
-        public int Status { get; set; } = -1;
-        public string Message { get; set; } = "";
         
     }
 

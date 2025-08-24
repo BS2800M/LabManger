@@ -1,4 +1,4 @@
-using LabMangerAPI.SugarSql;
+using LabMangerAPI.Data;
 using LabMangerAPI.Validator;
 using LabMangerAPI.Repository;
 using LabMangerAPI.Service;

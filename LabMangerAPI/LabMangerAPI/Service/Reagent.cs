@@ -1,9 +1,10 @@
 ﻿
 using LabMangerAPI.Repository;
-using LabMangerAPI.RequestType;
+using LabMangerAPI.DTOs;
 using SqlSugar;
 using System.Net;
-using LabMangerAPI.SugarSql;
+using LabMangerAPI.Data;
+using LabMangerAPI.Models;
 
 namespace LabMangerAPI.Service;
 using Validator;

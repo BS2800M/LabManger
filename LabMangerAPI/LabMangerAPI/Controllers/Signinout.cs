@@ -1,4 +1,4 @@
-﻿using LabMangerAPI.RequestType;
+﻿using LabMangerAPI.DTOs;
 using LabMangerAPI.Service;
 using Microsoft.AspNetCore.Mvc;
 

@@ -57,7 +57,7 @@
     <template #default>
       <div id="content1">
         <p>用户名</p>  
-        <el-input v-model="formData.username" style="width: 300px" placeholder="用户名"  />
+        <el-input v-model="formData.username"   @input="checkinput" style="width: 300px" placeholder="用户名"   />
         <p>密码</p>  
         <el-input v-model="formData.password" style="width: 300px" placeholder="密码" />
       </div>
@@ -65,7 +65,7 @@
         <p>角色</p>  
         <role_select v-model="formData.role" style="width: 300px" placeholder="角色" />
         <p>团队</p>  
-        <team_select v-model="formData.teamid" style="width: 300px" placeholder="团队" />
+        <team_select v-model="formData.teamid" @change="checkinput" style="width: 300px" placeholder="团队" />
       </div>
     </template>
     </el-drawer>
@@ -105,7 +105,7 @@ const formData = reactive({
 
 
 async function add_drawer(){
-  state.addbutton_disable=false
+  state.addbutton_disable=true
   state.addbutton_show=true
   state.updatebutton_show=false
   formData.id=null
@@ -130,7 +130,21 @@ async function edit_drawer(row){
   state.drawer=true
 }
 
+function checkinput(){
 
+  const validationRules = {
+  // 定义必填字段数组，包含需要验证的字段名
+  required: ['username','teamid','role']
+}
+// 使用some方法检查必填字段数组中是否存在无效字段
+const hasEmptyField = validationRules.required.some(field => {
+  const value = formData[field]
+  return value == null || value === ''
+})
+// 更新按钮禁用状态   
+state.updatebutton_disable = hasEmptyField
+state.addbutton_disable = hasEmptyField
+}
 
 async function user_show() {
     const data = await api_user_show(state)

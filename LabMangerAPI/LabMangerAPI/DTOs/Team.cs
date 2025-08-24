@@ -1,17 +1,19 @@
 ﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 using System.ComponentModel.DataAnnotations;
-using LabMangerAPI.SugarSql;
+using LabMangerAPI.Models;
+using LabMangerAPI.DTOs.Common;
 
-namespace LabMangerAPI.RequestType;
+namespace LabMangerAPI.DTOs;
 
 public class RequestTeam
 {
     /// 添加团队的请求模型
     public class Add
     {
+        [Required(ErrorMessage = "团队名称必须填写")]
         /// 团队名称
-        public string Name { get; set; } = "";
+        public string Name { get; set; } = null!;
 
         /// 联系电话
         [StringLength(50, ErrorMessage = "电话长度不能超过50个字符")]
@@ -25,19 +27,10 @@ public class RequestTeam
     }
 
     /// 查询团队的请求模型
-    public class Show
+    public class Show : SearchablePaginationDto
     {
-
         /// 搜索的团队名称 支持模糊搜索
         public string? Name { get; set; } = "";
-
-        /// 页码
-        [Range(1, int.MaxValue, ErrorMessage = "页码必须大于0")]
-        public int Page { get; set; } = 1;
-
-        /// 每页大小
-        [Range(1, 1000, ErrorMessage = "每页大小必须在1-1000之间")]
-        public int PageSize { get; set; } = 10;
     }
 
     public class Update
@@ -70,30 +63,20 @@ public class RequestTeam
 
 public class ResponseTeam
 {
-    public class Add
+    public class Add : ApiResponse<Team>
     {
-        public int Status { get; set; } = -1;
-        public string Message {get;set;} = "";
-        public Team? Data { get; set; } 
     }
 
-    public class Show
+    public class Show : PaginatedResponse<Team>
     {
-        public int Status { get; set; } = -1;
-        public string Message {get;set;} = "";
-        public List<Team>? Data { get; set; } 
-        public int TotalPage {get;set;}
-        public int TotalCount {get;set;}
     }
-    public class Update
+    
+    public class Update : ApiResponse<Team>
     {
-        public int Status { get; set; } = -1;
-        public string Message {get;set;} = "";
-        public Team? Data {get;set;}
     }
-    public class Del{
-        public int Status { get; set; } = -1;
-        public string Message {get;set;} = "";
+    
+    public class Del : ApiResponse
+    {
     }
 }
 

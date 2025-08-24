@@ -1,7 +1,7 @@
 ﻿
 using LabMangerAPI.Repository;
 using SqlSugar;
-using LabMangerAPI.RequestType;
+using LabMangerAPI.DTOs;
 namespace LabMangerAPI.Service;
 
 public class ServiceInventory

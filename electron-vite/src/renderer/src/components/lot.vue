@@ -3,7 +3,7 @@
         <div id="background2">
         <el-input 
             style="left:200px;top:10px;width:250px;" 
-            v-model="state.searchlot" 
+            v-model="state.name" 
             placeholder="搜索批号" 
             @input="lot_show" 
         />
@@ -54,7 +54,7 @@
     <template #default>
         <div id="content1">
         <p>批号数字</p>  
-        <el-input v-model="formData.name" style="width: 300px" placeholder="输入批号"  />
+        <el-input v-model="formData.name" @input="checkinput" style="width: 300px" placeholder="输入批号"  />
         <p>批号有效期</p>  
         <el-config-provider :locale=zhCn> 
           <el-date-picker 

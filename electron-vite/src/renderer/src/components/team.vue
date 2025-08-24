@@ -58,7 +58,7 @@
     <template #default>
       <div id="content1">
         <p>检验小组名称</p>  
-        <el-input v-model="formData.name" style="width: 300px" placeholder="检验小组名称"  />
+        <el-input v-model="formData.name" @input="checkinput" style="width: 300px" placeholder="检验小组名称"  />
         <p>联系电话</p>  
         <el-input v-model="formData.phone" style="width: 300px" placeholder="填写电话"  />
       </div>
@@ -104,7 +104,7 @@ const formData = reactive({
 })
 
 async function add_drawer(){
-  state.addbutton_disable=false
+  state.addbutton_disable=true
   state.addbutton_show=true
   state.updatebutton_show=false
   formData.id=null
@@ -151,6 +151,20 @@ async function team_add() {
     await team_show()
 }
 
+function checkinput(){
+  const validationRules = {
+  // 定义必填字段数组，包含需要验证的字段名
+  required: ['name']
+}
+// 使用some方法检查必填字段数组中是否存在无效字段
+const hasEmptyField = validationRules.required.some(field => {
+  const value = formData[field]
+  return value == null || value === ''
+})
+// 更新按钮禁用状态   
+state.updatebutton_disable = hasEmptyField
+state.addbutton_disable = hasEmptyField
+}
 
 
 

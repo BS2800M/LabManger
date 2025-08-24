@@ -5,6 +5,7 @@
           style="left:200px;top:10px;width:250px;" 
           v-model="state.name" 
           placeholder="搜索试剂名称" 
+        
           @input="reagent_show" 
         />
         <el-button 
@@ -57,7 +58,7 @@
     <template #default>
       <div id="content1">
         <p>试剂名称</p>  
-        <el-input v-model="formData.name" style="width: 300px" placeholder="输入试剂的名称"  />
+        <el-input v-model="formData.name" @input="checkinput" style="width: 300px" placeholder="输入试剂的名称"  />
         <p>试剂规格</p>  
         <el-input v-model="formData.specifications" style="width: 300px" placeholder="如：盒 箱 瓶"  />
         <p>试剂的储存环境</p>  
@@ -125,7 +126,7 @@ const formData = reactive({
 
 async function add_drawer(){
   state.drawer=true
-  state.addbutton_disable=false
+  state.addbutton_disable=true
   state.addbutton_show=true
   state.updatebutton_show=false
   state.editbox_disablegeneratelot=false
@@ -171,10 +172,11 @@ function checkinput() {
 // 使用some方法检查必填字段数组中是否存在无效字段
 const hasEmptyField = validationRules.required.some(field => {
   const value = formData[field]
-  return value == null
+  return value == null || value === ''
 })
 // 更新按钮禁用状态   
 state.updatebutton_disable = hasEmptyField
+state.addbutton_disable = hasEmptyField
 }
 
 
