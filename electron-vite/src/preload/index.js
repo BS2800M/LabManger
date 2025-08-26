@@ -3,8 +3,8 @@ const {contextBridge, ipcRenderer} =require('electron')
 const read_conf= ()=>{
 return ipcRenderer.invoke('read_conf')
 }
-const saveprinterconf=(printername,selectid,allowprint)=>{
-return ipcRenderer.invoke('save_printer',printername,selectid,allowprint)
+const saveprinterconf=(printername,selectid,allowprint,scale)=>{
+return ipcRenderer.invoke('save_printer',printername,selectid,allowprint,scale)
 }
 
 const gotoprint=(listdata)=>{

@@ -11,14 +11,16 @@ lerna-debug.log*
 /electron-vite/dist
 /electron-vite/electron-dist
 /electron-vite/out
-/electron-vite/dist
-
-
+/LabMangerAPI/LabMangerAPI/bin
+/LabMangerAPI/LabMangerAPI/obj
+/LabMangerAPI/LabMangerAPI/publish
 /fastify/node_modules
 db.sqlite3
 data.db
 /fastify/prisma/migrations
 /fastify/cilent
+release/
+
 
 # Editor directories and files
 .vscode/*

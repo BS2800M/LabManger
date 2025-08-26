@@ -16,37 +16,27 @@
 			</div>
 		</div>
 	</div>
-	<messagebox ref="messageboxRef"></messagebox>
 </template>
 
 <script setup>
 import {ref} from 'vue';
 import { useRouter } from 'vue-router'
-import { api_login } from '@/api/loginout';	
-import messagebox from '@/components/messagebox.vue'
+import { api_signin } from '@/api/signinout';	
 const router = useRouter()
 let username=ref("")
 let password=ref("")
 let backgrounblur=ref({filter:""})
-let messageboxRef=ref()
-function openmessagebox(a,b,c){
-  messageboxRef.value.openmessagebox(a,b,c)
+
+
+async function login(){
+    const data = await api_signin(username.value, password.value)
+    localStorage.token = data.token //储存token
+    localStorage.username = data.userName //储存用户
+    localStorage.teamname = data.teamName //储存用户id
+    localStorage.role = data.role //储存用户权限
+
+    router.push("/home")
 }
-
-function login(){
-	api_login(username.value,password.value)
-	.then(data=>{
-		localStorage.token=data.token //储存token
-		localStorage.username=data.username//储存用户
-		localStorage.teamname=data.teamname//储存用户id
-		router.push("/home")
-	})
-	.catch(err=>{
-		openmessagebox('error',err.response.data.msg,null)
-	})
-
-}
-
 </script>
   
   

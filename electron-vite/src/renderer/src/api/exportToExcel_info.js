@@ -1,7 +1,7 @@
 
 import {Workbook} from 'exceljs'
 import {api_operation_show_exportToExcel} from '@/api/operation'
-import {format_iso_YYYYMMDDHHmm} from '@/api/dateformat'
+import {format_iso_YYYYMMDDHHmm} from '@/utils/format'
 async function exportToExcel_info(){
     const teamname=localStorage.teamname
     const workbook = new Workbook()

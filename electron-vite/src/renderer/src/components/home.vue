@@ -11,6 +11,8 @@
         <el-select-v2 class="selectprinter"  placeholder="选择打印机" v-model="select_printerid" filterable :options="allprinter" style="width: 300px"  :height="500" @change="saveprinter_conf"/>
         <p>是否开启条码打印</p>
         <el-switch v-model="allow_print" size="large" active-text="开启"inactive-text="关闭"     @change="saveprinter_conf"/>
+        <p>条码打印大小</p>
+        <el-input-number v-model="scale_print" :min="1" :max="3" :step="0.1" style="width: 150px" @change="saveprinter_conf" />
       </div>
   </div>
 </template >
@@ -18,11 +20,12 @@
 
 <script setup>
 import {ref,onMounted, reactive} from 'vue'
-import { api_inventory_show } from '@/api/inventory'
+import { api_inventory_dashboard } from '@/api/inventory'
 
 let allprinter = ref([])
 let select_printerid=ref()
 let allow_print=ref()
+let scale_print=ref()
 let dashbord=reactive({
   total:0,
   warning_totalnum:0,
@@ -33,18 +36,22 @@ let dashbord=reactive({
 
 
 async function readprinters(){ 
-  let data=await myapi.read_conf()
-  let printerlist=data.printerlist
-  let i
-  for (i in printerlist){
-    allprinter.value.push({
-      label:printerlist[i].name,
-      value:i
+    let data = await myapi.read_conf()
+    if(data==null){
+      eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:"读取配置失败",action:null})
+      return
     }
-    )
-  }
-  select_printerid.value=data.select_printerid
-  allow_print.value=data.allow_print
+    let printerlist = data.printerlist
+    let i
+    for (i in printerlist){
+        allprinter.value.push({
+            label: printerlist[i].name,
+            value: i
+        })
+    }
+    select_printerid.value = data.select_printerid
+    allow_print.value = data.allow_print
+    scale_print.value = data.scale
 }
 
 
@@ -52,25 +59,23 @@ function saveprinter_conf(){
   let selectname=allprinter.value[select_printerid.value].label
   let selectid=select_printerid.value
   let allowprint=allow_print.value
-  myapi.saveprinterconf(selectname,selectid,allowprint)
+  let scale=scale_print.value
+  myapi.saveprinterconf(selectname,selectid,allowprint,scale)
 }
 
 async function readdashbord(){
-  let state={
-  inputsearchname: '',    // 输入搜索名称
-  page: 1,       // 当前页
-  totalpages: 1,        // 总页
-  pagesize:13
-  }
-  let data=await api_inventory_show(state)
-  dashbord.total=data.dashbord.total
-  dashbord.warning_totalnum=data.dashbord.warning_totalnum
-  dashbord.warning_numnum=data.dashbord.warning_numnum
-  dashbord.warning_expirnum=data.dashbord.warning_expirnum
+    let data = await api_inventory_dashboard()
+    dashbord.total = data.data.totalNum
+    dashbord.warning_totalnum = data.data.warningTotalNum
+    dashbord.warning_numnum = data.data.warningNumNum
+    dashbord.warning_expirnum = data.data.warningExpNum
 }
 
-onMounted(readprinters)
-onMounted(readdashbord)
+onMounted(()=>{
+  readprinters()
+  readdashbord()
+})
+
 </script>
 <style scoped>
 #background{
@@ -103,8 +108,8 @@ z-index: 0;
 #setting{
   position: absolute;
   width: 350px;
-  height:180px;
-  top: 520px;
+  height:270px;
+  top: 400px;
   left:250px;
   color: white;
   background-color:rgb(60, 83, 108);

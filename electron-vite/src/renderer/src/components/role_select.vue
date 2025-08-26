@@ -9,7 +9,7 @@ import { defineProps,watch } from 'vue';
 
 
 const allrolelist=ref([])
-const selectrole=reactive({selectid:"user"})
+const selectrole=reactive({selectid:0})
 const props = defineProps({
   modelValue: {
     required: true
@@ -19,10 +19,10 @@ const emit = defineEmits(['update:modelValue'])
 
 function list_AllRole(){
   allrolelist.value=[
-    {label:"组员",value:"user"},
-    {label:"组长",value:"team_leader"},
-    {label:"主任",value:"director"},
-    {label:"管理员",value:"admin"},
+    {label:"组员",value:0},
+    {label:"组长",value:1},
+    {label:"主任",value:2},
+    {label:"管理员",value:3},
   ]
 }
 

@@ -1,11 +1,17 @@
 <template>
     <div id="background" :style="null">  
       <div id="background2">
+        <el-input 
+          style="left:200px;top:10px;width:250px;" 
+          v-model="state.reagentname" 
+          placeholder="搜索试剂名称" 
+          @input="list_reagentnumber" 
+        />
         <el-pagination 
           background  
           layout="prev, pager, next"  
           v-model:current-page="state.page" 
-          :page-count="state.totalpages" 
+          :page-count="state.totalpage" 
           @change="list_reagentnumber" 
           style="position: absolute;left: 200px;top: 50px;"
         />
@@ -31,23 +37,48 @@
           header-cell-class-name="rowstyle"
           :row-class-name="tableRowClassName"
         >
-          <el-table-column prop="reagentname" label="试剂名称" min-width="150" show-overflow-tooltip/>
-          <el-table-column prop="lotname" label="批号" min-width="150" show-overflow-tooltip/>
-          <el-table-column prop="inventory_number" label="库存" min-width="100" show-overflow-tooltip/>
-          <el-table-column prop="warning_type" :sortable="true" label="警告类型" min-width="100" show-overflow-tooltip/>
-          <el-table-column prop="lastweek_outbound_number" label="上周出库数量" min-width="100" show-overflow-tooltip/>
-          <el-table-column prop="last_outbound_time" label="最后一次出库" min-width="200" :formatter="formatDateColumn" show-overflow-tooltip/>
+          <el-table-column prop="reagentName" label="试剂名称" min-width="130" show-overflow-tooltip/>
+          <el-table-column prop="lotName" label="批号" min-width="130" show-overflow-tooltip/>
+          <el-table-column prop="number" label="库存" min-width="80" show-overflow-tooltip/>
+          <el-table-column prop="specifications" label="规格" min-width="80" show-overflow-tooltip/>
+          <el-table-column prop="lotExpirationDate" label="有效期" min-width="150" :formatter="formatDateColumn" show-overflow-tooltip/>
+          <el-table-column prop="warnNumber" :sortable="true" label="警告数量" min-width="100" show-overflow-tooltip/>
+          <el-table-column label="操作" min-width="120">
+          <template #default="scope">
+            <el-button size="small" type="primary" @click="state.drawer=true">统计</el-button>
+          </template>
+        </el-table-column>
         </el-table>
     </div>
+
+    <el-drawer v-model="state.drawer" direction="rtl" size="80%" >
+      <template #header>
+      <span >统计</span>
+    </template>
+      <template #footer>
+      <div style="flex: auto">
+        <el-button type="primary" @click="state.drawer=false">关闭</el-button>
+      </div>
+    </template>
+    <template #default>
+      <div style="width:800px; position: absolute; left: 50px;">
+        <statistics_chart  style="width: 800px; position:absolute; top: 0px; left: -10px;"> </statistics_chart>
+    </div>
+    </template>
+    </el-drawer>
 </template>
 <script setup>
 
 
-import {  onMounted, reactive, onUnmounted } from 'vue'
-import { formatDateColumn } from '@/api/dateformat.js'
+
+
+
+import {  ref, onMounted, reactive, onUnmounted } from 'vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
-import { api_inventory_show,api_inventory_audit } from '@/api/inventory'
+import { api_inventory_show,api_inventory_auditall } from '@/api/inventory'
 import {Workbook} from 'exceljs'
+import { formatDateColumn } from '@/utils/format'
+import statistics_chart from './statistics_chart.vue'
 
 
 
@@ -58,43 +89,43 @@ const state = reactive({
   inputsearchname: '',    // 输入搜索名称
   tableData: [],         // 表格数据，初始化为空数组
   page: 1,       // 当前页
-  totalpages: 1,        // 总页
-  pagesize:13
-})
+  totalpage: 1,        // 总页
+  pagesize:13,
+  reagentname:'',
+  drawer:false
+  })
 
 
 function tableRowClassName({ row,rowindex }) {
-  if (row.warning_status===true) {
-    return 'warning-row'
+  if (row.warning==="" || row.warning===null ) {
+    return 'success-row'
   }
-  return 'success-row'
+  return 'warning-row'
 }
 
 
 async function list_reagentnumber() {
-    api_inventory_show(state)
-        .then(function(data) {
-            state.tableData = data.data
-            state.totalpages = data.totalpages
-        })
+    const data = await api_inventory_show(state)
+    state.tableData = data.data
+    state.totalpage = data.totalPage
 }
 
 async function exportToExcel() {
-  state.pagesize = 1000000
+  state.pagesize = 1000
   let result = await api_inventory_show(state)
   state.pagesize = 10
   // 取出数据数组
   let exportData = result.data || []
   // 准备导出数据
   exportData = exportData.map(item => ({
-    '试剂名称': item.reagentname,
-    '批号': item.lotname,
+    '试剂名称': item.reagentName,
+    '批号': item.lotName,
     '规格': item.specifications,
-    '应库存': item.inventory_number,
+    '应库存': item.number,
     '实际库存': null,
-    '警告类型': item.warning_type,
-    '上周出库数量': item.lastweek_outbound_number,
-    '最后一次出库': formatDateColumn(null, null, item.last_outbound_time)
+    '有效期':item.lotExpirationDate,
+    '警告数量': item.warnNumber,
+
   }))
 
   // 使用 exceljs 创建工作簿和工作表
@@ -108,10 +139,9 @@ async function exportToExcel() {
     { header: '规格', key: '规格', width: 8 },
     { header: '应库存', key: '应库存', width: 8 },
     { header: '实际库存', key: '实际库存', width: 8 },
-    { header: '警告数量', key: '警告数量', width: 8 },
-    { header: '警告天数', key: '警告天数', width: 8 },
-    { header: '上周出库数量', key: '上周出库数量', width: 15 },
-    { header: '最后一次出库', key: '最后一次出库', width: 20 }
+    { header: '有效期', key: '实际库存', width: 8 },
+    { header: '警告数量', key: '实际库存', width: 8 },
+
   ]
 
   // 添加数据行
@@ -133,13 +163,8 @@ async function exportToExcel() {
 }
 
   async function inventory_audit(){
-    state.reagentid=-1
-    state.lotid=-1
-  api_inventory_audit(state).then(function(data){
-    list_reagentnumber()
-    state.reagentid=undefined
-    state.lotid=undefined
-  })
+    await api_inventory_auditall(state)
+    await list_reagentnumber()
 } 
 
 

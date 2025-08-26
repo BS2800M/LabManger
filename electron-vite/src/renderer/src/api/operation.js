@@ -24,15 +24,25 @@ return myrequest.post('/operation/special_outbound/',{
 
 export let api_operation_show=(body)=>{
 return myrequest.get('/operation/show/',{
-    reagentname:body.reagentname,
-    searchlater:body.searchlater,
-    searchearlier:body.searchearlier,
-    barcodenumber:body.barcodenumber,
+    reagentname:body.reagentName,
+    starttime:body.starttime,
+    endtime:body.endtime,
+    barcodenumber:body.barcodeNumber,
     page:body.page,
     pagesize:body.pagesize
     })
 }
 
+export let api_operation_update=(body)=>{
+    return myrequest.put('/operation/update/',{
+        id:body.id,
+        reagentid:body.reagentid,
+        lotid:body.lotid,
+        note:body.note,
+        action:body.action,
+        createTime:body.createTime,
+    })
+}
 export let api_operation_del=(deleteid)=>{
 return myrequest.put('/operation/del/',{
     id:deleteid

@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-LabManger 是一个基于 Vue.js + Electron 桌面应用和 Fastify 后端服务的实验室管理系统。该系统专门为实验室试剂管理而设计，提供完整的试剂入库、出库、库存管理、批次追踪、预警提醒等功能。
+LabManger 是一个基于 Vue.js + Electron 桌面应用和 ASP.NET Core 9.0 后端服务的实验室管理系统。该系统专门为实验室试剂管理而设计，提供完整的试剂入库、出库、库存管理、批次追踪、预警提醒等功能。
 
 ### 主要功能
 - 🔐 用户认证与权限管理
@@ -28,13 +28,14 @@ LabManger 是一个基于 Vue.js + Electron 桌面应用和 Fastify 后端服务
 - **条码生成**: jsbarcode
 - **Excel处理**: xlsx
 
-### 后端 (Fastify)
-- **框架**: Fastify 5.3.3
-- **数据库**: SQLite + Prisma ORM
-- **认证**: JWT (jsonwebtoken)
-- **日志**: Pino
-- **进程管理**: PM2
-- **开发工具**: TypeScript + tsx
+### 后端 (ASP.NET Core 9.0)
+- **框架**: ASP.NET Core 9.0
+- **数据库**: SQLite + SqlSugar ORM
+- **认证**: JWT Bearer Token
+- **API文档**: OpenAPI (Swagger)
+- **依赖注入**: 内置DI容器
+- **全局异常处理**: 自定义异常过滤器
+- **开发工具**: C# + .NET 9.0 SDK
 
 ## 项目结构
 
@@ -58,16 +59,18 @@ LabManger/
 │   │           └── App.vue      # 根组件
 │   ├── electron.vite.config.cjs # electron-vite 配置
 │   └── package.json         # 前端依赖配置
-├── fastify/                 # 后端服务
-│   ├── router/              # 路由定义
-│   ├── plugin/              # 插件
-│   ├── prisma/              # 数据库
-│   │   ├── schema.prisma    # 数据库模型
-│   │   ├── data.db          # SQLite 数据库文件
-│   │   └── migrations/      # 数据库迁移
-│   ├── types/               # TypeScript 类型定义
-│   ├── app.ts               # 应用入口
-│   └── package.json         # 后端依赖配置
+├── LabMangerAPI/            # 后端服务 (ASP.NET Core)
+│   ├── Controllers/         # API控制器
+│   ├── Service/             # 业务逻辑层
+│   ├── Repository/          # 数据访问层
+│   ├── Models/              # 实体模型
+│   ├── DTOs/                # 数据传输对象
+│   │   └── Common/          # 通用基类
+│   ├── Data/                # 数据库相关
+│   ├── Validator/           # 验证器
+│   ├── appsettings.json     # 配置文件
+│   └── Program.cs           # 应用入口
+├── old_fastify/             # 旧版Fastify后端（已废弃）
 ├── 项目接口api.md           # API 接口文档
 └── README.md                # 项目说明文档
 ```
@@ -76,66 +79,61 @@ LabManger/
 
 ### 核心数据模型
 
-#### 1. 团队 (team)
+#### 1. 团队 (Team)
 - 实验室小组信息管理
 - 包含名称、电话、备注等基本信息
 
-#### 2. 试剂 (reagent)
+#### 2. 试剂 (Reagent)
 - 试剂基本信息
 - 规格、价格、预警数量、存储条件等
 
-#### 3. 批次 (lot)
+#### 3. 批次 (Lot)
 - 试剂批次管理
 - 批号、有效期、关联试剂
 
-#### 4. 操作记录 (operation)
+#### 4. 操作记录 (Operation)
 - 所有入库、出库操作记录
 - 包含条码号、操作时间、操作用户等
 
-#### 5. 库存 (inventory)
+#### 5. 库存 (Inventory)
 - 实时库存信息
 - 出库统计、库存修正等
 
-#### 6. 用户 (user)
+#### 6. 用户 (User)
 - 用户账户管理
 - 权限控制、团队归属
 
 ## 安装与部署
 
 ### 环境要求
-- Node.js 20.x 或更高版本
-- npm 9.x 或更高版本
-- Windows 操作系统（支持 32 位架构）
+- **前端**: Node.js 20.x 或更高版本
+- **后端**: .NET 9.0 SDK 或更高版本
+- **操作系统**: Windows 10/11（支持 32 位架构）
 
 ### 后端部署
 
 1. **进入后端目录**
    ```bash
-   cd fastify
+   cd LabMangerAPI/LabMangerAPI
    ```
 
-2. **安装依赖**
+2. **还原NuGet包**
    ```bash
-   npm install
+   dotnet restore
    ```
 
-3. **初始化数据库**
+3. **构建项目**
    ```bash
-   npx prisma migrate deploy
+   dotnet build
    ```
 
-4. **生成测试数据（可选）**
-   ```bash
-   npx tsx scripts/generateData.ts
-   ```
-
-5. **启动服务**
+4. **运行项目**
    ```bash
    # 开发环境
-   npm run dev
+   dotnet run
    
    # 生产环境
-   npm start
+   dotnet run --environment Production
    ```
 
 ### 前端部署
@@ -168,22 +166,23 @@ LabManger/
 ## 配置说明
 
 ### 后端配置
-- 默认端口: 8000
-- 数据库: SQLite (prisma/data.db)
-- 环境变量: 通过 `.env` 文件配置
+- **默认端口**: 8000 (HTTP)
+- **开发端口**: 5057 (HTTP), 7246 (HTTPS)
+- **数据库**: SQLite (data.db)
+- **配置文件**: appsettings.json
 
 ### 前端配置
-- 开发服务器端口: 5173
-- 构建输出目录: `out/`
-- 配置文件: `conf.txt` (包含打印机配置、服务器地址等)
-- 应用图标: `icon.ico`
+- **开发服务器端口**: 5173
+- **构建输出目录**: `out/`
+- **配置文件**: `conf.txt` (包含打印机配置、服务器地址等)
+- **应用图标**: `icon.ico`
 
 ## 主要功能模块
 
 ### 1. 用户认证
 - 登录/登出功能
-- JWT Token 认证
-- 权限控制
+- JWT Bearer Token 认证
+- 基于角色的权限控制
 
 ### 2. 团队管理
 - 创建、编辑、删除团队
@@ -244,21 +243,22 @@ LabManger/
 5. 使用 TypeScript 进行类型检查
 
 ### 后端开发
-1. 使用 Fastify 框架
-2. Prisma ORM 进行数据库操作
-3. JWT 进行身份认证
+1. 使用 ASP.NET Core 9.0 框架
+2. SqlSugar ORM 进行数据库操作
+3. JWT Bearer Token 进行身份认证
 4. 统一的错误处理和响应格式
+5. 依赖注入和中间件模式
 
 ### 数据库操作
-1. 使用 Prisma 进行数据库迁移
+1. 使用 SqlSugar CodeFirst 进行数据库迁移
 2. 遵循数据库设计规范
 3. 建立合适的索引提高查询性能
 
 ## 部署说明
 
 ### 生产环境部署
-1. 后端使用 PM2 进行进程管理
-2. 启用多进程模式提高性能
+1. 后端使用 IIS 或 Kestrel 进行托管
+2. 启用 HTTPS 和反向代理
 3. 配置日志记录和错误处理
 4. 定期备份数据库
 
@@ -268,23 +268,41 @@ LabManger/
 3. 包含必要的依赖文件
 4. 配置应用图标和元信息
 
+## 架构优势
+
+### 技术栈优势
+- **高性能**: ASP.NET Core 9.0 提供优秀的性能表现
+- **类型安全**: C# 强类型语言，编译时错误检查
+- **简单部署**: 单文件部署，无需复杂的环境配置
+- **跨平台**: 支持 Windows、Linux、macOS
+- **丰富生态**: .NET 生态系统提供丰富的库和工具
+
+### 开发体验
+- **热重载**: 开发时自动重新编译和加载
+- **调试友好**: 强大的调试工具和错误信息
+- **代码生成**: 自动生成API文档和客户端代码
+- **依赖注入**: 内置DI容器，便于测试和维护
+
 ## 常见问题
 
-### 1. 数据库连接问题
-- 检查 `.env` 文件中的数据库路径配置
-- 确保 `prisma/data.db` 文件存在且有读写权限
+### 1. .NET SDK 相关问题
+- 确保安装了 .NET 9.0 SDK
+- 检查环境变量 PATH 配置
+- 使用 `dotnet --version` 验证安装
 
-### 2. 端口冲突
-- 修改后端配置文件中的端口设置
+### 2. 数据库连接问题
+- 检查 `appsettings.json` 中的数据库路径配置
+- 确保 `data.db` 文件存在且有读写权限
+- 验证 SqlSugar 连接字符串格式
+
+### 3. 端口冲突
+- 修改 `appsettings.json` 中的端口设置
 - 检查防火墙设置
+- 使用 `netstat -ano` 查看端口占用
 
-### 3. 打印机配置
+### 4. 打印机配置
 - 在 `conf.txt` 中配置正确的打印机名称
 - 确保打印机驱动已正确安装
-
-### 4. 条码扫描问题
-- 检查条码格式是否正确
-- 确保条码扫描器正常工作
 
 ### 5. electron-vite 相关问题
 - 确保 Node.js 版本 >= 20.x
@@ -293,7 +311,14 @@ LabManger/
 
 ## 更新日志
 
-### v2.0.0 (当前版本)
+### v3.0.0 (当前版本)
+- **后端重构**: 从 Fastify 迁移到 ASP.NET Core 9.0
+- **ORM 升级**: 从 Prisma 迁移到 SqlSugar
+- **架构优化**: 采用分层架构，提高代码可维护性
+- **通用基类**: 创建分页查询和API响应通用基类
+- **类型安全**: 使用 C# 强类型语言，提高代码质量
+
+### v2.0.0 (历史版本)
 - 使用 electron-vite 4.x 架构
 - 升级 Electron 到 27.x
 - 优化构建流程和开发体验

@@ -3,17 +3,15 @@
         <div id="background2">
             <span style=" position:absolute;width:150px;left:200px;top:20px;" >试剂</span>
             <div style=" position:absolute; width: 300px;left:250px;top:20px;">
-            <el-tree-select
-            v-model="tree.select"
-            lazy
-            style="width: 350px;"
-            :load="load_tree"
-            :props="tree.props" 
-            @change="get_id"
-            filterable
-            placeholder="搜索试剂名称"
-        />
+                <reagentlot_select v-model="formData.reagentlot" @change="checkinput" />
             </div>
+
+            <span style=" position:absolute;width:150px;left:650px;top:20px;" >注释</span>
+            <el-input 
+            style="position:absolute;width:200px;left:700px;top:20px;"
+            v-model="formData.note" 
+            placeholder="可填写注释" 
+            />
             <span style=" position:absolute;width:150px;left:200px;top:60px;" >数量</span>
             <el-input-number 
                 class="searchinput"  
@@ -21,12 +19,12 @@
                 :min="1" 
                 :max="9999" 
                 placeholder="0" 
-                @change="get_id"
+                @change="checkinput"
                 style=" position:absolute;width:150px;left:250px;top:60px;" 
             />
             <el-button 
                 type="success"  
-                :disabled="formData.editbox_disablebutton" 
+                :disabled="formData.disablebutton" 
                 @click="ready_inbound"
                 style=" position:absolute;left:250px;top:100px;"
             >准备入库</el-button>
@@ -39,10 +37,10 @@
             header-cell-class-name="rowstyle"
             height="480"
         >
-            <el-table-column prop="reagentid" label="试剂id" sortable min-width="200" show-overflow-tooltip/>
-            <el-table-column prop="reagentname" label="试剂名字" min-width="300" show-overflow-tooltip/>
-            <el-table-column prop="lot" label="批号" min-width="200" show-overflow-tooltip/>
+            <el-table-column prop="reagentname" label="试剂名字" min-width="150" show-overflow-tooltip/>
+            <el-table-column prop="lot" label="批号" min-width="150" show-overflow-tooltip/>
             <el-table-column prop="number" label="数量" min-width="100" show-overflow-tooltip/>  
+            <el-table-column prop="note" label="注释" min-width="100" show-overflow-tooltip/>
             <el-table-column label="操作" min-width="100" >
                 <template #default="scope">
                     <el-button size="small" type="danger" @click="delete_inbound(scope.row.rowsid)">删除</el-button>
@@ -60,63 +58,46 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import {  reactive} from 'vue'
 import { api_operation_inbound } from '@/api/operation'
-import { api_reagent_showall} from '@/api/reagent'
-import { api_lot_showall} from '@/api/lot'
+import reagentlot_select from './reagentlot_select.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/dist/index.css'
 import { h } from 'vue'
 // 组件引用
 // 使用reactive统一管理状态
 const formData = reactive({
-    number: 1, // 出库数量
-    editbox_disablebutton: true, // 是否禁用按钮 默认禁用
-    lot_selectvalue: null, // 选择批号下拉菜单对应的绑定值
-    reagentid: null, // 选择试剂下拉菜单对应的id
-    lotid: null, // 选择批号下拉菜单对应的id
-    reagentname:null,
-    lot:null,
-    tableData: [], // 表格数据
+    number:1,//数量
+    disablebutton: true, // 是否禁用按钮 默认禁用
+    reagentlot: {reagentid:null,lotid:null,reagentname:null,lotname:null}, // 选择试剂批号下拉菜单对应的id
+    tableData: [], // 表格数据  
 })
 
 
-let tree=reactive({
-    props : {
-    label: 'label',
-    children: 'children',
-    isLeaf: 'isLeaf',
-    },
-    searchname:undefined,
-    select:null,
-    value:0,
-    bufferdata:[]
-})
-
-
-function ready_inbound() {
+async function ready_inbound() {
         formData.tableData.push({
         rowsid: formData.tableData.length + 1,
-        reagentid: formData.reagentid,
-        reagentname: formData.reagentname,
-        lotid: formData.lotid,
-        lot: formData.lot,
+        reagentid: formData.reagentlot.reagentid,
+        reagentname: formData.reagentlot.reagentname,
+        lotid: formData.reagentlot.lotid,
+        lot: formData.reagentlot.lotname,
         number: formData.number,
+        note: formData.note,
     })
 }
 
-function inbound() {
-    api_operation_inbound(formData.tableData)
-        .then(data => {   
-            formData.tableData = []
-    ElMessage({
-        type: data.msg.includes("库存不足") ? "warning" : "success",
-        message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-        h('span', null, data.msg)]),
+async function inbound() {
+    const data = await api_operation_inbound(formData.tableData)
+    formData.tableData = []
+    for (let i in data.message) {
+        ElMessage({
+            type: data.message[i].includes("库存不足") ? "warning" : "success",
+            message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+                h('span', null, data.message[i])
+            ]),
         })
-        myapi.gotoprint(data.list)
-        })
-
+    }
+    myapi.gotoprint(data.data)
 }
 function delete_inbound(rowsid) {
     formData.tableData = formData.tableData.filter(item => item.rowsid !== rowsid)
@@ -125,61 +106,22 @@ function delete_inbound(rowsid) {
 
 
 
-function load_tree(node, resolve){
-
-    if (node.level===0){
-        api_reagent_showall().then(data=>{
-        let reagents=[]
-        for (let i in data.data){
-            reagents.push({label:data.data[i].name,
-                id:data.data[i].id,
-                value:++tree.value,
-                isLeaf:false
-            })
-        } 
-        resolve(reagents)
-    })
-    }
-    if (node.level===1){
-        let bufferparmas={reagentid:node.data.id}
-        api_lot_showall(bufferparmas).then(data=>{
-            let lots=[]
-            for (let i in data.data){
-            lots.push({label:data.data[i].name,
-                id:data.data[i].id,
-                value:++tree.value,
-                isLeaf:true,
-                reagentname:node.data.label,
-                reagentid:node.data.id
-            })
-        }
-        resolve(lots)
-        tree.bufferdata.push(...lots)
 
 
-        })
-    }
+
+
+
+function checkinput(){
+  // 检查必填字段
+  const hasEmptyField = 
+    !formData.reagentlot.reagentid || 
+    !formData.reagentlot.lotid || 
+    !formData.number
+  
+  // 更新按钮禁用状态   
+  formData.disablebutton = hasEmptyField
 }
 
-function get_id(selectedValue){
-   for (let i in tree.bufferdata){
-    if (tree.bufferdata[i].value===selectedValue){
-        formData.lotid=tree.bufferdata[i].id
-        formData.lot=tree.bufferdata[i].label
-        formData.reagentid=tree.bufferdata[i].reagentid
-        formData.reagentname=tree.bufferdata[i].reagentname
-        }
-   }
-   if (tree.select!==null && formData.number!==null){
-    formData.editbox_disablebutton=false
-   }
-   if (tree.select===null || formData.number===null){
-    formData.editbox_disablebutton=true
-   }
-}
-
-
-// 生命周期钩子
 
 </script>
 

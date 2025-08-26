@@ -7,14 +7,20 @@ var printWindow=null
 var listdata=null
 
 async function read_conf(){ //读取配置和打印机
- let data=fs.readFileSync('./conf.txt').toString()
- data=JSON.parse(data)
- let printerlist = await  mainWindow.webContents.getPrintersAsync()
- data.printerlist=printerlist
- return data
+  try{
+    let data=fs.readFileSync('./conf.txt').toString()
+    data=JSON.parse(data)
+    let printerlist = await  mainWindow.webContents.getPrintersAsync()
+    data.printerlist=printerlist
+    return data
+  }
+  catch(error){
+    console.log(error)
+    return null
+  }
 }
 
-async function saveconf(in_printername,in_select_printerid,in_allowprint) //保存配置
+async function saveconf(in_printername,in_select_printerid,in_allowprint,in_scale) //保存配置
 {
   let data= await read_conf()
   let writedata={}
@@ -22,12 +28,10 @@ async function saveconf(in_printername,in_select_printerid,in_allowprint) //保�
   writedata.printername=in_printername
   writedata.select_printerid=in_select_printerid
   writedata.allow_print=in_allowprint
+  writedata.scale=in_scale
   writedata=JSON.stringify(writedata);
   fs.writeFileSync('./conf.txt',writedata)
 }
-
-
-
 
 async function gotoprint(inputlistdata){  //打印数据传输给主进程 
   let printer=await read_conf()
@@ -67,7 +71,7 @@ function createWindow () {
     }
   })
   ipcMain.handle('read_conf',read_conf)
-  ipcMain.handle('save_printer',async (event,args1,args2,args3) =>{saveconf(args1,args2,args3)})
+  ipcMain.handle('save_printer',async (event,args1,args2,args3,args4) =>{saveconf(args1,args2,args3,args4)})
   ipcMain.handle('gotoprint',async(event,args)=>{gotoprint(args)}) //监听 用户界面发出准备打印的命令发送到主进程
   ipcMain.on('print', () =>{ printWindow.webContents.print(printOptions)}) //监听 printwindow渲染好的条码发送到主进程
 
