@@ -36,12 +36,7 @@ public class ServiceInventory
         };
     }
 
-
-
-
-
-
-
+    
     public  async Task<ResponseInventory.AuditAll> AuditAll(RequestInventory.AuditAll search)
     {
        var  alllist = await _repository.ShowAll();

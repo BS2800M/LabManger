@@ -182,4 +182,27 @@ public class RepositoryOperation
         return result;
 
     }
+    
+    public async Task<List<ResponseOperation.ExportToExcelDataListData>> ShowOperationExcel(int reagentid) //获取某个试剂的全部操作 用于表格导出
+    {
+        var result = await _db.Queryable<Operation>()
+            .Where(o=>o.Active==true && o.ReagentId==reagentid)
+            .LeftJoin<Lot>((o,l)=>l.Id == o.LotId)
+            .LeftJoin<User>((o,l,u)=>o.UserId == u.Id)
+            .OrderBy(o=>o.CreateTime, OrderByType.Desc)
+            .Select((o,l,u)=>new ResponseOperation.ExportToExcelDataListData
+            {
+                CreateTime = o.CreateTime,
+                LotId = o.LotId,
+                LotName = l.Name,
+                ExpirationDate = l.ExpirationDate,
+                UserName = u.UserName,
+                Action=o.Action,
+                InventoryNumber = 0, //数量由sevice层计算
+                InboundNumber = 0,
+                OutboundNumber = 0
+            })
+            .ToListAsync();
+        return result;
+    }
 }

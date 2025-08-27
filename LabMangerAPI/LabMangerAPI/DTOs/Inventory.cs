@@ -1,6 +1,5 @@
 ﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
 
-using System.ComponentModel.DataAnnotations;
 using LabMangerAPI.DTOs.Common;
 namespace LabMangerAPI.DTOs;
 
@@ -39,6 +38,7 @@ public class ResponseInventory
         public DateTime LotExpirationDate { get; set; }
         public string Specifications { get; set; } = "";
         
+
         public string Warning { get; set; } = "";
         
         public int WarnNumber { get; set; }

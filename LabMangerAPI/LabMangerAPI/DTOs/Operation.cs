@@ -68,6 +68,11 @@ public class RequestOperation
         public  int Id { get; set;}
     }
 
+    public class ExportToExcel
+    {
+        
+    }
+
 
 
 }
@@ -134,6 +139,35 @@ public class ResponseOperation
     public class Del : ApiResponse
     {
         
+    }
+
+    public class ExportToExcelDataListData
+    {
+        public DateTime CreateTime { get; set; } = DateTime.Now;
+        public int LotId { get; set; }
+        public string LotName { get; set; } = "";
+        public DateTime ExpirationDate {get; set;}= DateTime.Now;
+        public string UserName { get; set; } = "";
+        
+        public string Action { get; set; } = "";
+        public int InboundNumber { get; set; } = 0;
+        public int OutboundNumber { get; set; } = 0;
+        public int InventoryNumber { get; set; } = 0;
+    }
+
+    public class ExportToExcelData
+    {
+        public int ReagentId { get; set; }
+        public string ReagentName { get; set; } = "";
+        public string StorageCondition { get; set; } = "";
+        public string Manufacturer { get; set; } = "";
+        public List<ExportToExcelDataListData> OperationList { get; set; } = new List<ExportToExcelDataListData>();
+
+    }
+
+    public class ExportToExcel:ApiResponse
+    {
+        public List<ExportToExcelData> Data { get; set; } = new List<ExportToExcelData>();
     }
 
 }

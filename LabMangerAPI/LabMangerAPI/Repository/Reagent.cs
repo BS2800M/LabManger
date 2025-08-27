@@ -26,7 +26,7 @@ public class RepositoryReagent : ICrud<Reagent, Reagent, RequestReagent.Add, Req
             Specifications = body.Specifications,
             Price = body.Price,
             StorageCondition = body.StorageCondition,
-
+            
             Manufacturer = body.Manufacturer,
             Note = body.Note,
             WarnNumber = body.WarnNumber,

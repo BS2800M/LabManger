@@ -133,7 +133,9 @@ public class RepositoryInventory
     
     public async Task<List<Inventory>> ShowAll() //展示所有库存 不受任何限制
     {
-        var alllist =  _db.Queryable<Inventory>().ToListAsync();
+        var alllist =  _db.Queryable<Inventory>()
+            .Where(it => it.Reagent!.Active==true&&it.Lot!.Active==true)
+            .ToListAsync();
         return  await alllist;
 
     }

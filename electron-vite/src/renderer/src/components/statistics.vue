@@ -18,7 +18,7 @@
         <el-button 
           id="export"
           type="primary" 
-          @click="exportToExcel"
+          @click="inventory_exporttoexcel_list"
           style="position: absolute;left: 900px;top: 50px;"
           >
           导出盘库表</el-button>
@@ -76,7 +76,7 @@
 import {  ref, onMounted, reactive, onUnmounted } from 'vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { api_inventory_show,api_inventory_auditall } from '@/api/inventory'
-import {Workbook} from 'exceljs'
+import {inventory_exporttoexcel_list} from '@/utils/exportexcel'
 import { formatDateColumn } from '@/utils/format'
 import statistics_chart from './statistics_chart.vue'
 
@@ -110,57 +110,7 @@ async function list_reagentnumber() {
     state.totalpage = data.totalPage
 }
 
-async function exportToExcel() {
-  state.pagesize = 1000
-  let result = await api_inventory_show(state)
-  state.pagesize = 10
-  // 取出数据数组
-  let exportData = result.data || []
-  // 准备导出数据
-  exportData = exportData.map(item => ({
-    '试剂名称': item.reagentName,
-    '批号': item.lotName,
-    '规格': item.specifications,
-    '应库存': item.number,
-    '实际库存': null,
-    '有效期':item.lotExpirationDate,
-    '警告数量': item.warnNumber,
 
-  }))
-
-  // 使用 exceljs 创建工作簿和工作表
-  const workbook = new Workbook()
-  const worksheet = workbook.addWorksheet('盘库表')
-
-  // 添加表头
-  worksheet.columns = [
-    { header: '试剂名称', key: '试剂名称', width: 20 },
-    { header: '批号', key: '批号', width: 20 },
-    { header: '规格', key: '规格', width: 8 },
-    { header: '应库存', key: '应库存', width: 8 },
-    { header: '实际库存', key: '实际库存', width: 8 },
-    { header: '有效期', key: '实际库存', width: 8 },
-    { header: '警告数量', key: '实际库存', width: 8 },
-
-  ]
-
-  // 添加数据行
-  exportData.forEach(row => {
-    worksheet.addRow(row)
-  })
-
-  // 生成并下载 Excel 文件
-  const buffer = await workbook.xlsx.writeBuffer()
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `盘库表${new Date().toLocaleDateString()}.xlsx`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  window.URL.revokeObjectURL(url)
-}
 
   async function inventory_audit(){
     await api_inventory_auditall(state)

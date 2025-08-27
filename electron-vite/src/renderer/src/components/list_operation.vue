@@ -47,7 +47,7 @@
             <el-button 
                 id="export"
                 type="primary" 
-                @click="exportToExcel"
+                @click="operation_exporttoexcel_list"
                 style="position:absolute;left:1000px;top:50px;"
             >
                 导出记录(列表版)
@@ -55,7 +55,7 @@
             <el-button 
                 id="export"
                 type="primary" 
-                @click="exportToExcel_info"
+                @click="operation_exporttoexcel_info"
                 style="position:absolute;left:800px;top:50px;"
             >
                 导出记录(信息版)
@@ -131,10 +131,9 @@
   import { api_operation_show,api_operation_del,api_operation_update } from '@/api/operation'
   import { toRaw } from 'vue';
   import {formatDateColumn,getnowtime,getnowtime_previousmonth} from '@/utils/format'
-  import {Workbook} from 'exceljs'
   import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
   import {format_YYYYMMDDHHmm_iso} from '@/utils/format'
-  import {exportToExcel_info } from '@/api/exportToExcel_info.js'
+  import {operation_exporttoexcel_info,operation_exporttoexcel_list } from '@/utils/exportexcel.js'
   import get_permission from '@/utils/permission'
   // 状态管理
   const state = reactive({
@@ -220,56 +219,8 @@ async function operation_show(){
     await api_operation_del(id)
     operation_show()
   }
-  async  function exportToExcel() {
-    state.pagesize = 1000 // 设置为最大值
+  
 
-    let result = await api_operation_show(state)
-    state.pagesize = 10 // 恢复默认值
-    // 取出数据数组
-    let exportData = result.data || []
-    // 准备导出数据
-    exportData = exportData.map(item => ({
-      '时间': formatDateColumn(null, null, item.createTime),
-      '试剂名称': item.reagentName,
-      '批号': item.lotName,
-      '动作': item.action,
-      '用户': item.userName,
-      '条码号': item.barcodeNumber,
-      '注释': item.note
-    }))
-
-    // 使用 exceljs 创建工作簿和工作表
-    const workbook = new Workbook()
-    const worksheet = workbook.addWorksheet('操作记录')
-
-    // 添加表头
-    worksheet.columns = [
-      { header: '时间', key: '时间', width: 30 },
-      { header: '试剂名称', key: '试剂名称', width: 30 },
-      { header: '批号', key: '批号', width: 20 },
-      { header: '动作', key: '动作', width: 10 },
-      { header: '用户', key: '用户', width: 10 },
-      { header: '条码号', key: '条码号', width: 20 },
-      { header: '注释', key: '注释', width: 40 }
-    ]
-
-    // 添加数据行
-    exportData.forEach(row => {
-      worksheet.addRow(row)
-    })
-
-    // 生成并下载 Excel 文件
-    const buffer = await workbook.xlsx.writeBuffer()
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `操作记录${new Date().toLocaleDateString()}.xlsx`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
-  }
 
 </script>
   <style scoped>

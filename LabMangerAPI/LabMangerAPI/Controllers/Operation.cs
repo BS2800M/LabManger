@@ -54,7 +54,12 @@ public class OperationController : ControllerBase
     {
         return await _operationService.Del(body);
     }
-    
+
+    [HttpGet("exporttoexcel")]
+    public async Task<ResponseOperation.ExportToExcel> ExportToExcel()
+    {
+        return await _operationService.ExportToExcel();
+    }
     
     
     

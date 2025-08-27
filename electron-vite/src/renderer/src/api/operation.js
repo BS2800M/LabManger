@@ -49,7 +49,7 @@ return myrequest.put('/operation/del/',{
     })
 }
 
-export let api_operation_show_exportToExcel=(body)=>{
-return myrequest.get('/operation/show_exportToExcel/',{
+export let api_operation_exporttoexcel=(body)=>{
+return myrequest.get('/operation/exporttoexcel/',{
     })
 }
