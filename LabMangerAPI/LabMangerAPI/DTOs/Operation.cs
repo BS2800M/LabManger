@@ -70,6 +70,8 @@ public class RequestOperation
 
     public class ExportToExcel
     {
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 50;
         
     }
 
@@ -143,6 +145,7 @@ public class ResponseOperation
 
     public class ExportToExcelDataListData
     {
+        public int ReagentId { get; set; } = 0; // 添加试剂ID用于分组
         public DateTime CreateTime { get; set; } = DateTime.Now;
         public int LotId { get; set; }
         public string LotName { get; set; } = "";

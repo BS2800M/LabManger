@@ -295,7 +295,8 @@ POST /user/add/
 {
   "username": "宰国芳",
   "password": "10086",
-  "permission": "officia adipisicing ut fugiat ut"
+  "teamid": 1,
+  "role": 0
 }
 ```
 
@@ -307,7 +308,16 @@ POST /user/add/
 |» username|body|string| 是 |none|
 |» password|body|string| 是 |none|
 |» teamid|body|integer| 是 |none|
-|» role|body|string| 是 |none|
+|» role|body|integer| 否 |none|
+
+#### 枚举值
+
+|属性|值|
+|---|---|
+|» role|0|
+|» role|1|
+|» role|2|
+|» role|3|
 
 > 返回示例
 
@@ -1508,6 +1518,89 @@ POST /operation/special_outbound/
 |» status|integer|true|none||状态|
 |» message|[string]|true|none||none|
 
+## PUT 操作修改
+
+PUT /operation/update/
+
+> Body 请求参数
+
+```json
+{
+  "id": 9,
+  "reagentid": 69,
+  "lotid": 16,
+  "createtime": "2025-08-24T11:04:52.563",
+  "action": "inbound",
+  "note": "修改后"
+}
+```
+
+### 请求参数
+
+|名称|位置|类型|必选|说明|
+|---|---|---|---|---|
+|Authorization|header|string| 否 |Bearer {{token}}|
+|body|body|object| 否 |none|
+|» id|body|integer| 否 |ID 编号|
+|» reagentid|body|integer| 是 |none|
+|» lotid|body|integer| 是 |none|
+|» createtime|body|string(date-time)| 是 |none|
+|» action|body|string| 是 |none|
+|» note|body|string| 是 |none|
+
+> 返回示例
+
+> 200 Response
+
+```json
+{
+  "status": 0,
+  "message": "更新成功",
+  "data": {
+    "id": 10,
+    "name": "ASO试剂",
+    "specifications": "箱",
+    "price": 1000,
+    "storgeCondition": "常温",
+    "active": true,
+    "manufacturer": "迈瑞",
+    "note": "注释",
+    "warnNumber": 0,
+    "warnDays": 0,
+    "createTime": "2025-08-17T12:39:58.6364337+08:00",
+    "teamId": 1
+  }
+}
+```
+
+### 返回结果
+
+|状态码|状态码含义|说明|数据模型|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
+
+### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» status|integer|true|none||状态|
+|» message|string|true|none||none|
+|» data|object|true|none||none|
+|»» id|integer|true|none||none|
+|»» name|string|true|none||none|
+|»» specifications|string|true|none||none|
+|»» price|integer|true|none||none|
+|»» storgeCondition|string|true|none||none|
+|»» active|boolean|true|none||none|
+|»» manufacturer|string|true|none||none|
+|»» note|string|true|none||none|
+|»» warnNumber|integer|true|none||none|
+|»» warnDays|integer|true|none||none|
+|»» createTime|string|true|none||none|
+|»» teamId|integer|true|none||none|
+
 ## PUT 操作删除
 
 PUT /operation/del/
@@ -1951,7 +2044,14 @@ GET /inventory/dashboard/
 
 ## GET 导出专用表格接口
 
-GET /operation/show_exportToExcel/
+GET /operation/exporttoexcel/
+
+### 请求参数
+
+|名称|位置|类型|必选|说明|
+|---|---|---|---|---|
+|page|query|integer| 否 |none|
+|pagesize|query|integer| 否 |none|
 
 > 返回示例
 
@@ -1959,88 +2059,70 @@ GET /operation/show_exportToExcel/
 
 ```json
 {
-  "status": 0,
-  "msg": "成功",
   "data": [
     {
-      "reagentid": 160,
-      "reagentname": "醋酸2",
-      "storage_condition": "低温避光",
-      "operationlist": [
+      "reagentId": 2,
+      "reagentName": "add100",
+      "storageCondition": "",
+      "manufacturer": "",
+      "operationList": [
         {
-          "creation_time": "2025-06-14T17:07:17.715Z",
-          "lotid": 300,
-          "lotname": "LOT20200602636",
-          "lotexpiration_date": "2024-11-19T19:13:48.159Z",
-          "inventory_number": 60,
-          "inbound_number": 60,
-          "outbound_number": 0,
-          "username": "测试用户"
+          "createTime": "2025-08-26T21:35:24.509",
+          "lotId": 5,
+          "lotName": "LOT888",
+          "expirationDate": "2025-08-21T23:59:59",
+          "userName": "admin",
+          "action": "inbound",
+          "inboundNumber": 4,
+          "outboundNumber": 0,
+          "inventoryNumber": 4
         },
         {
-          "creation_time": "2025-06-14T17:08:02.507Z",
-          "lotid": 300,
-          "lotname": "LOT20200602636",
-          "lotexpiration_date": "2024-11-19T19:13:48.159Z",
-          "inventory_number": 130,
-          "inbound_number": 70,
-          "outbound_number": 0,
-          "username": "测试用户"
+          "createTime": "2025-08-25T23:02:47.069",
+          "lotId": 2,
+          "lotName": "lot100",
+          "expirationDate": "2026-06-26T00:52:46.418",
+          "userName": "",
+          "action": "inbound",
+          "inboundNumber": 1,
+          "outboundNumber": 0,
+          "inventoryNumber": 5
         }
       ]
     },
     {
-      "reagentid": 196,
-      "reagentname": "硝酸钠2",
-      "storage_condition": "阴凉干燥",
-      "operationlist": [
+      "reagentId": 1,
+      "reagentName": "测试试剂",
+      "storageCondition": "",
+      "manufacturer": "",
+      "operationList": [
         {
-          "creation_time": "2025-06-14T17:07:17.715Z",
-          "lotid": 476,
-          "lotname": "LOT20210719045",
-          "lotexpiration_date": "2025-07-15T06:48:33.734Z",
-          "inventory_number": 50,
-          "inbound_number": 50,
-          "outbound_number": 0,
-          "username": "测试用户"
-        }
-      ]
-    },
-    {
-      "reagentid": 258,
-      "reagentname": "硫酸钼2",
-      "storage_condition": "-80℃超低温",
-      "operationlist": [
+          "createTime": "2025-08-25T20:43:25.951",
+          "lotId": 4,
+          "lotName": "LOT777",
+          "expirationDate": "2025-08-13T23:59:59",
+          "userName": "",
+          "action": "inbound",
+          "inboundNumber": 1,
+          "outboundNumber": 0,
+          "inventoryNumber": 1
+        },
         {
-          "creation_time": "2025-06-14T17:07:17.715Z",
-          "lotid": 262,
-          "lotname": "LOT20220515068",
-          "lotexpiration_date": "2026-01-21T00:04:22.704Z",
-          "inventory_number": 40,
-          "inbound_number": 40,
-          "outbound_number": 0,
-          "username": "测试用户"
-        }
-      ]
-    },
-    {
-      "reagentid": 289,
-      "reagentname": "硝酸铪2",
-      "storage_condition": "阴凉干燥",
-      "operationlist": [
-        {
-          "creation_time": "2025-06-14T17:07:17.715Z",
-          "lotid": 492,
-          "lotname": "LOT20220717678",
-          "lotexpiration_date": "2025-02-13T21:50:52.866Z",
-          "inventory_number": 30,
-          "inbound_number": 30,
-          "outbound_number": 0,
-          "username": "测试用户"
+          "createTime": "2025-08-25T19:44:29.159",
+          "lotId": 1,
+          "lotName": "lot800",
+          "expirationDate": "2026-06-25T19:44:22.552",
+          "userName": "",
+          "action": "inbound",
+          "inboundNumber": 1,
+          "outboundNumber": 0,
+          "inventoryNumber": 2
         }
       ]
     }
-  ]
+  ],
+  "status": 0,
+  "message": "成功"
 }
 ```
 
@@ -2056,20 +2138,23 @@ GET /operation/show_exportToExcel/
 
 |名称|类型|必选|约束|中文名|说明|
 |---|---|---|---|---|---|
-|» status|integer|true|none||none|
-|» msg|string|true|none||none|
 |» data|[object]|true|none||none|
-|»» reagentid|integer|true|none||none|
-|»» reagentname|string|true|none||none|
-|»» storage_condition|string|true|none||none|
-|»» operationlist|[object]|true|none||none|
-|»»» creation_time|string|true|none||none|
-|»»» lotid|integer|true|none||none|
-|»»» lotname|string|true|none||none|
-|»»» lotexpiration_date|string|true|none||none|
-|»»» inventory_number|integer|true|none||none|
-|»»» inbound_number|integer|true|none||none|
-|»»» outbound_number|integer|true|none||none|
+|»» reagentId|integer|true|none||none|
+|»» reagentName|string|true|none||none|
+|»» storageCondition|string|true|none||none|
+|»» manufacturer|string|true|none||none|
+|»» operationList|[object]|true|none||none|
+|»»» createTime|string|true|none||none|
+|»»» lotId|integer|true|none||none|
+|»»» lotName|string|true|none||none|
+|»»» expirationDate|string|true|none||none|
+|»»» userName|string|true|none||none|
+|»»» action|string|true|none||none|
+|»»» inboundNumber|integer|true|none||none|
+|»»» outboundNumber|integer|true|none||none|
+|»»» inventoryNumber|integer|true|none||none|
+|» status|integer|true|none||none|
+|» message|string|true|none||none|
 
 # 登录登出
 
@@ -2099,7 +2184,14 @@ POST /signinout/signin/
 > 200 Response
 
 ```json
-{}
+{
+  "status": 0,
+  "message": "string",
+  "token": "string",
+  "userName": "string",
+  "teamName": "string",
+  "role": 0
+}
 ```
 
 ### 返回结果
@@ -2109,6 +2201,17 @@ POST /signinout/signin/
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
 
 ### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» status|integer|true|none||none|
+|» message|string|true|none||none|
+|» token|string|true|none||none|
+|» userName|string|true|none||none|
+|» teamName|string|true|none||none|
+|» role|integer|true|none||none|
 
 ## GET 登出
 

@@ -56,9 +56,9 @@ public class OperationController : ControllerBase
     }
 
     [HttpGet("exporttoexcel")]
-    public async Task<ResponseOperation.ExportToExcel> ExportToExcel()
+    public async Task<ResponseOperation.ExportToExcel> ExportToExcel([FromQuery] RequestOperation.ExportToExcel query)
     {
-        return await _operationService.ExportToExcel();
+        return await _operationService.ExportToExcel(query);
     }
     
     

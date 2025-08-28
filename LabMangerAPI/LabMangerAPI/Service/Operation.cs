@@ -270,127 +270,123 @@ public class ServiceOperation
 
     private List<ResponseOperation.ExportToExcelDataListData> BuildExportExcelOperation(List<ResponseOperation.ExportToExcelDataListData> list) //业务逻辑 相同的操作合并起来
     {
-        List<ResponseOperation.ExportToExcelDataListData> mergedlist=new List<ResponseOperation.ExportToExcelDataListData>();
+        if (list.Count == 0)
+            return new List<ResponseOperation.ExportToExcelDataListData>();
+
+        List<ResponseOperation.ExportToExcelDataListData> mergedlist = new List<ResponseOperation.ExportToExcelDataListData>();
+        const double fiveSecondsMs = 5 * 1000;
+        
+        // 预定义动作类型枚举，避免重复字符串比较
+        int GetActionType(string action)
+        {
+            if (string.Equals(action, "inbound", StringComparison.OrdinalIgnoreCase))
+                return 1; // 入库
+            if (string.Equals(action, "outbound", StringComparison.OrdinalIgnoreCase) || 
+                string.Equals(action, "specialoutbound", StringComparison.OrdinalIgnoreCase))
+                return 2; // 出库
+            return 0; // 其他
+        }
+
         foreach (var item in list)
         {
             if (mergedlist.Count == 0)
             {
                 // 初始化计数
-                if (string.Equals(item.Action, "inbound", StringComparison.OrdinalIgnoreCase))
-                {
-                    item.InboundNumber = 1;
-                    item.OutboundNumber = 0;
-                }
-                else if (string.Equals(item.Action, "outbound", StringComparison.OrdinalIgnoreCase) || string.Equals(item.Action, "specialoutbound", StringComparison.OrdinalIgnoreCase))
-                {
-                    item.InboundNumber = 0;
-                    item.OutboundNumber = 1;
-                }
-                else
-                {
-                    item.InboundNumber = 0;
-                    item.OutboundNumber = 0;
-                }
-                // 库存 = 上一条库存(无则0) + 入库 - 出库
+                var actionType = GetActionType(item.Action);
+                item.InboundNumber = actionType == 1 ? 1 : 0;
+                item.OutboundNumber = actionType == 2 ? 1 : 0;
                 item.InventoryNumber = item.InboundNumber - item.OutboundNumber;
                 mergedlist.Add(item);
                 continue;
             }
 
             var last = mergedlist[mergedlist.Count - 1];
-            string Normalize(string action) => string.Equals(action, "specialoutbound", StringComparison.OrdinalIgnoreCase) ? "outbound" : action;
-            var lastAction = Normalize(last.Action);
-            var currentAction = Normalize(item.Action);
+            var lastActionType = GetActionType(last.Action);
+            var currentActionType = GetActionType(item.Action);
 
             var timeDiffMs = Math.Abs((item.CreateTime - last.CreateTime).TotalMilliseconds);
-            const double fiveSecondsMs = 5 * 1000;
 
-            if (timeDiffMs < fiveSecondsMs && item.LotId == last.LotId && string.Equals(currentAction, lastAction, StringComparison.OrdinalIgnoreCase))
+            if (timeDiffMs < fiveSecondsMs && item.LotId == last.LotId && lastActionType == currentActionType)
             {
-                // 符合条件：累加对应计数，并按公式更新库存（在最后一条上更新）
-                int delta = 0;
-                if (string.Equals(currentAction, "inbound", StringComparison.OrdinalIgnoreCase))
+                // 符合条件：累加对应计数
+                if (currentActionType == 1) // 入库
                 {
-                    last.InboundNumber = (last.InboundNumber == 0 ? 0 : last.InboundNumber) + 1;
-                    delta = 1;
+                    last.InboundNumber++;
+                    last.InventoryNumber++;
                 }
-                else if (string.Equals(currentAction, "outbound", StringComparison.OrdinalIgnoreCase))
+                else if (currentActionType == 2) // 出库
                 {
-                    last.OutboundNumber = (last.OutboundNumber == 0 ? 0 : last.OutboundNumber) + 1;
-                    delta = -1;
+                    last.OutboundNumber++;
+                    last.InventoryNumber--;
                 }
-                last.InventoryNumber = last.InventoryNumber + delta;
-                continue; //跳过
+                continue;
             }
 
-            // 不符合条件：开始新分组并初始化计数
-            if (string.Equals(item.Action, "inbound", StringComparison.OrdinalIgnoreCase))
-            {
-                item.InboundNumber = 1;
-                item.OutboundNumber = 0;
-            }
-            else if (string.Equals(item.Action, "outbound", StringComparison.OrdinalIgnoreCase) || string.Equals(item.Action, "specialoutbound", StringComparison.OrdinalIgnoreCase))
-            {
-                item.InboundNumber = 0;
-                item.OutboundNumber = 1;
-            }
-            else
-            {
-                item.InboundNumber = 0;
-                item.OutboundNumber = 0;
-            }
-            // 库存 = 上一条库存 + 当前入库 - 当前出库
-            var previousInventory = mergedlist[mergedlist.Count - 1].InventoryNumber;
-            item.InventoryNumber = previousInventory + item.InboundNumber - item.OutboundNumber;
+            // 不符合条件：开始新分组
+            var newActionType = GetActionType(item.Action);
+            item.InboundNumber = newActionType == 1 ? 1 : 0;
+            item.OutboundNumber = newActionType == 2 ? 1 : 0;
+            item.InventoryNumber = last.InventoryNumber + item.InboundNumber - item.OutboundNumber;
 
             mergedlist.Add(item);
         }
         return mergedlist;
-        
-
-
     }
 
-    public async Task<ResponseOperation.ExportToExcel> ExportToExcel() //导出专用表格版本
+      public async Task<ResponseOperation.ExportToExcel> ExportToExcel(RequestOperation.ExportToExcel query)
     {
         var search = new RequestReagent.Show
         {
             Name = "",
-            Page = 1,
-            PageSize = int.MaxValue
+            Page = query.Page,
+            PageSize = query.PageSize
         };
         RefAsync<int> totalcount = new RefAsync<int>();
         RefAsync<int> totalpage = new RefAsync<int>();
             
-       var reagentlist=await _repositoryReagent.Show(search, totalcount, totalpage);
-       var resultdata = new List<ResponseOperation.ExportToExcelData>();
-       foreach (var item in reagentlist) //更新每个列表的试剂信息
-       {
+        // 1. 获取当前页试剂
+        var reagentlist = await _repositoryReagent.Show(search, totalcount, totalpage);
+        
+        if (reagentlist.Count == 0)
+        {
+            return new ResponseOperation.ExportToExcel
+            {
+                Status = 0,
+                Message = "无数据",
+                Data = new List<ResponseOperation.ExportToExcelData>()
+            };
+        }
+        
+        // 2. 批量获取当前页试剂的操作记录（只查询需要的试剂ID）
+        var reagentIds = reagentlist.Select(r => r.Id).ToList();
+        var operations = await _repositoryoperation.ShowOperationsByReagentIds(reagentIds);
+        
+        // 3. 内存中分组处理
+        var resultdata = new List<ResponseOperation.ExportToExcelData>();
+        foreach (var reagent in reagentlist)
+        {
+            var reagentOperations = operations
+                .Where(op => op.ReagentId == reagent.Id)
+                .ToList();
+            
+            var mergedOperationList = BuildExportExcelOperation(reagentOperations);
+            
+            resultdata.Add(new ResponseOperation.ExportToExcelData{
+                ReagentId = reagent.Id,
+                ReagentName = reagent.Name,
+                StorageCondition = reagent.StorageCondition,
+                Manufacturer = reagent.Manufacturer,
+                OperationList = mergedOperationList,
+            });
+        }
+       
+        return new ResponseOperation.ExportToExcel
+        {
+            Status = 0,
+            Message = $"第{query.Page}页，共{totalpage.Value}页，每页{query.PageSize}条",
+            Data = resultdata,
+        };
 
-           var operationlist = await _repositoryoperation.ShowOperationExcel(item.Id);
-           var mergedOperationList = BuildExportExcelOperation(operationlist);
-           
-           
-           resultdata.Add(new ResponseOperation.ExportToExcelData{
-               ReagentId=item.Id,
-               ReagentName = item.Name,
-               StorageCondition = item.StorageCondition,
-               Manufacturer = item.Manufacturer,
-               OperationList = mergedOperationList,
-           });
-       }
-       
-       
-       
-       
-       return new ResponseOperation.ExportToExcel
-       {
-           Status = 0,
-           Message = "成功",
-           Data=resultdata,
-       };
     }
-
-
 
 }

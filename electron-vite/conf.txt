@@ -1,1 +1,1 @@
-{"baseurl":"http://127.0.0.1:5173/cross","printername":"导出为WPS PDF","select_printerid":"0","allow_print":true,"scale":2.4}
+{"baseurl":"http://127.0.0.1:5173/cross","printername":"导出为WPS PDF","select_printerid":"0","allow_print":false,"scale":2.4}

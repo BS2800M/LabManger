@@ -183,24 +183,31 @@ public class RepositoryOperation
 
     }
     
-    public async Task<List<ResponseOperation.ExportToExcelDataListData>> ShowOperationExcel(int reagentid) //获取某个试剂的全部操作 用于表格导出
+
+
+    // 新增：根据试剂ID列表批量查询操作记录（智能分页用） 导出表格用
+    public async Task<List<ResponseOperation.ExportToExcelDataListData>> ShowOperationsByReagentIds(List<int> reagentIds) 
     {
+        if (reagentIds == null || reagentIds.Count == 0)
+            return new List<ResponseOperation.ExportToExcelDataListData>();
+
         var result = await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true && o.ReagentId==reagentid)
-            .LeftJoin<Lot>((o,l)=>l.Id == o.LotId)
-            .LeftJoin<User>((o,l,u)=>o.UserId == u.Id)
-            .OrderBy(o=>o.CreateTime, OrderByType.Desc)
-            .Select((o,l,u)=>new ResponseOperation.ExportToExcelDataListData
+            .Where(o => o.Active == true && reagentIds.Contains(o.ReagentId))
+            .LeftJoin<Reagent>((o,r) => o.ReagentId == r.Id)
+            .LeftJoin<Lot>((o,r,l) => l.Id == o.LotId)
+            .LeftJoin<User>((o,r,l,u) => o.UserId == u.Id)
+            .Where((o,r,l,u) => r.Active == true)
+            .OrderBy(o => o.ReagentId, OrderByType.Asc)
+            .OrderBy(o => o.CreateTime, OrderByType.Asc)
+            .Select((o,r,l,u) => new ResponseOperation.ExportToExcelDataListData
             {
+                ReagentId = o.ReagentId,
                 CreateTime = o.CreateTime,
                 LotId = o.LotId,
                 LotName = l.Name,
                 ExpirationDate = l.ExpirationDate,
                 UserName = u.UserName,
-                Action=o.Action,
-                InventoryNumber = 0, //数量由sevice层计算
-                InboundNumber = 0,
-                OutboundNumber = 0
+                Action = o.Action,
             })
             .ToListAsync();
         return result;
