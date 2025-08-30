@@ -7,21 +7,34 @@
             placeholder="搜索批号" 
             @input="lot_show" 
         />
-        <el-button 
-            type="success" 
-            @click="add_drawer"
-            style=" position:absolute;left:1000px; top:50px;"
-        >增加批号</el-button>
         <el-pagination 
             background  
             layout="prev, pager, next"  
             v-model:current-page="state.page" 
             :page-count="state.totalpage" 
             @change="lot_show" 
-            style="position: absolute;left: 200px;top: 50px;"
+            style="position: absolute;left: 200px;top: 50px; "
         />
+        <div class="button-container">
+            <el-button 
+                type="success" 
+                @click="add_drawer"
+            >增加批号</el-button>
+            <el-button 
+                type="primary" 
+                @click="edit_drawer"
+            >修改批号</el-button>
+            <el-button 
+                type="danger" 
+                @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>lot_del(formData.id)})"
+            >删除批号</el-button>
+        </div>
+
         </div>
         <el-table
+            ref="tableRef"
+            highlight-current-row
+            @row-click="handleRowClick"
             :data="state.tableData"
             :default-sort="{ prop: 'date', order: 'descending' }"
             :style="{width:'calc(100vw - 205px)'}"
@@ -31,12 +44,6 @@
             <el-table-column prop="name" label="批号" min-width="150" show-overflow-tooltip/>
             <el-table-column prop="expirationDate" label="有效期" min-width="150" :formatter="formatDateColumn" show-overflow-tooltip/>
             <el-table-column prop="reagentName" label="所属试剂名称" min-width="100" show-overflow-tooltip/>
-            <el-table-column label="操作" min-width="100" show-overflow-tooltip>
-                <template #default="scope">
-                    <el-button size="small" type="primary" @click="edit_drawer(scope.row)">编辑</el-button>
-                    <el-button size="small" type="danger" @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>lot_del(scope.row.id)})">删除</el-button>
-                </template>
-            </el-table-column>
         </el-table>
     </div>
 
@@ -116,8 +123,34 @@ const formData = reactive({
 
 // 试剂列表数据
 const allreagentlist = ref([])
+const tableRef=ref(null)
+
+function handleRowClick(row, column, event) {
+  if(formData.id===row.id){
+    tableRef.value.setCurrentRow(null)
+    formData.id=null
+    formData.name=''
+    formData.expirationdate=null
+    formData.reagentid=null
+    formData.reagentname=''
+    formData.seletevalue=null
+  }
+  else{
+    formData.id=row.id
+    formData.name=row.name
+    formData.expirationdate=row.expirationDate
+    formData.reagentid=row.reagentId
+    formData.reagentname=row.reagentName
+    formData.seletevalue=null
+    tableRef.value.setCurrentRow(row)
+  }
+}
+
+
+
 
 async function add_drawer(){
+  tableRef.value.setCurrentRow(null)
   state.addbutton_disable=true
   state.addbutton_show=true
   state.updatebutton_show=false
@@ -132,21 +165,19 @@ async function add_drawer(){
 
 }
 
-async function edit_drawer(row){
+async function edit_drawer(){
+  if(formData.id){
   state.updatebutton_disable=true
   state.addbutton_disable=true
   state.addbutton_show=false
   state.updatebutton_show=true
   state.editbox_disable_selete=true
-  formData.id=row.id
-  formData.name=row.name
-  formData.expirationdate=row.expirationDate
-  formData.reagentid=row.reagentId
-  formData.reagentname=row.reagentName
-  formData.seletevalue=null
   checkinput()
   state.drawer=true
-
+  }
+  else{
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要修改的记录'})
+  }
 }
 
 
@@ -177,10 +208,15 @@ function checkinput(){
     state.tableData = data.data
     state.totalpage = data.totalPage
 }
-async function lot_del(id){
-    await api_lot_del(id)
+async function lot_del(){
+  if(formData.id){
+    await api_lot_del(formData.id)
     eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
     await lot_show()
+  }
+  else{
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要删除的记录'})
+  }
 }
 
 
@@ -229,6 +265,14 @@ onMounted(async () => {
     position: absolute;
     left: 200px;
     top: 100px;
+}
+
+.button-container {
+  position: absolute;
+  left: 800px;
+  top: 50px;
+  display: flex;
+  gap: 10px;
 }
 
 </style>

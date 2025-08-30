@@ -4,7 +4,7 @@
 </template>
 <script setup>
 import {  ref, onMounted,reactive} from 'vue';
-import { defineProps,watch } from 'vue';
+import { watch } from 'vue';
 
 
 
@@ -30,7 +30,7 @@ function changeselect(){
     emit('update:modelValue',selectrole.selectid)
 }
 
-
+function startwatch(){
 watch(() => props.modelValue,newValue => {
   for (let i in allrolelist.value){
     if (allrolelist.value[i].value==newValue){
@@ -38,12 +38,20 @@ watch(() => props.modelValue,newValue => {
       break
     }
   }
+},
+{
+  immediate:true
+}
+)
+}
+
+
+
+
+onMounted(()=>{
+  list_AllRole()
+  startwatch()
 })
-
-
-
-
-onMounted(list_AllRole)
 
 </script>
 

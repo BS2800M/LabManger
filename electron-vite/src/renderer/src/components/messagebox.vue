@@ -16,8 +16,8 @@
   </div>
 </template>
   
-  <script  setup>
-import {ref,reactive,defineExpose,onMounted,onUnmounted} from 'vue'
+<script  setup>
+import {ref,reactive,defineExpose,onMounted} from 'vue'
 let centerDialogVisible = ref(false)
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 let state=reactive({
@@ -37,6 +37,9 @@ if (state.type==='error'){
   state.action=()=>{
     centerDialogVisible.value=false
   }
+}
+if(state.type==='delete'){
+  state.title='删除'
 }
 }
 function closemessagebox(){

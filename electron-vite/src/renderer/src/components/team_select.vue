@@ -49,7 +49,7 @@ function start_watch(){
             break}
         }
       }
-    }, { immediate: false }) // 添加 immediate: true，确保组件挂载时立即执行
+    }, { immediate: true }) // 添加 immediate: true，确保组件挂载时立即执行
 }
 
 

@@ -58,7 +58,8 @@ async function expandNode() {
     } else if (props.modelValue.reagentid) {
         // 如果只有试剂，直接设置选中值
         status.select = `R-${props.modelValue.reagentid}`
-    }
+    } 
+    
 }
 
 async function load_tree(node, resolve) {
@@ -103,10 +104,11 @@ async function load_tree(node, resolve) {
     }
 }
 
-function changeselect(data) {
+function changeselect() {
     if (!status.select) return
     // 处理试剂选择
     if (typeof status.select === 'string' && status.select.startsWith('R-')) {
+        
         const id = Number(status.select.slice(2))
         const r = tree.allreagentlist.find(i => i.id === id)
         if (r) {
@@ -116,6 +118,7 @@ function changeselect(data) {
                 reagentname: r.label,
                 lotname: null
             })
+            
             emit('change')
         }
         return
@@ -134,10 +137,22 @@ function changeselect(data) {
             })
             emit('change')
         }
+
     }
 }
 
 watch(() => props.modelValue, async (newValue) => {
+
+    const r = tree.allreagentlist.find(i=>i.id===newValue.reagentid) //检查试剂是否存在
+    if(r==undefined){
+        status.select=null
+        return
+    }
+    const l = tree.alllotlist.find(i=>i.id===newValue.lotid) //检查批号是否存在 
+    if(l==undefined){
+        status.select=null
+        return
+    }
     if (newValue?.reagentid) {
         // 当有试剂ID时，主动展开节点
         await expandNode()

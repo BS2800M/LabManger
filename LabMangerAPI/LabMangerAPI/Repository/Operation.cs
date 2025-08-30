@@ -66,7 +66,7 @@ public class RepositoryOperation
     {
 
         int outcount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true && o.BarcodeNumber==barcodenumber && o.Action=="outbound")
+            .Where(o=>o.Active==true && o.BarcodeNumber==barcodenumber && o.Action==OperationAction.Outbound)
             .CountAsync();
         return outcount;
     }
@@ -74,7 +74,7 @@ public class RepositoryOperation
     {
 
         int outcount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true && o.ReagentId==reagentid && o.LotId==lotid &&o.Action=="outbound")
+            .Where(o=>o.Active==true && o.ReagentId==reagentid && o.LotId==lotid &&o.Action==OperationAction.Outbound)
             .CountAsync();
         return outcount;
     }
@@ -83,7 +83,7 @@ public class RepositoryOperation
     public async Task<int> InboundCount(string barcodenumber) //得出入库数量
     {
         int incount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true && o.BarcodeNumber==barcodenumber && o.Action=="inbound")
+            .Where(o=>o.Active==true && o.BarcodeNumber==barcodenumber && o.Action==OperationAction.Inbound)
             .CountAsync();
         return incount;
     }
@@ -91,7 +91,7 @@ public class RepositoryOperation
     public async Task<int> InboundCount(int reagentid ,int lotid) //得出入库数量
     {
         int incount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true && o.ReagentId==reagentid&&o.LotId==lotid && o.Action=="inbound")
+            .Where(o=>o.Active==true && o.ReagentId==reagentid&&o.LotId==lotid && o.Action==OperationAction.Inbound)
             .CountAsync();
         return incount;
     }
@@ -101,7 +101,7 @@ public class RepositoryOperation
     public Operation GetOperation(string barcodenumber)//输入条码号 查询对应的记录
     {
         var result =  _db.Queryable<Operation>()
-            .Single(o => o.Active == true && o.BarcodeNumber == barcodenumber && o.Action == "inbound");
+            .Single(o => o.Active == true && o.BarcodeNumber == barcodenumber && o.Action == OperationAction.Inbound);
         return result;
     }
     
@@ -146,18 +146,20 @@ public class RepositoryOperation
 
     public async Task<Operation> Update(RequestOperation.Update body) //修改操作
     {
-        var result = await _db.Updateable(new Operation
+    var result = await _db.Updateable<Operation>()
+        .SetColumns(it => new Operation
         {
-            Id = body.Id,
             TeamId = _userContext.TeamId,
             ReagentId = body.ReagentId,
             LotId = body.LotId,
             Action = body.Action,
             Note = body.Note,
             CreateTime = body.CreateTime,
-
-        }).ExecuteReturnEntityAsync();
-        return result;
+            BarcodeNumber = body.BarcodeNumber,
+        })
+        .Where(it => it.Id == body.Id)
+        .ExecuteReturnEntityAsync();
+    return result;
     }
 
     
@@ -175,10 +177,10 @@ public class RepositoryOperation
 
     public async Task<Operation> Del(int id) //删除
     {
-        var result= await _db.Updateable(new Operation {
-            Id= id,
-            Active = false,
-        }).ExecuteReturnEntityAsync();
+        var result= await _db.Updateable<Operation>()
+            .SetColumns(it => it.Active == false)
+            .Where(it => it.Id == id)
+            .ExecuteReturnEntityAsync();
         return result;
 
     }
@@ -188,7 +190,7 @@ public class RepositoryOperation
     // 新增：根据试剂ID列表批量查询操作记录（智能分页用） 导出表格用
     public async Task<List<ResponseOperation.ExportToExcelDataListData>> ShowOperationsByReagentIds(List<int> reagentIds) 
     {
-        if (reagentIds == null || reagentIds.Count == 0)
+        if (reagentIds.Count == 0)
             return new List<ResponseOperation.ExportToExcelDataListData>();
 
         var result = await _db.Queryable<Operation>()

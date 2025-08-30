@@ -29,8 +29,8 @@
   },
 
   "devDependencies": {
-    "electron": "^27.3.11",
-    "electron-builder": "^25.1.8"
+    "electron": "^21.4.4",
+    "electron-builder": "^24.9.1"
   },
   "main": "src/main/index.js",
   "build": {

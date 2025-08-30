@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using LabMangerAPI.Repository;
 using LabMangerAPI.DTOs;
+using LabMangerAPI.DTOs.Common;
 using LabMangerAPI.Data;
 using LabMangerAPI.Models;
 using SqlSugar;
@@ -34,7 +35,8 @@ public class ServiceOperation
         // 数据访问：查询操作详情
         var result=await _repositoryoperation.GetOperationsWithDetailsAsync(startId, endId);
         //更新库存
-        var messages=  await BuildInventoryUpdatesAsync(body);
+        var inventoryResults = await BuildInventoryUpdatesAsync(body);
+        var messages = inventoryResults.Select(r => r.Message).ToList();
         
         return new ResponseOperation.Inbound
         {
@@ -62,7 +64,7 @@ public class ServiceOperation
                     UserId = int.Parse(_userContext.UserId),
                     BarcodeNumber = GenerateBarcodeNumber(currentId), // 业务逻辑
                     Note = inbound.Note,
-                    Action = "inbound",
+                    Action = OperationAction.Inbound,
                     Active = true,
                     CreateTime = DateTime.Now
                 });
@@ -89,7 +91,7 @@ public class ServiceOperation
                     UserId = int.Parse(_userContext.UserId),
                     BarcodeNumber = GenerateBarcodeNumber(currentId), // 业务逻辑
                     Note = inbound.Note,
-                    Action = "specialoutbound",
+                    Action = OperationAction.Outbound,
                     Active = true,
                     CreateTime = DateTime.Now
                 });
@@ -104,29 +106,27 @@ public class ServiceOperation
         return (id + 100000).ToString();
     }
 
-    private async Task<List<string>> BuildInventoryUpdatesAsync(RequestOperation.Inbound body) //业务逻辑 入库更新库存
+    private async Task<List<InventoryUpdateResult>> BuildInventoryUpdatesAsync(RequestOperation.Inbound body) //业务逻辑 批量入库更新库存
     {
-        var tasks = new List<Task<string>>();
-            foreach (var inbound in body.InboundList)
-            {
-                tasks.Add(_repositoryInventory.UpdatePlus(inbound.ReagentId, inbound.LotId, inbound.Number));
-            }
+        var tasks = new List<Task<InventoryUpdateResult>>();
+        foreach (var inbound in body.InboundList)
+        {
+            tasks.Add(_repositoryInventory.UpdatePlus(inbound.ReagentId, inbound.LotId, inbound.Number));
+        }
 
-            var result= await Task.WhenAll(tasks);
-            return result.ToList();
-
+        var result = await Task.WhenAll(tasks);
+        return result.ToList();
     }
     
-    private async Task<List<string>> BuildInventoryUpdatesAsync(RequestOperation.SpecialOutbound body) //业务逻辑 出库更新库存
+    private async Task<List<InventoryUpdateResult>> BuildInventoryUpdatesAsync(RequestOperation.SpecialOutbound body) //业务逻辑 出库更新库存
     {
-        var tasks = new List<Task<string>>();
+        var tasks = new List<Task<InventoryUpdateResult>>();
         foreach (var inbound in body.OutboundList)
         {
             tasks.Add(_repositoryInventory.UpdatePlus(inbound.ReagentId, inbound.LotId, -(inbound.Number)));
         }
-        var result= await Task.WhenAll(tasks);
+        var result = await Task.WhenAll(tasks);
         return result.ToList();
-
     }
 
     public async Task<ResponseOperation.Outbound> Outbound(RequestOperation.Outbound body) //根据条码号出库
@@ -159,18 +159,18 @@ public class ServiceOperation
                     ReagentId = search.ReagentId,
                     LotId = search.LotId,
                     UserId = int.Parse(_userContext.UserId),
-                    Action = "outbound",
+                    Action = OperationAction.Outbound,
                     Active = true,
                     BarcodeNumber = search.BarcodeNumber,
                     Note = search.Note,
                     CreateTime = DateTime.Now
                 });
             await _repositoryoperation.CreateOperationsAsync(createlist);
-            var response= await _repositoryInventory.UpdatePlus(search.ReagentId, search.LotId, -1);
+            var response = await _repositoryInventory.UpdatePlus(search.ReagentId, search.LotId, -1);
             return new ResponseOperation.Outbound
             {
                 Status = 0,
-                Message = response,
+                Message = response.Message,
             };
         }
         throw new HttpRequestException("出库失败",null,HttpStatusCode.Forbidden);
@@ -178,9 +178,27 @@ public class ServiceOperation
 
     public async Task<ResponseOperation.SpecialOutbound> SpecialOutbound(RequestOperation.SpecialOutbound body) // 特殊出库
     {
-        var operations = await BuildOperationsAsync(body);
+
+        var inventoryResults = await BuildInventoryUpdatesAsync(body);
+        
+        // 使用结构化结果来优雅地处理库存不足的情况
+        var validOutboundItems = body.OutboundList
+            .Zip(inventoryResults, (outbound, result) => new { Outbound = outbound, Result = result })
+            .Where(item => item.Result.IsSuccess) // 使用结构化结果判断是否成功
+            .Select(item => item.Outbound)
+            .ToList();
+        
+        // 创建新的 body 对象，只包含有效的出库项
+        var filteredBody = new RequestOperation.SpecialOutbound
+        {
+            OutboundList = validOutboundItems
+        };
+        var operations = await BuildOperationsAsync(filteredBody);
         await _repositoryoperation.CreateOperationsAsync(operations);
-        var  messages= await BuildInventoryUpdatesAsync(body);
+
+        // 提取消息用于返回
+        var messages = inventoryResults.Select(r => r.Message).ToList();
+
         return new ResponseOperation.SpecialOutbound
         {
             Status = 1,
@@ -276,45 +294,32 @@ public class ServiceOperation
         List<ResponseOperation.ExportToExcelDataListData> mergedlist = new List<ResponseOperation.ExportToExcelDataListData>();
         const double fiveSecondsMs = 5 * 1000;
         
-        // 预定义动作类型枚举，避免重复字符串比较
-        int GetActionType(string action)
-        {
-            if (string.Equals(action, "inbound", StringComparison.OrdinalIgnoreCase))
-                return 1; // 入库
-            if (string.Equals(action, "outbound", StringComparison.OrdinalIgnoreCase) || 
-                string.Equals(action, "specialoutbound", StringComparison.OrdinalIgnoreCase))
-                return 2; // 出库
-            return 0; // 其他
-        }
 
         foreach (var item in list)
         {
             if (mergedlist.Count == 0)
             {
                 // 初始化计数
-                var actionType = GetActionType(item.Action);
-                item.InboundNumber = actionType == 1 ? 1 : 0;
-                item.OutboundNumber = actionType == 2 ? 1 : 0;
+                item.InboundNumber = item.Action == OperationAction.Inbound ? 1 : 0;
+                item.OutboundNumber = item.Action == OperationAction.Outbound ? 1 : 0;
                 item.InventoryNumber = item.InboundNumber - item.OutboundNumber;
                 mergedlist.Add(item);
                 continue;
             }
 
             var last = mergedlist[mergedlist.Count - 1];
-            var lastActionType = GetActionType(last.Action);
-            var currentActionType = GetActionType(item.Action);
 
             var timeDiffMs = Math.Abs((item.CreateTime - last.CreateTime).TotalMilliseconds);
 
-            if (timeDiffMs < fiveSecondsMs && item.LotId == last.LotId && lastActionType == currentActionType)
+            if (timeDiffMs < fiveSecondsMs && item.LotId == last.LotId && item.Action == last.Action)
             {
                 // 符合条件：累加对应计数
-                if (currentActionType == 1) // 入库
+                if (item.Action==OperationAction.Inbound ) // 入库
                 {
                     last.InboundNumber++;
                     last.InventoryNumber++;
                 }
-                else if (currentActionType == 2) // 出库
+                else if (item.Action==OperationAction.Outbound) // 出库
                 {
                     last.OutboundNumber++;
                     last.InventoryNumber--;
@@ -323,9 +328,8 @@ public class ServiceOperation
             }
 
             // 不符合条件：开始新分组
-            var newActionType = GetActionType(item.Action);
-            item.InboundNumber = newActionType == 1 ? 1 : 0;
-            item.OutboundNumber = newActionType == 2 ? 1 : 0;
+            item.InboundNumber = item.Action == OperationAction.Inbound ? 1 : 0;
+            item.OutboundNumber = item.Action == OperationAction.Outbound ? 1 : 0;
             item.InventoryNumber = last.InventoryNumber + item.InboundNumber - item.OutboundNumber;
 
             mergedlist.Add(item);

@@ -81,11 +81,10 @@ public class RepositoryLot : ICrud<Lot, ResponseLot.ShowData, RequestLot.Add, Re
     public async Task<bool> Del(RequestLot.Del body)
     {
         // 只负责数据删除，权限验证移到服务层
-        await _db.Updateable(new Lot
-        {
-            Id = body.Id,
-            Active = false,
-        }).ExecuteReturnEntityAsync();
+        await _db.Updateable<Lot>()
+            .SetColumns(it => it.Active == false)
+            .Where(it => it.Id == body.Id)
+            .ExecuteReturnEntityAsync();
         
         return true;
     }

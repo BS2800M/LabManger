@@ -55,10 +55,10 @@ public class RepositoryTeam:ICrud<Team,Team,RequestTeam.Add,RequestTeam.Show,Req
 
     public async Task<bool> Del(RequestTeam.Del body)
     {
-        await _db.Updateable(new  Team{
-            Id= body.Id,
-            Active = false,
-        }).ExecuteReturnEntityAsync();
+        await _db.Updateable<Team>()
+            .SetColumns(it => it.Active == false)
+            .Where(it => it.Id == body.Id)
+            .ExecuteReturnEntityAsync();
         return  true;
     }
 }

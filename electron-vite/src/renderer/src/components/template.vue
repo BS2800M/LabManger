@@ -5,15 +5,9 @@
           style="left:200px;top:10px;width:250px;" 
           v-model="state.name" 
           placeholder="搜索试剂名称" 
-        
+
           @input="reagent_show" 
         />
-        <el-button 
-          id="add" 
-          type="success" 
-          @click="add_drawer"
-          style=" position:absolute;left:1000px; top:50px;"
-        >增加模板</el-button>
         <el-pagination 
           background  
           layout="prev, pager, next"  
@@ -22,24 +16,44 @@
           @change="reagent_show" 
           style="position: absolute;left: 200px;top: 50px;"
         />
+        <div class="button-container">
+          <el-button 
+            id="add" 
+            type="success" 
+            @click="add_drawer"
+          >增加模板</el-button>
+
+          <el-button 
+            id="update" 
+            type="primary" 
+            @click="edit_drawer"
+          >修改模板</el-button>
+
+          <el-button 
+            id="delete" 
+            type="danger" 
+            @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>reagent_del(formData.id)})"
+          >删除模板</el-button>
+        </div>
+
       </div>
         <el-table
+          ref="tableRef"
+          highlight-current-row
+          @row-click="handleRowClick"
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
           :style="{width:'calc(100vw - 205px)'}"
           row-class-name="rowstyle"
           header-cell-class-name="rowstyle"
         >
+        
           <el-table-column prop="name" label="试剂名称" min-width="150" show-overflow-tooltip/>
           <el-table-column prop="specifications" label="规格" min-width="100" show-overflow-tooltip/>
           <el-table-column prop="manufacturer" label="生产厂家" min-width="100" show-overflow-tooltip/>
+          <el-table-column prop="storageCondition" label="储存环境" min-width="100" show-overflow-tooltip/>
           <el-table-column prop="note" label="备注" min-width="100" show-overflow-tooltip/>
-          <el-table-column label="操作" min-width="100">
-            <template #default="scope">
-              <el-button size="small" type="primary" @click="edit_drawer(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>reagent_del(scope.row.id)})">删除</el-button>
-            </template>
-          </el-table-column>
+  
         </el-table>
     </div>
 
@@ -82,12 +96,9 @@
       </div>
     </template>
     </el-drawer>
-
-
-
 </template>
 <script setup>
-import {  onMounted, reactive } from 'vue'
+import {  onMounted, reactive,ref } from 'vue'
 import { api_reagent_show,api_reagent_del,api_reagent_update,api_reagent_add } from '@/api/reagent'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { format_iso_YYYYMMDDHHmm } from '@/utils/format'
@@ -122,6 +133,39 @@ const formData = reactive({
   note:null,
   createTime:null
 })
+const tableRef = ref(null)
+function handleRowClick(row, column, event) {
+  if(formData.id===row.id){
+    tableRef.value.setCurrentRow(null)
+    formData.id=null
+    formData.name=''
+    formData.specifications=''
+    formData.storageCondition=''
+    formData.manufacturer=''
+    formData.warnNumber=0
+    formData.price=0
+    formData.warnDays=0
+    formData.generateLot=false
+    formData.note=''
+    formData.createTime=null
+    tableRef.value.setCurrentRow(null)
+  }
+  else{
+    formData.id=row.id
+    formData.name=row.name
+    formData.specifications=row.specifications
+    formData.storageCondition=row.storageCondition
+    formData.manufacturer=row.manufacturer
+    formData.warnNumber=row.warnNumber
+    formData.price=row.price
+    formData.warnDays=row.warnDays
+    formData.generateLot=row.generateLot
+    formData.note=row.note
+    formData.createTime= format_iso_YYYYMMDDHHmm(row.createTime)
+    tableRef.value.setCurrentRow(row)
+  }
+
+}
 
 
 async function add_drawer(){
@@ -140,28 +184,24 @@ async function add_drawer(){
   formData.generateLot=true
   formData.note=""
   formData.createTime=null
+  tableRef.value.setCurrentRow(null)
   state.drawer=true
 
 }
 
-async function edit_drawer(row){
+async function edit_drawer(){
+  if(formData.id){
   state.updatebutton_disable=false
   state.addbutton_disable=true
   state.addbutton_show=false
   state.updatebutton_show=true
   state.editbox_disablegeneratelot=true
-  formData.id=row.id
-  formData.name=row.name
-  formData.specifications=row.specifications
-  formData.storageCondition=row.storageCondition
-  formData.manufacturer=row.manufacturer
-  formData.warnNumber=row.warnNumber
-  formData.price=row.price
-  formData.warnDays=row.warnDays
-  formData.generateLot=row.generateLot
-  formData.note=row.note
-  formData.createTime= format_iso_YYYYMMDDHHmm(row.createTime)
+  
   state.drawer=true
+  }
+  else{
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要修改的记录'})
+  }
 }
 
 function checkinput() {
@@ -186,9 +226,14 @@ async function reagent_show() {
     state.totalpage = data.totalPage
 }
 async function reagent_del(id){
-  await api_reagent_del(id)
-  await reagent_show()
-  eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
+  if(formData.id){
+    await api_reagent_del(formData.id)
+    await reagent_show()
+    eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
+  }
+  else{
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要删除的记录'})
+  }
 }
 
 async function reagent_update() {
@@ -219,8 +264,13 @@ onMounted(async () => {
   left: 200px;
   top: 100px;
 }
-
-
+.button-container {
+  position: absolute;
+  left: 800px;
+  top: 50px;
+  display: flex;
+  gap: 10px;  /* 统一间距 */
+}
 </style>
 
 

@@ -50,6 +50,7 @@ public class ServiceInventory
 
        return new ResponseInventory.AuditAll
        {
+           
            Status = 0,
            Message = "成功"
        };

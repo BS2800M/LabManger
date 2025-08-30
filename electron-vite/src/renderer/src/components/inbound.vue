@@ -61,6 +61,7 @@
 import {  reactive} from 'vue'
 import { api_operation_inbound } from '@/api/operation'
 import reagentlot_select from './reagentlot_select.vue'
+import { toRaw } from 'vue';
 import { ElMessage } from 'element-plus'
 import 'element-plus/dist/index.css'
 import { h } from 'vue'
@@ -87,6 +88,7 @@ async function ready_inbound() {
 }
 
 async function inbound() {
+    let printdatalist=[]
     const data = await api_operation_inbound(formData.tableData)
     formData.tableData = []
     for (let i in data.message) {
@@ -97,7 +99,16 @@ async function inbound() {
             ]),
         })
     }
-    myapi.gotoprint(data.data)
+    for (let i in data.data) {
+        printdatalist.push(toRaw({
+            reagentlot:{
+                reagentname:data.data[i].reagentname,
+                lotname:data.data[i].lotname
+            },
+            barcodeNumber:data.data[i].barcodeNumber
+        }))
+    }
+    myapi.gotoprint(printdatalist)
 }
 function delete_inbound(rowsid) {
     formData.tableData = formData.tableData.filter(item => item.rowsid !== rowsid)

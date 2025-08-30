@@ -70,11 +70,10 @@ public class RepositoryUser:ICrud<User,ResponseUser.ShowData,RequestUser.Add,Req
 
     public async Task<bool> Del(RequestUser.Del body)
     {
-        await _db.Updateable(new User
-        {
-            Id = body.Id,
-            Active = false,
-        }).ExecuteReturnEntityAsync();
+        await _db.Updateable<User>()
+            .SetColumns(it => it.Active == false)
+            .Where(it => it.Id == body.Id)
+            .ExecuteReturnEntityAsync();
         return  true;
     }
 }

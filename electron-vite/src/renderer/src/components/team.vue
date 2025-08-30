@@ -8,13 +8,6 @@
           placeholder="搜索检验小组" 
           @input="team_show" 
         />
-        <el-button 
-          id="add" 
-          type="success" 
-          v-if="get_permission('team_add')"
-          @click="add_drawer"
-          style=" position: absolute;left: 1000px;top: 50px;"
-        >增加检验小组</el-button>
         <el-pagination 
           style=" position: absolute;left: 200px;top: 50px;"
           class="searchinput" 
@@ -24,8 +17,32 @@
           :page-count="state.totalpage" 
           @change="team_show" 
         />
+                 <div class="button-container">
+           <el-button 
+             id="add" 
+             type="success" 
+             v-if="get_permission('team_add')"
+             @click="add_drawer"
+           >增加小组</el-button>
+           <el-button 
+             id="update" 
+             type="primary" 
+             v-if="get_permission('team_edit')"
+             @click="edit_drawer"
+           >修改小组</el-button> 
+           <el-button 
+             id="delete" 
+             type="danger" 
+             v-if="get_permission('team_delete')"
+             @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>team_del()})"
+           >删除小组</el-button>
+         </div>
+
       </div>
         <el-table
+          ref="tableRef"
+          highlight-current-row
+          @row-click="handleRowClick"
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
           :style="{width:'calc(100vw - 205px)'}"
@@ -35,12 +52,6 @@
           <el-table-column prop="name" label="名字" sortable min-width="100" />
           <el-table-column prop="phone" label="电话" min-width="100" />
           <el-table-column prop="note" label="其他说明" min-width="350" />
-          <el-table-column label="操作" min-width="100">
-            <template #default="scope">
-              <el-button size="small" type="primary" v-if="get_permission('team_edit')" @click="edit_drawer(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" v-if="get_permission('team_delete')" @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>team_del(scope.row.id)})">删除</el-button>
-            </template>
-          </el-table-column>
         </el-table>
     </div>
 
@@ -103,27 +114,50 @@ const formData = reactive({
   note:'',
 })
 
-async function add_drawer(){
-  state.addbutton_disable=true
-  state.addbutton_show=true
-  state.updatebutton_show=false
+const tableRef=ref(null)
+
+function handleRowClick(row, column, event) {
+  if(formData.id===row.id){
+  formData.id=null
+  formData.name=''
+    formData.phone=''
+    formData.note=''
+    tableRef.value.setCurrentRow(null)
+  }
+  else{
+    formData.id=row.id
+    formData.name=row.name
+    formData.phone=row.phone
+    formData.note=row.note
+    tableRef.value.setCurrentRow(row)
+  }
+}
+
+
+  async function add_drawer(){
   formData.id=null
   formData.name=''
   formData.phone=''
   formData.note=''
+  tableRef.value.setCurrentRow(null)
   state.drawer=true
+  state.updatebutton_disable=true
+  state.addbutton_disable=true
+  state.addbutton_show=true
+  state.updatebutton_show=false
 }
 
-async function edit_drawer(row){
+async function edit_drawer(){
+  if(formData.id){
   state.updatebutton_disable=false
   state.addbutton_disable=true
   state.addbutton_show=false
   state.updatebutton_show=true
-  formData.id=row.id
-  formData.name=row.name
-  formData.phone=row.phone
-  formData.note=row.note
   state.drawer=true
+  }
+  else{
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要修改的记录'})
+  }
 }
 async function team_show() {
     const data = await api_team_show(state)
@@ -133,10 +167,15 @@ async function team_show() {
     state.totalpage = data.totalPage
 }
 
-async function team_del(id){
-    await api_team_del(id)
+async function team_del(){
+  if(formData.id){
+    await api_team_del(formData.id)
     await team_show()
     eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
+  }
+  else{
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要删除的记录'})
+  }
 }
 
 async function team_update() {
@@ -185,10 +224,12 @@ onMounted(() => {
 #background2{
   height: 90px;
 }
-#add{
+.button-container {
   position: absolute;
-  left:1000px;
-  top:5px
+  left: 800px;
+  top: 50px;
+  display: flex;
+  gap: 10px;
 }
 
 

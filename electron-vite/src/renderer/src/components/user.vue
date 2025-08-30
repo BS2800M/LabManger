@@ -8,13 +8,6 @@
           placeholder="搜索用户" 
           @input="user_show" 
         />
-        <el-button 
-          id="add" 
-          type="success" 
-          v-if="get_permission('user_add')"
-          @click="add_drawer"
-          style=" position: absolute;left: 1000px;top: 50px;"
-        >增加用户</el-button>
         <el-pagination 
          style=" position: absolute;left: 200px;top: 50px;"
           class="searchinput" 
@@ -24,8 +17,33 @@
           :page-count="state.totalpage" 
           @change="user_show" 
         />
+                 <div class="button-container">
+           <el-button 
+             id="add" 
+             type="success" 
+             v-if="get_permission('user_add')"
+             @click="add_drawer"
+           >增加用户</el-button>
+           <el-button 
+             id="update" 
+             type="primary" 
+             v-if="get_permission('user_edit')"
+             @click="edit_drawer"
+           >修改用户</el-button>
+           <el-button 
+             id="delete" 
+             type="danger" 
+             v-if="get_permission('user_delete')"
+             @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>user_del(formData.id)})"
+           >删除用户</el-button>
+         </div>
+
+        
       </div>
         <el-table
+          ref="tableRef"
+          highlight-current-row
+          @row-click="handleRowClick"
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
           :style="{width:'calc(100vw - 205px)'}"
@@ -35,12 +53,6 @@
           <el-table-column prop="userName" label="用户名" sortable min-width="100" />
           <el-table-column prop="role" label="角色" min-width="100" :formatter="formatRole" />
           <el-table-column prop="teamName" label="团队" min-width="100" />
-          <el-table-column label="操作" min-width="100">
-            <template #default="scope">
-              <el-button size="small" type="primary" v-if="get_permission('user_edit')" @click="edit_drawer(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" v-if="get_permission('user_delete')" @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>user_del(scope.row.id)})">删除</el-button>
-            </template>
-          </el-table-column>
         </el-table>
     </div>
 
@@ -73,8 +85,8 @@
 
 </template> 
 <script setup>
-  import {onMounted, reactive } from 'vue'
-  import { api_user_show,api_user_del,api_user_add,api_user_update} from '@/api/user.js'
+import {onMounted, reactive,ref } from 'vue'
+import { api_user_show,api_user_del,api_user_add,api_user_update} from '@/api/user.js'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import role_select from '@/components/role_select.vue'
 import team_select from '@/components/team_select.vue'
@@ -95,6 +107,7 @@ const state = reactive({
   addbutton_disable:true,
   addbutton_show:false,
   updatebutton_show:false,
+  
 })
 const formData = reactive({
   id:null,
@@ -105,31 +118,59 @@ const formData = reactive({
   password:''
 })
 
+const tableRef=ref(null)
+
+function handleRowClick(row, column, event) {
+  // 检查是否点击的是当前已选中的行
+  if (formData.id === row.id) {
+    // 如果点击的是当前选中的行，则取消选中
+    tableRef.value.setCurrentRow(null)
+    formData.id = null
+    formData.username = ''
+    formData.role = 0
+    formData.teamid = null
+    formData.using = true
+    formData.password = ''
+  } else {
+    // 选中新行时，更新 formData 的属性
+    formData.id = row.id
+    formData.username = row.userName
+    formData.role = row.role
+    formData.teamid = row.teamId
+    formData.using = row.using
+    formData.password = row.password
+
+    // 手动设置当前行高亮
+    tableRef.value.setCurrentRow(row)
+  }
+}
+
 
 async function add_drawer(){
-  state.addbutton_disable=true
-  state.addbutton_show=true
-  state.updatebutton_show=false
   formData.id=null
   formData.username=''
   formData.role=0
   formData.teamid=null
   formData.using=true
   formData.password=''
+  tableRef.value.setCurrentRow(null)
+  state.addbutton_disable=true
+  state.addbutton_show=true
+  state.updatebutton_show=false
   state.drawer=true
 }
 
-async function edit_drawer(row){
+async function edit_drawer(){
+  if(formData.id){
   state.updatebutton_disable=false
   state.addbutton_disable=true
-  state.addbutton_show=false
-  state.updatebutton_show=true
-  formData.id=row.id
-  formData.username=row.userName
-  formData.role=row.role
-  formData.teamid=row.teamId
-  formData.password=row.password
-  state.drawer=true
+    state.addbutton_show=false
+    state.updatebutton_show=true
+    state.drawer=true
+  }
+  else{
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要修改的记录'})
+  }
 }
 
 function checkinput(){
@@ -156,13 +197,19 @@ async function user_show() {
     state.totalpage = data.totalPage
 }
 
-async function user_del(id){
-    await api_user_del(id)
+async function user_del(){
+  if(formData.id){
+    await api_user_del(formData.id)
     await user_show()
     eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
+  }
+  else{
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要删除的记录'})
+  }
 }
 
 async function user_update() {
+
     await api_user_update(formData)
     state.drawer = false
     await user_show()
@@ -190,10 +237,12 @@ onMounted(() => {
   top: 100px;
 }
 
-#add{
+.button-container {
   position: absolute;
-  left:1000px;
-  top:5px
+  left: 800px;
+  top: 50px;
+  display: flex;
+  gap: 10px;
 }
 
 </style>

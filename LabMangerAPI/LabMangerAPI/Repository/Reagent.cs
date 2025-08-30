@@ -84,11 +84,10 @@ public class RepositoryReagent : ICrud<Reagent, Reagent, RequestReagent.Add, Req
     public async Task<bool> Del(RequestReagent.Del body)
     {
         // 只负责数据删除，权限验证移到服务层
-        await _db.Updateable(new Reagent
-        {
-            Id = body.Id,
-            Active = false,
-        }).ExecuteReturnEntityAsync();
+        await _db.Updateable<Reagent>()
+            .SetColumns(it => it.Active == false)
+            .Where(it => it.Id == body.Id)
+            .ExecuteReturnEntityAsync();
         
         return true;
     }

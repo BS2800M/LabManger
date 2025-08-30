@@ -2,7 +2,7 @@
 import {Workbook} from 'exceljs'
 import {api_operation_exporttoexcel,api_operation_show} from '@/api/operation'
 import {api_inventory_show} from '@/api/inventory'
-import {format_iso_YYYYMMDDHHmm,formatDateColumn} from '@/utils/format'
+import {format_iso_YYYYMMDDHHmm,formatDateColumn,format_operation_action} from '@/utils/format'
 async function operation_exporttoexcel_info(){
     const teamname=localStorage.teamname
     const workbook = new Workbook()
@@ -109,7 +109,7 @@ async function operation_exporttoexcel_info(){
       '时间': formatDateColumn(null, null, item.createTime),
       '试剂名称': item.reagentName,
       '批号': item.lotName,
-      '动作': item.action,
+      '动作': format_operation_action(null, null, item.action),
       '用户': item.userName,
       '条码号': item.barcodeNumber,
       '注释': item.note

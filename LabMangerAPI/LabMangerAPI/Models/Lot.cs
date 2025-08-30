@@ -2,6 +2,12 @@ using SqlSugar;
 
 namespace LabMangerAPI.Models;
 
+[SugarIndex("idx_lot_reagent_name",
+    nameof(ReagentId), OrderByType.Asc,
+    nameof(Name), OrderByType.Asc)]
+[SugarIndex("idx_lot_team_active",
+    nameof(TeamId), OrderByType.Asc,
+    nameof(Active), OrderByType.Asc)]
 public class Lot
 {    
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]

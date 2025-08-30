@@ -40,7 +40,8 @@ export let api_operation_update=(body)=>{
         lotid:body.lotid,
         note:body.note,
         action:body.action,
-        createTime:body.createTime,
+        createtime:body.createtime,
+        barcodenumber:body.barcodenumber
     })
 }
 export let api_operation_del=(deleteid)=>{

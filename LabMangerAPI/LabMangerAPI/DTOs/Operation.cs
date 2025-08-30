@@ -56,9 +56,11 @@ public class RequestOperation
         
         public DateTime CreateTime { get; set; } = DateTime.Now;
         
-        public string Action { get; set; } = "";
+        public OperationAction Action { get; set; }
         
         public string Note { get; set; } = "";
+        
+        public string BarcodeNumber { get; set; } = "";
         
     }
 
@@ -129,7 +131,7 @@ public class ResponseOperation
         public string Note { get; set; } = "";
         public string BarcodeNumber { get; set; } = "";
         public string UserName { get; set; } = "";
-        public string Action { get; set; } = "";
+        public OperationAction Action { get; set; } 
         
         
     }
@@ -145,17 +147,17 @@ public class ResponseOperation
 
     public class ExportToExcelDataListData
     {
-        public int ReagentId { get; set; } = 0; // 添加试剂ID用于分组
+        public int ReagentId { get; set; } 
         public DateTime CreateTime { get; set; } = DateTime.Now;
         public int LotId { get; set; }
         public string LotName { get; set; } = "";
         public DateTime ExpirationDate {get; set;}= DateTime.Now;
         public string UserName { get; set; } = "";
         
-        public string Action { get; set; } = "";
-        public int InboundNumber { get; set; } = 0;
-        public int OutboundNumber { get; set; } = 0;
-        public int InventoryNumber { get; set; } = 0;
+        public OperationAction Action { get; set; } 
+        public int InboundNumber { get; set; } 
+        public int OutboundNumber { get; set; } 
+        public int InventoryNumber { get; set; } 
     }
 
     public class ExportToExcelData

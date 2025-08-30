@@ -15,22 +15,34 @@
           @change="list_reagentnumber" 
           style="position: absolute;left: 200px;top: 50px;"
         />
-        <el-button 
-          id="export"
-          type="primary" 
-          @click="inventory_exporttoexcel_list"
-          style="position: absolute;left: 900px;top: 50px;"
-          >
-          导出盘库表</el-button>
+        <div class="button-container">
           <el-button 
-          id="cal"
-          type="primary" 
-          @click="inventory_audit"
-          style="position: absolute;left: 1000px;top: 50px;"
+            id="export"
+            type="primary" 
+            @click="inventory_exporttoexcel_list"
           >
-          更新信息</el-button>
+            导出盘库表
+          </el-button>
+          <el-button 
+            id="cal"
+            type="primary" 
+            @click="inventory_audit"
+          >
+            更新信息
+          </el-button>
+          <el-button 
+            id="statistics"
+            type="primary" 
+            @click="statistics"
+          >
+            库存统计
+          </el-button>
+        </div>
         </div> 
         <el-table
+          ref="tableRef"
+          highlight-current-row
+          @row-click="handleRowClick"
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
           :style="{width:'calc(100vw - 205px)'}"
@@ -43,11 +55,6 @@
           <el-table-column prop="specifications" label="规格" min-width="80" show-overflow-tooltip/>
           <el-table-column prop="lotExpirationDate" label="有效期" min-width="150" :formatter="formatDateColumn" show-overflow-tooltip/>
           <el-table-column prop="warnNumber" :sortable="true" label="警告数量" min-width="100" show-overflow-tooltip/>
-          <el-table-column label="操作" min-width="120">
-          <template #default="scope">
-            <el-button size="small" type="primary" @click="state.drawer=true">统计</el-button>
-          </template>
-        </el-table-column>
         </el-table>
     </div>
 
@@ -73,7 +80,7 @@
 
 
 
-import {  ref, onMounted, reactive, onUnmounted } from 'vue'
+import {   ref, onMounted, reactive, onUnmounted } from 'vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { api_inventory_show,api_inventory_auditall } from '@/api/inventory'
 import {inventory_exporttoexcel_list} from '@/utils/exportexcel'
@@ -92,19 +99,44 @@ const state = reactive({
   totalpage: 1,        // 总页
   pagesize:13,
   reagentname:'',
-  drawer:false
+  drawer:false,
   })
+const tableRef = ref(null)
+const formData = reactive({
+  reagentId: '',
+  lotId: '',
+})
 
-
-function tableRowClassName({ row,rowindex }) {
+function tableRowClassName({ row,rowindex }) { // 表格行样式
   if (row.warning==="" || row.warning===null ) {
     return 'success-row'
   }
   return 'warning-row'
 }
 
+function handleRowClick(row) { // 表格行点击事件
+  if(formData.reagentId === row.reagentId && formData.lotId === row.lotId){
+    formData.reagentId = ''
+    formData.lotId = ''
+    tableRef.value.setCurrentRow(null)
+  }else{
+    formData.reagentId = row.reagentId
+    formData.lotId = row.lotId
+    tableRef.value.setCurrentRow(row)
+  }
+}
 
-async function list_reagentnumber() {
+function statistics(){ // 库存统计
+  if (formData.reagentId === '' && formData.lotId === ''){
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要统计的记录'})
+  }else{
+    state.drawer=true
+    formData.reagentId = ''
+    formData.lotId = ''
+  }
+}
+
+async function list_reagentnumber() { // 获取试剂列表
     const data = await api_inventory_show(state)
     state.tableData = data.data
     state.totalpage = data.totalPage
@@ -112,7 +144,7 @@ async function list_reagentnumber() {
 
 
 
-  async function inventory_audit(){
+  async function inventory_audit(){ // 更新信息
     await api_inventory_auditall(state)
     await list_reagentnumber()
 } 
@@ -137,9 +169,11 @@ onUnmounted(() => {
   left: 200px;
   top: 100px;
 }
-#export{
+.button-container {
   position: absolute;
-  left: 900px;
-  top: 10px;
+  left: 700px;
+  top: 50px;
+  display: flex;
+  gap: 10px;
 }
 </style>

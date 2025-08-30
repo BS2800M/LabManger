@@ -29,14 +29,13 @@ async function loadstart(){
     height: 100*myconf.scale*0.9,
     fontSize:15*myconf.scale,
     displayValue:true
-}
-
-
+              }
 
   if (myconf.allow_print==true){
+    console.log(args)
     for(let i in args){
-      reagentname.value=args[i].reagentName
-      lot.value=args[i].lotName
+      reagentname.value=args[i].reagentlot.reagentname
+      lot.value=args[i].reagentlot.lotname
       barcodeNumber=args[i].barcodeNumber
       if(barcodeNumber!==null && barcodeNumber!==""){
         JsBarcode('.barcode', barcodeNumber,options)

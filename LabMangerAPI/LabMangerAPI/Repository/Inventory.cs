@@ -1,5 +1,6 @@
 ﻿using LabMangerAPI.Validator;
 using LabMangerAPI.DTOs;
+using LabMangerAPI.DTOs.Common;
 using LabMangerAPI.Data;
 using LabMangerAPI.Models;
 using SqlSugar;
@@ -65,7 +66,7 @@ public class RepositoryInventory
         return await result;
     }
 
-    public async  Task<string> UpdatePlus(int reagentId, int lotid, int number) //更新库存 在原来的基础上加减
+    public async Task<InventoryUpdateResult> UpdatePlus(int reagentId, int lotid, int number) //更新库存 在原来的基础上加减
     {
         using var tran = _db.Ado.UseTran();
         try
@@ -84,19 +85,24 @@ public class RepositoryInventory
                     ReagentName = r.Name,
                 })
                 .ToListAsync();
-            if (result.First().Number+number <0 )
+            
+            var currentStock = result.First().Number;
+            var reagentName = result.First().ReagentName;
+            
+            if (currentStock + number < 0)
             {
-                return result.First().ReagentName+"库存不足";
+                return InventoryUpdateResult.InsufficientStock(reagentName, currentStock, number);
             }
+            
             await _db.Updateable(new Inventory
             {
                 Id = result.First().Id,
                 ReagentId = result.First().ReagentId,
                 LotId = result.First().LotId,
-                Number = result.First().Number+number,
+                Number = currentStock + number,
             }).ExecuteReturnEntityAsync();
             tran.CommitTran();
-            return result.First().ReagentName+"库存更新成功";
+            return InventoryUpdateResult.Success(reagentName, currentStock + number, number);
         }
         catch (Exception ex)
         {
