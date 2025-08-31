@@ -4,8 +4,57 @@ import { VueUiXy } from "vue-data-ui";
 import "vue-data-ui/style.css"; // 如果您使用多个组件，请将此样式导入放在您的主文件中
 
 // 接收从父组件传入的数据
+const props = defineProps({
+  modelValue: {
+    type: Object,
+    default: () => ({
+      dataset: null,
+      xAxisLabels: null,
+      title: "示例"
+    })
+  }
+});
+
+// 先定义计算属性
+const dataset = computed(() => {
+  // 添加安全的空值检查
+  if (!props.modelValue || !props.modelValue.dataset) {
+    return [
+      {
+        name: '库存',
+        series: [0],
+        color: '#42d392',  // 使用官方示例的颜色
+        type: 'line',
+        shape: 'circle',
+        useArea: false,  // 官方示例中是false
+        useProgression: false,
+        dataLabels: true,
+        smooth: false,  // 官方示例中是false
+        dashed: false,
+        useTag: 'none'
+      }
+    ];
+  }
+  return props.modelValue.dataset;
+});
+
+// 添加安全的 xAxisLabels 计算属性
+const xAxisLabels = computed(() => {
+  if (!props.modelValue || !props.modelValue.xAxisLabels) {
+    return [0,0,0,0,0];
+  }
+  return props.modelValue.xAxisLabels;
+});
 
 
+const title = computed(() => {
+  if (!props.modelValue || !props.modelValue.title) {
+    return '试剂统计';
+  }
+  return props.modelValue.title;
+});
+
+// 然后定义 config 对象
 const config = ref({
         theme: '',
         responsive: false,
@@ -75,7 +124,7 @@ const config = ref({
                     show: false,
                     smooth: true,
                     selectedColor: '#1F77B4',
-                    selectedColorOpacity: '0.5',
+                    selectedColorOpacity: 0.5,
                     lineColor: 'rgba(255, 255, 255, 1)',
                     selectionRadius: 2,
                     indicatorColor: 'rgba(255, 255, 255, 1)',
@@ -83,10 +132,10 @@ const config = ref({
                 }
             },
             padding: {
-                top: 100,
-                right: 100,
-                bottom: 100,
-                left: 100
+                top: 45,
+                right: 0,
+                bottom: 80,
+                left: 70
             },
             highlighter: {
                 color: '#ffffffff',
@@ -100,7 +149,7 @@ const config = ref({
                 from: 0,
                 to: 0,
                 color: '#CCCCCCff',
-                opacity: '16',
+                opacity: 16,
                 caption: {
                     text: 'Caption',
                     fontSize: 20,
@@ -147,7 +196,7 @@ const config = ref({
                         fontSize: 30
                     },
                     zeroLine: {
-                        show: true
+                        show: true  // 恢复官方默认设置
                     },
                     xAxis: {
                         showBaseline: true,
@@ -171,12 +220,14 @@ const config = ref({
                         scaleMax: null,
                         groupColor: 'rgba(255, 255, 255, 1)',
                         scaleLabelOffsetX: 0,
-                        scaleValueOffsetX: 0
+                        scaleValueOffsetX: 0,
+                        rounding: 1,
+                        serieNameFormatter: null
                     },
                     xAxisLabels: {
                         color: '#ffffffff',
                         show: true,
-                        values: [1755778445311,1756678445311,1757778445311,1757778445311],
+                        values: xAxisLabels,
                         datetimeFormatter: {
                             enable: true,
                             locale: 'ja',
@@ -218,7 +269,7 @@ const config = ref({
                 fontSize: 20
             },
             title: {
-                text: '试剂统计',
+                text: title,
                 color: '#ffffffff',
                 fontSize: 20,
                 bold: true,
@@ -332,13 +383,13 @@ const config = ref({
             }
         },
         line: {
-            radius: 6,
+            radius: 8,
             useGradient: false,
-            strokeWidth: 2,
+            strokeWidth: 5,  // 默认值，会被具体系列的 strokeWidth 覆盖
             cutNullValues: false,
             dot: {
                 hideAboveMaxSerieLength: 62,
-                useSerieColor: false,
+                useSerieColor: true,  // 使用系列颜色
                 fill: '#FFFFFF',
                 strokeWidth: 2
             },
@@ -402,44 +453,6 @@ const config = ref({
         },
         showTable: false
     });
-
-
-
-const props = defineProps({
-  chartData: {
-    type: Array,
-    default: () => []
-  },
-  xAxisLabels: {
-    type: Array,
-    default: () => []
-  }
-});
-
-const dataset = computed(() => {
-  return props.chartData.length > 0 ? props.chartData : [
-  {
-        name: '库存',
-        series: [
-            1,
-            2,
-            3,
-            4,
-        ],
-        color: '#ffffff',
-        type: 'line',
-        shape: 'circle',
-        useArea: true,
-        useProgression: false,
-        dataLabels: true,
-        smooth: true,
-        dashed: false,
-        useTag: 'none'
-    }
-    // 默认数据...
-  ];
-});
-
 </script>
 <template>
     <!-- Using a wrapper is optional -->

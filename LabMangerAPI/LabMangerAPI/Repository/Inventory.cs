@@ -51,6 +51,8 @@ public class RepositoryInventory
             .Select((i,r,l) => new ResponseInventory.ShowData
             {
                 Id = i.Id,
+                ReagentId = i.ReagentId,
+                LotId = i.LotId,
                 ReagentName = r.Name,
                 LotName = l.Name,
                 Number = i.Number,
@@ -83,17 +85,17 @@ public class RepositoryInventory
                     i.LotId,
                     i.Number,
                     ReagentName = r.Name,
+                    r.WarnNumber,
                 })
                 .ToListAsync();
             
             var currentStock = result.First().Number;
             var reagentName = result.First().ReagentName;
             
-            if (currentStock + number < 0)
+            if (currentStock + number < 0) //如果库存数量小于出库数量 不予出库
             {
                 return InventoryUpdateResult.InsufficientStock(reagentName, currentStock, number);
             }
-            
             await _db.Updateable(new Inventory
             {
                 Id = result.First().Id,
@@ -102,6 +104,10 @@ public class RepositoryInventory
                 Number = currentStock + number,
             }).ExecuteReturnEntityAsync();
             tran.CommitTran();
+            if (currentStock + number <= result.First().WarnNumber) //如果库存数量达到警告线则提醒 但会正常出库
+            {
+                return InventoryUpdateResult.WarningStock(reagentName, currentStock, number);
+            }
             return InventoryUpdateResult.Success(reagentName, currentStock + number, number);
         }
         catch (Exception ex)

@@ -1,23 +1,21 @@
 ﻿using SqlSugar;
 namespace LabMangerAPI.Data;
-public class MySqlSugar
+public static class MySqlSugar
 {
-    public  static SqlSugarClient Db = new SqlSugarClient(new ConnectionConfig()
+    public static SqlSugarClient Db = new SqlSugarClient(new ConnectionConfig()
+    {
+        // 使用简单的 SQLite 连接字符串
+        ConnectionString = "Data Source=data.db",
+        DbType = DbType.Sqlite,
+        IsAutoCloseConnection = true,
+        InitKeyType = InitKeyType.Attribute,
+        // 优化连接池配置
+        MoreSettings = new ConnMoreSettings()
         {
-            ConnectionString = "datasource=data.db",
-            DbType = DbType.Sqlite,
-            IsAutoCloseConnection = false
-        },
-        db =>
-        {
-          //  db.Aop.OnLogExecuting = (sql, pars) =>
-          //  { 
-          //      Console.WriteLine(UtilMethods.GetNativeSql(sql, pars));
-
-          //  };
-        });
-
-    
+            IsAutoRemoveDataCache = true,
+            IsWithNoLockQuery = true
+        }
+    });
 }
 
 

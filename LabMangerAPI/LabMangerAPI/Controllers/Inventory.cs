@@ -34,6 +34,12 @@ namespace LabMangerAPI.Controllers
         {
             return await _inventoryservice.DashBoard(query);
         }
-        
+
+        [HttpGet("statistics")]
+        public async Task<ResponseInventory.Statistics> Statistics([FromQuery] RequestInventory.Statistics query)
+        {
+            return await _inventoryservice.Statistics(query);
+        }
+
     }
 }

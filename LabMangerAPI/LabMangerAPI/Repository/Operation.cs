@@ -62,7 +62,7 @@ public class RepositoryOperation
     }
     
     
-    public async Task<int> OutboundCount(string barcodenumber) //得出出库
+    public async Task<int> OutboundCount(string barcodenumber) //得出出库数量
     {
 
         int outcount=await _db.Queryable<Operation>()
@@ -79,7 +79,20 @@ public class RepositoryOperation
         return outcount;
     }
 
-    
+    public async Task<int> OutboundCount(int reagentid, DateTime starttime, DateTime endtime)
+    {
+        
+        int outcount=await _db.Queryable<Operation>()
+            .Where(o=>o.Active==true
+                      &&o.ReagentId==reagentid 
+                      &&o.Action==OperationAction.Outbound
+                      &&o.CreateTime>=starttime
+                      &&o.CreateTime<=endtime)
+            .CountAsync();
+        return outcount;
+    }
+
+
     public async Task<int> InboundCount(string barcodenumber) //得出入库数量
     {
         int incount=await _db.Queryable<Operation>()
@@ -96,6 +109,17 @@ public class RepositoryOperation
         return incount;
     }
     
+    public async Task<int> InboundCount(int reagentid, DateTime starttime, DateTime endtime)
+    {
+        int incount=await _db.Queryable<Operation>()
+            .Where(o=>o.Active==true
+                      &&o.ReagentId==reagentid 
+                      &&o.Action==OperationAction.Inbound
+                      &&o.CreateTime>=starttime
+                      &&o.CreateTime<=endtime)
+            .CountAsync();
+        return incount;
+    }
     
 
     public Operation GetOperation(string barcodenumber)//输入条码号 查询对应的记录

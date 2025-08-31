@@ -86,14 +86,21 @@ async function ready_inbound() {
         note: formData.note,
     })
 }
-
 async function inbound() {
     let printdatalist=[]
     const data = await api_operation_inbound(formData.tableData)
     formData.tableData = []
+    let message_type = "error"
     for (let i in data.message) {
+        if (data.message[i].includes("库存不足")) {
+            message_type = "error"
+        } else if (data.message[i].includes("库存达到警告线")) {
+            message_type = "warning"
+        } else if (data.message[i].includes("库存更新成功")) {
+            message_type = "success"
+        }
         ElMessage({
-            type: data.message[i].includes("库存不足") ? "warning" : "success",
+            type: message_type,
             message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
                 h('span', null, data.message[i])
             ]),

@@ -1,6 +1,7 @@
 ﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 using LabMangerAPI.DTOs.Common;
+using System.ComponentModel.DataAnnotations;
 namespace LabMangerAPI.DTOs;
 
 public class RequestInventory
@@ -23,6 +24,18 @@ public class RequestInventory
         public int Id { get; set; } = 0;
     }
 
+    public class Statistics
+    {
+        public int ReagentId { get; set; } = 0;
+        public int LotId { get; set; } = 0;
+        
+        [Range(1, int.MaxValue, ErrorMessage = "天数间隔")]
+        public int IntervalDay { get; set; } = 1;
+        public DateTime StartTime{ get; set; } = DateTime.Today;
+        public DateTime EndTime{ get; set; } = DateTime.Today;
+
+    }
+
 
 }
 public class ResponseInventory
@@ -32,7 +45,10 @@ public class ResponseInventory
     {
         public int Id { get; set; }
         public string ReagentName { get; set; } = "";
+        public int ReagentId { get; set; }
+        
         public string LotName { get; set; } = "";
+        public int LotId { get; set; }
         public int Number { get; set; }
         public int ReagentWarnNumber { get; set; }
         public DateTime LotExpirationDate { get; set; }
@@ -63,7 +79,27 @@ public class ResponseInventory
         public int WarningTotalNum { get; set; } 
         public int WarningNumNum { get; set; } 
         public int WarningExpNum { get; set; } 
+        
+        
+        
     }
-    
+
+    public class DataSet
+    {
+        public string Name { get; set; } = "";
+        public List<int> Number { get; set; } = new List<int>();
+    }
+
+    public class StatisticsData
+    {
+        public List<DateTime> XAxisLabels { get; set; } = new List<DateTime>();
+        public List<DataSet>  DataSet { get; set; } =new List<DataSet>();
+    }
+
+    public class Statistics : ApiResponse<StatisticsData>
+    {
+        
+    }
+
 
 }

@@ -137,7 +137,7 @@
           <el-date-picker 
             v-model="formData.createTime" 
             type="datetime"
-            placeholder="选择注释" 
+            placeholder="选择操作时间" 
             size="default" 
             @change="checkinput"
             value-format="YYYY-MM-DD HH:mm:ss"
@@ -157,7 +157,7 @@
     </template>
       <template #footer>
       <div style="flex: auto">
-        <el-button  size="large" type="warning"   @click="operation_batch_delete" :disabled="state.delete_startid==null || state.delete_endid==null" >批量删除</el-button>
+        <el-button  size="large" type="warning":loading="state.batch_delete_loading"  @click="operation_batch_delete" :disabled="state.delete_startid==null || state.delete_endid==null" >{{state.batch_delete_button_text}}</el-button>
         <el-button  size="large" type="primary"  @click="state.batch_delete_drawer=false">关闭</el-button>
       </div>
     </template>
@@ -205,7 +205,9 @@
     tableData:null,
     batch_delete_drawer:false,
     delete_startid:null,
-    delete_endid:null
+    delete_endid:null,
+    batch_delete_loading:false,
+    batch_delete_button_text:'批量删除'
   })
 
 let formData=reactive({
@@ -277,15 +279,28 @@ async function operation_show(){
     state.batch_delete_drawer=true
     state.delete_startid=null
     state.delete_endid=null
+    state.batch_delete_button_text='批量删除'
   }
-  async function operation_batch_delete(){
-    let delete_list=[]  
-    for(let i=state.delete_startid;i<=state.delete_endid;i++){
-      delete_list.push(api_operation_del(i))
+  async function operation_batch_delete(){ 
+    try
+    {
+      state.batch_delete_loading=true
+      const startId = parseInt(state.delete_startid)
+      const endId = parseInt(state.delete_endid)
+      for(let i=startId;i<=endId;i++){
+          await api_operation_del(i)
+          state.batch_delete_button_text='删除中('+i+'/'+endId+')'
+
+      }
+      operation_show()
+      state.batch_delete_loading=false
+      state.batch_delete_drawer=false
+
     }
-    await Promise.all(delete_list)
-    operation_show()
-    state.batch_delete_drawer=false
+    catch(error){
+      state.batch_delete_loading=false
+      eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'批量删除失败'})
+    }
   }
 
   function checkinput(){

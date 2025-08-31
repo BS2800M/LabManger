@@ -69,8 +69,40 @@
     </template>
     <template #default>
       <div style="width:800px; position: absolute; left: 50px;">
-        <statistics_chart  style="width: 800px; position:absolute; top: 0px; left: -10px;"> </statistics_chart>
+        <statistics_chart v-model="state.statisticsData"  style=" width:700px; position:absolute; top: 10px; left: -0px;"> </statistics_chart>
     </div>
+    <div class="date-picker-container" style="width:800px; position: absolute; left: 50px;top: 650px">
+      <el-config-provider :locale=zhCn> 
+          <el-date-picker 
+            v-model="formData.starttime" 
+            type="datetime"
+            placeholder="选择开始时间" 
+            size="default" 
+            @change="checkinput"
+            value-format="YYYY-MM-DD HH:mm:ss"
+          />   
+        </el-config-provider>
+        <el-config-provider :locale=zhCn> 
+          <el-date-picker 
+            v-model="formData.endtime" 
+            type="datetime"
+            placeholder="选择结束时间" 
+            size="default" 
+            @change="checkinput"
+            value-format="YYYY-MM-DD HH:mm:ss"
+          />   
+        </el-config-provider>
+        <el-input-number v-model="formData.intervalday" :min="1" :max="365" placeholder="1" @change="checkinput" />
+        <el-button type="primary" @click="statistics_data" :disabled="state.statisticsbuttondisabled">查询</el-button>
+      </div>
+      <div class="date-picker-text" style="width:800px; position: absolute; left: 50px;top: 700px">
+        <span >开始时间</span>
+        <span>结束时间</span>
+        <span >间隔时间（单位：天）</span>
+      </div>
+
+
+
     </template>
     </el-drawer>
 </template>
@@ -82,30 +114,55 @@
 
 import {   ref, onMounted, reactive, onUnmounted } from 'vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
-import { api_inventory_show,api_inventory_auditall } from '@/api/inventory'
+import { api_inventory_show,api_inventory_auditall,api_inventory_statistics } from '@/api/inventory'
 import {inventory_exporttoexcel_list} from '@/utils/exportexcel'
 import { formatDateColumn } from '@/utils/format'
 import statistics_chart from './statistics_chart.vue'
+import { ElConfigProvider } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
 
+const formData = reactive({
+  reagentname: '',
+  reagentId: null,
+  lotId: null,
+  starttime: null,
+  endtime: null,
+  intervalday: 1,
+})
 
-
-
-// 状态管理
+// 状态管
 const state = reactive({
   inputsearchname: '',    // 输入搜索名称
   tableData: [],         // 表格数据，初始化为空数组
   page: 1,       // 当前页
   totalpage: 1,        // 总页
   pagesize:13,
-  reagentname:'',
   drawer:false,
+  statisticsbuttondisabled:true,
+  statisticsData: {
+    dataset: [
+      {
+        name: "示例",
+        series: [0,1,2,3,4],
+        color: '#ffffff',
+        type: 'line',
+        shape: 'circle',
+        useArea: true,
+        useProgression: false,
+        dataLabels: true,
+        smooth: false,
+        dashed: false,
+        useTag: 'none',
+        strokeWidth: 100
+      }
+    ],
+    xAxisLabels: [0,10,20,30,40],
+    title: '试剂统计示例'
+  }    // 统计数据
   })
 const tableRef = ref(null)
-const formData = reactive({
-  reagentId: '',
-  lotId: '',
-})
+
 
 function tableRowClassName({ row,rowindex }) { // 表格行样式
   if (row.warning==="" || row.warning===null ) {
@@ -116,10 +173,12 @@ function tableRowClassName({ row,rowindex }) { // 表格行样式
 
 function handleRowClick(row) { // 表格行点击事件
   if(formData.reagentId === row.reagentId && formData.lotId === row.lotId){
-    formData.reagentId = ''
-    formData.lotId = ''
+    formData.reagentname = ''
+    formData.reagentId = null
+    formData.lotId = null
     tableRef.value.setCurrentRow(null)
   }else{
+    formData.reagentname = row.reagentName
     formData.reagentId = row.reagentId
     formData.lotId = row.lotId
     tableRef.value.setCurrentRow(row)
@@ -127,12 +186,22 @@ function handleRowClick(row) { // 表格行点击事件
 }
 
 function statistics(){ // 库存统计
-  if (formData.reagentId === '' && formData.lotId === ''){
+  if (formData.reagentId === null || formData.lotId === null){
     eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要统计的记录'})
   }else{
     state.drawer=true
-    formData.reagentId = ''
-    formData.lotId = ''
+    formData.starttime = null
+    formData.endtime = null
+    formData.intervalday = 1
+    state.statisticsbuttondisabled = true
+  }
+}
+
+function checkinput() { // 检查输入
+  if (formData.starttime === null || formData.endtime === null || formData.intervalday === null || formData.reagentId === null) {
+    state.statisticsbuttondisabled = true
+  } else {
+    state.statisticsbuttondisabled = false
   }
 }
 
@@ -142,7 +211,31 @@ async function list_reagentnumber() { // 获取试剂列表
     state.totalpage = data.totalPage
 }
 
+async function statistics_data() { // 获取统计数据
 
+    const data = await api_inventory_statistics(formData)
+    state.statisticsData.title = formData.reagentname
+    state.statisticsData.xAxisLabels = data.data.xAxisLabels
+    state.statisticsData.dataset = []
+    for (let i in data.data.dataSet) {
+      state.statisticsData.dataset.push({
+        name: data.data.dataSet[i].name,
+        series: data.data.dataSet[i].number,
+        useProgression: false,
+        dataLabels: true,
+        smooth: false,
+        dashed: false,
+        useTag: 'none',
+        color: lineStyles[i % lineStyles.length].color,
+        shape: 'circle',
+        type: lineStyles[i % lineStyles.length].type,
+        useArea: true,
+        
+      })
+    }     
+
+  
+}
 
   async function inventory_audit(){ // 更新信息
     await api_inventory_auditall(state)
@@ -150,15 +243,16 @@ async function list_reagentnumber() { // 获取试剂列表
 } 
 
 
+const lineStyles=[
+  {  color: '#42d392',type: 'line' },
+  { color: '#ffae00',type: 'line' },
+  {  color: '#b267c1',type: 'line' },
+]
 // 生命周期钩子
 onMounted(() => {
     list_reagentnumber()
-    eventBus.on(EVENT_TYPES.TEMPLATE_UPDATED, list_reagentnumber)
 })
 
-onUnmounted(() => {
-  eventBus.off(EVENT_TYPES.TEMPLATE_UPDATED)
-})
 </script >
 <style scoped>
 #background2{
@@ -175,5 +269,13 @@ onUnmounted(() => {
   top: 50px;
   display: flex;
   gap: 10px;
+}
+.date-picker-container {
+  display: flex;
+  gap: 15px;
+}
+.date-picker-text {
+  display: flex;
+  gap: 170px;
 }
 </style>

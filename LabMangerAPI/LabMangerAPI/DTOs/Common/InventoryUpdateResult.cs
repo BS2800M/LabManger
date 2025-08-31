@@ -31,4 +31,16 @@ public class InventoryUpdateResult
             RequestedChange = requestedChange
         };
     }
+
+    public static InventoryUpdateResult WarningStock(string reagentName, int currentStock, int requestedChange)
+    {
+        return new InventoryUpdateResult
+        {
+            IsSuccess = true,
+            ReagentName = reagentName,
+            Message = $"{reagentName}库存达到警告线",
+            CurrentStock = currentStock,
+            RequestedChange = requestedChange
+        };
+    }
 }
