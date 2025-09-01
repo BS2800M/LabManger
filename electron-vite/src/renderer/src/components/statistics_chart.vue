@@ -455,11 +455,12 @@ const config = ref({
     });
 </script>
 <template>
-    <!-- Using a wrapper is optional -->
-    <div :style="{ width: '600px'}">
+    <!-- 移除固定宽度，使用flex布局 -->
+    <div class="chart-wrapper" style="width: 95%; height: 95%;">
         <VueUiXy
             :config="config"
             :dataset="dataset"
         />
     </div>
 </template>
+

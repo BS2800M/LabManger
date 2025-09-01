@@ -16,7 +16,7 @@
     "axios": "^1.10.0",
     "dayjs": "^1.11.13",
     "electron-vite": "^4.0.0",
-    "element-plus": "^2.10.3",
+    "element-plus": "^2.4.4",
     "exceljs": "^4.4.0",
     "jsbarcode": "^3.12.1",
     "mitt": "^3.0.1",
@@ -27,13 +27,14 @@
     "vue-router": "^4.5.1",
     "xlsx": "^0.18.5"
   },
-
   "devDependencies": {
-    "electron": "^21.4.4",
+    "electron": "21.4.4",
     "electron-builder": "^24.9.1"
   },
   "main": "src/main/index.js",
   "build": {
-    "extraFiles": ["./conf.txt"]
+    "extraFiles": [
+      "./conf.txt"
+    ]
   }
 }

@@ -1,4 +1,5 @@
-
+// 导入polyfill以支持ES2024特性
+import './polyfills.js'
 
 import { createApp } from 'vue'
 import App from './App.vue'

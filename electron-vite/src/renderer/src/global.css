@@ -75,7 +75,6 @@
 
     .el-input .el-input__wrapper
     .el-input .el-input__inner
-
     {
         background-color:transparent;
         --el-input-focus-border-color:white;
@@ -84,11 +83,15 @@
     .el-date-picker .el-input .el-input__inner{
       color: rgb(0, 0, 0) !important;
     }
-    .el-select {
-      --el-select-multiple-input-color:white !important
+    .el-select-v2 {
+      background-color: transparent !important;
+      --el-input-text-color: white !important;
+      --el-input-placeholder-color: rgba(255, 255, 255, 0.6) !important;
     }
-
-
+    .el-select-v2__wrapper{
+      background-color: transparent !important;
+    }
+        
     .el-input.is-disabled .el-input__wrapper {
       --el-disabled-bg-color:transparent !important;
     }
@@ -124,4 +127,7 @@
     .el-drawer__header span{
       padding-bottom:5px
     }
+
+
+
 

@@ -67,43 +67,43 @@
         <el-button type="primary" @click="state.drawer=false">关闭</el-button>
       </div>
     </template>
-    <template #default>
-      <div style="width:800px; position: absolute; left: 50px;">
-        <statistics_chart v-model="state.statisticsData"  style=" width:700px; position:absolute; top: 10px; left: -0px;"> </statistics_chart>
-    </div>
-    <div class="date-picker-container" style="width:800px; position: absolute; left: 50px;top: 650px">
-      <el-config-provider :locale=zhCn> 
-          <el-date-picker 
-            v-model="formData.starttime" 
-            type="datetime"
-            placeholder="选择开始时间" 
-            size="default" 
-            @change="checkinput"
-            value-format="YYYY-MM-DD HH:mm:ss"
-          />   
-        </el-config-provider>
-        <el-config-provider :locale=zhCn> 
-          <el-date-picker 
-            v-model="formData.endtime" 
-            type="datetime"
-            placeholder="选择结束时间" 
-            size="default" 
-            @change="checkinput"
-            value-format="YYYY-MM-DD HH:mm:ss"
-          />   
-        </el-config-provider>
-        <el-input-number v-model="formData.intervalday" :min="1" :max="365" placeholder="1" @change="checkinput" />
-        <el-button type="primary" @click="statistics_data" :disabled="state.statisticsbuttondisabled">查询</el-button>
-      </div>
-      <div class="date-picker-text" style="width:800px; position: absolute; left: 50px;top: 700px">
-        <span >开始时间</span>
-        <span>结束时间</span>
-        <span >间隔时间（单位：天）</span>
-      </div>
+          <template #default>
+        <div class="drawer-content">
+          <div class="chart-container">
+            <statistics_chart v-model="state.statisticsData" />
+          </div>
+            <div class="date-picker-container">
+              <el-config-provider :locale=zhCn> 
+                  <el-date-picker 
+                    v-model="formData.starttime" 
+                    type="datetime"
+                    placeholder="选择开始时间" 
+                    size="default" 
+                    @change="checkinput"
+                    value-format="YYYY-MM-DD HH:mm:ss"
+                  />   
+                </el-config-provider>
+                <el-config-provider :locale=zhCn> 
+                  <el-date-picker 
+                    v-model="formData.endtime" 
+                    type="datetime"
+                    placeholder="选择结束时间" 
+                    size="default" 
+                    @change="checkinput"
+                    value-format="YYYY-MM-DD HH:mm:ss"
+                  />   
+                </el-config-provider>
+                <el-input-number v-model="formData.intervalday" :min="1" :max="365" placeholder="1" @change="checkinput" />
+                <el-button type="primary" @click="statistics_data" :disabled="state.statisticsbuttondisabled">查询</el-button>
+            </div>
+            <div class="date-picker-text">
+              <span >开始时间</span>
+              <span>结束时间</span>
+              <span >间隔时间（单位：天）</span>
+            </div>
+          </div>
 
-
-
-    </template>
+      </template>
     </el-drawer>
 </template>
 <script setup>
@@ -189,11 +189,11 @@ function statistics(){ // 库存统计
   if (formData.reagentId === null || formData.lotId === null){
     eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要统计的记录'})
   }else{
-    state.drawer=true
     formData.starttime = null
     formData.endtime = null
     formData.intervalday = 1
     state.statisticsbuttondisabled = true
+    state.drawer=true
   }
 }
 
@@ -270,12 +270,25 @@ onMounted(() => {
   display: flex;
   gap: 10px;
 }
+
+
+
 .date-picker-container {
   display: flex;
   gap: 15px;
+  position: relative;
+  left: 40px;
+  top: 30px;
+  width: 800px;
+
 }
+
 .date-picker-text {
   display: flex;
   gap: 170px;
+  position: relative;
+  left: 40px;
+  top: 30px;
+  width: 800px;
 }
 </style>

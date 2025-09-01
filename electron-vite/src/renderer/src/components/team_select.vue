@@ -1,6 +1,6 @@
 
 <template>
-<el-select-v2   placeholder="选择检验小组" v-model="selectvalue" 
+<el-select-v2  placeholder="选择检验小组" v-model="selectvalue" 
 :options="allteamlist" style="width: 250px" @change="changeselect"
 :filterable="true"
 />
