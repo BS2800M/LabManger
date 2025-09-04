@@ -1,6 +1,5 @@
 ﻿
 using SqlSugar;
-using LabMangerAPI.Data;
 using LabMangerAPI.Models;
 namespace LabMangerAPI.Validator;
 

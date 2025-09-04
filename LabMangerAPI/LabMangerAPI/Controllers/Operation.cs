@@ -3,10 +3,10 @@
 using DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Validator;   
-using Microsoft.AspNetCore.Authorization;
+
 using Service;
 
-[Authorize]
+    [SessionAuthorize]
 [ApiController]
 [Route("operation/")]
 [RequirePermission]

@@ -25,7 +25,8 @@ public class RequestInventory
     }
 
     public class Statistics
-    {
+    {   
+        public bool OnlyLot { get; set; } = false;
         public int ReagentId { get; set; } = 0;
         public int LotId { get; set; } = 0;
         

@@ -19,7 +19,6 @@ public interface IUserContext //验证信息接口 依赖注入
     string Scope { get; }
     int TeamId { get; }
     string UserId { get; }
-    string Username { get; }
 }
 
     public class UserContext : IUserContext //验证信息接类
@@ -34,5 +33,4 @@ public interface IUserContext //验证信息接口 依赖注入
         public string Scope => _httpContextAccessor.HttpContext?.Items["scope"]?.ToString() ?? string.Empty;
         public int TeamId => Convert.ToInt32(_httpContextAccessor.HttpContext?.Items["teamid"] ?? 0);
         public string UserId => _httpContextAccessor.HttpContext?.Items["userid"]?.ToString() ?? string.Empty;
-        public string Username => _httpContextAccessor.HttpContext?.Items["username"]?.ToString() ?? string.Empty;
     }

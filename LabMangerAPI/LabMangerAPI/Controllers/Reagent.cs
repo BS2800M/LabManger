@@ -2,12 +2,12 @@
 using LabMangerAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using LabMangerAPI.Validator;   
-using Microsoft.AspNetCore.Authorization;
+
 using LabMangerAPI.Service;
 
 
 namespace LabMangerAPI.Controllers;
-[Authorize]
+[SessionAuthorize]
 [ApiController]
 [Route("reagent/")]
 [RequirePermission]

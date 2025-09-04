@@ -230,15 +230,15 @@ const config = ref({
                         values: xAxisLabels,
                         datetimeFormatter: {
                             enable: true,
-                            locale: 'ja',
+                            locale: 'zh-CN',
                             useUTC: false,
                             januaryAsYear: false,
                             options: {
                             year: 'yyyy',
-                            month: 'yy/MMM',
-                            day: 'MM/d',
-                            hour: 'HH:mm',
-                            minute: 'HH:mm:ss',
+                            month: 'yy/MM',
+                            day: 'MM/dd',
+                            hour: 'dd HH',
+                            minute: 'HH:mm',
                             second: 'HH:mm:ss'
                             }
                         },
@@ -456,7 +456,7 @@ const config = ref({
 </script>
 <template>
     <!-- 移除固定宽度，使用flex布局 -->
-    <div class="chart-wrapper" style="width: 95%; height: 95%;">
+    <div class="chart-wrapper" style="width: 80%; height: 80%;">
         <VueUiXy
             :config="config"
             :dataset="dataset"

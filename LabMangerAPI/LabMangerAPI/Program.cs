@@ -3,20 +3,20 @@ using LabMangerAPI.Validator;
 using LabMangerAPI.Repository;
 using LabMangerAPI.Service;
 
-namespace LabMangerAPI
-{
+
+namespace LabMangerAPI;
+
     public class Program
     {
-
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder();
+            AppConfig.ReadConfig(builder); //读取配置
+            await Migrate.Run(); //迁移数据库
             
             // 添加配置服务
-            builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-
-            builder.Services.AddOpenApi();
             builder.Services.AddHttpContextAccessor();
+            builder.Services.AddDistributedMemoryCache();
             builder.Services.AddScoped<IUserContext, UserContext>();
             builder.Services.AddScoped<RepositoryReagent>();
             builder.Services.AddScoped<RepositoryLot>();
@@ -31,37 +31,34 @@ namespace LabMangerAPI
             builder.Services.AddScoped<ServiceInventory>();
             builder.Services.AddScoped<ServiceTeam>();
             builder.Services.AddScoped<ServiceUser>();
-
-
-
             builder.Services.AddControllers(options =>
             {
                 options.Filters.Add<GlobalExceptionFilter>();
                 options.Filters.Add<XcActionFilter>();
                 
-            }).ConfigureApiBehaviorOptions(options =>
-            {
-                // 禁用默认的模型验证响应
-               // options.SuppressModelStateInvalidFilter = true;
             });
-            
-            JwtVerification.Run(builder);
-            var app = builder.Build();
-            // 确保数据库表存在 
-            await Migrate.Run();
-            
-            if (app.Environment.IsDevelopment())
+
+            // 配置HTTPS证书
+            if (!string.IsNullOrEmpty(AppConfig.CertificatePath) && File.Exists(AppConfig.CertificatePath))
             {
-                app.MapOpenApi();
+                builder.WebHost.ConfigureKestrel(serverOptions =>
+                {
+                    serverOptions.ConfigureHttpsDefaults(httpsOptions =>
+                    {
+                    // 使用证书文件和私钥文件
+                    httpsOptions.ServerCertificate = System.Security.Cryptography.X509Certificates.X509Certificate2.CreateFromPemFile(AppConfig.CertificatePath, AppConfig.KeyPath);
+                    });
+                });
             }
+            var app = builder.Build();
+            app.UseHsts(); // 启用 HTTP Strict Transport Security (HSTS)
+            app.UseCors("AllowAll");
             app.UseRouting();
-            app.UseAuthentication();
-            app.UseAuthorization();
             app.MapControllers();
             app.Run();
             
         }
     }
-}
+
 
 

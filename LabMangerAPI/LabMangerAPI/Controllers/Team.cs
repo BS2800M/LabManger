@@ -2,12 +2,12 @@
 using LabMangerAPI.DTOs;
 using LabMangerAPI.Validator;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+
 using LabMangerAPI.Service;
 namespace LabMangerAPI.Controllers
 {
     [ApiController]
-    [Authorize]
+    [SessionAuthorize]
     [Route("team/")]
     [RequirePermission]
     public class TeamController : ControllerBase

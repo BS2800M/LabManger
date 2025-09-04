@@ -22,6 +22,7 @@
       <Compile Remove="Properties\view\**" />
       <Compile Remove="Controllers\LotController.cs" />
       <Compile Remove="MigrateReagentname.cs" />
+      <Compile Remove="Validator\JwtVerification.cs" />
     </ItemGroup>
 
     <ItemGroup>

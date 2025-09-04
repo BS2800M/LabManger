@@ -21,6 +21,7 @@
 <script setup>
 import {ref,onMounted, reactive} from 'vue'
 import { api_inventory_dashboard } from '@/api/inventory'
+import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 
 let allprinter = ref([])
 let select_printerid=ref()
@@ -119,9 +120,7 @@ z-index: 0;
 
 }
 
-.el-switch{
-  --el-text-color-primary:white;
-}
+
 
 
 </style>

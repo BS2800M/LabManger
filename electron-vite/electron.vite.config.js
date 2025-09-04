@@ -33,9 +33,15 @@ export default {
         port: 5173,
         proxy:{
           '/cross': {
-            target: 'http://127.0.0.1:8000',
+            target: 'https://127.0.0.1:8001',
             changeOrigin: true,
-            rewrite:(path)=>path.replace(/^\/cross/,'') //api替换为'',
+            secure: false, // 忽略自签名证书验证
+            rewrite:(path)=>path.replace(/^\/cross/,''), //api替换为''
+            configure: (proxy, options) => {
+              // 忽略 SSL 证书错误
+              proxy.on('error', (err, req, res) => {
+              });
+            },
           },
         },
       },

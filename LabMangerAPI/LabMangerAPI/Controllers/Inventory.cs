@@ -1,12 +1,12 @@
 ﻿using LabMangerAPI.Service;
 using LabMangerAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+
 using LabMangerAPI.Validator;
 
 namespace LabMangerAPI.Controllers
 {
-    [Authorize]
+    [SessionAuthorize]
     [ApiController]
     [Route("inventory/")]
     [RequirePermission]

@@ -33,10 +33,9 @@ namespace LabMangerAPI.DTOs;
            public int Status { get; set; } = -1;
            public string Message { get; set; } = "";
            
-           public string Token { get; set; } = "";
            public string UserName { get; set; } = "";
            public string TeamName { get; set; } = "";
-           
+           public string SessionId { get; set; } = "";
            public UserRole Role { get; set; }= UserRole.Member;
        }
 

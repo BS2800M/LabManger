@@ -73,7 +73,7 @@ public class ServiceInventory
         };
     }
 
-    public async Task<ResponseInventory.Statistics> Statistics(RequestInventory.Statistics body)
+    public async Task<ResponseInventory.Statistics> Statistics(RequestInventory.Statistics body) //统计图标数据生成
     {
         if (!await ResourceVerification.CheckResourceExist<Reagent>(MySqlSugar.Db, body.ReagentId)) //资源存在性验证
         {
@@ -96,11 +96,12 @@ public class ServiceInventory
         resultdata.DataSet.Add(new  ResponseInventory.DataSet{Name = "库存",Number = new List<int>()});
         resultdata.DataSet.Add(new  ResponseInventory.DataSet{Name = "入库",Number =new List<int>()});
         resultdata.DataSet.Add(new  ResponseInventory.DataSet{Name = "出库",Number =new List<int>()});
+
         while (searchend<=body.EndTime)
         {
             
-            int incount=await _repositoryoperation.InboundCount(body.ReagentId,searchstart,searchend); 
-            int outcount=await _repositoryoperation.OutboundCount(body.ReagentId,searchstart,searchend);
+            int incount=await _repositoryoperation.InboundCount(body.ReagentId,body.LotId,body.OnlyLot,searchstart,searchend); 
+            int outcount=await _repositoryoperation.OutboundCount(body.ReagentId,body.LotId,body.OnlyLot,searchstart,searchend);
             number=number+incount-outcount;
             resultdata.XAxisLabels.Add(searchstart);
             resultdata.DataSet[0].Number.Add(number);

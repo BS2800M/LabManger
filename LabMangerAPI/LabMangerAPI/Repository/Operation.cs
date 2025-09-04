@@ -79,15 +79,15 @@ public class RepositoryOperation
         return outcount;
     }
 
-    public async Task<int> OutboundCount(int reagentid, DateTime starttime, DateTime endtime)
+    public async Task<int> OutboundCount(int reagentid,int lotid,bool onlylot, DateTime starttime, DateTime endtime)
     {
-        
+        var exp = Expressionable.Create<Operation>();
+        exp.And(o => o.Active == true && o.ReagentId == reagentid);
+        exp.And(o => o.CreateTime>=starttime&&o.CreateTime<=endtime);
+        exp.And(o=>o.Action==OperationAction.Outbound);
+        exp.AndIF(onlylot,o=>o.LotId==lotid);
         int outcount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true
-                      &&o.ReagentId==reagentid 
-                      &&o.Action==OperationAction.Outbound
-                      &&o.CreateTime>=starttime
-                      &&o.CreateTime<=endtime)
+            .Where(exp.ToExpression())
             .CountAsync();
         return outcount;
     }
@@ -109,14 +109,16 @@ public class RepositoryOperation
         return incount;
     }
     
-    public async Task<int> InboundCount(int reagentid, DateTime starttime, DateTime endtime)
+    public async Task<int> InboundCount(int reagentid,int lotid,bool onlylot, DateTime starttime, DateTime endtime)
     {
+        var exp = Expressionable.Create<Operation>();
+        exp.And(o => o.Active == true && o.ReagentId == reagentid);
+        exp.And(o => o.CreateTime>=starttime&&o.CreateTime<=endtime);
+        exp.And(o=>o.Action==OperationAction.Inbound);
+        exp.AndIF(onlylot,o=>o.LotId==lotid);
+
         int incount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true
-                      &&o.ReagentId==reagentid 
-                      &&o.Action==OperationAction.Inbound
-                      &&o.CreateTime>=starttime
-                      &&o.CreateTime<=endtime)
+            .Where(exp.ToExpression())
             .CountAsync();
         return incount;
     }

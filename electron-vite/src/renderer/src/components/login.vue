@@ -22,6 +22,8 @@
 import {ref} from 'vue';
 import { useRouter } from 'vue-router'
 import { api_signin } from '@/api/signinout';	
+import { eventBus } from '@/utils/eventBus';
+import { EVENT_TYPES } from '@/utils/eventBus';
 const router = useRouter()
 let username=ref("")
 let password=ref("")
@@ -29,12 +31,19 @@ let backgrounblur=ref({filter:""})
 
 
 async function login(){
-    const data = await api_signin(username.value, password.value)
-    localStorage.token = data.token //储存token
-    localStorage.username = data.userName //储存用户
-    localStorage.teamname = data.teamName //储存用户id
-    localStorage.role = data.role //储存用户权限
-
+    const response = await api_signin(username.value, password.value)
+    // 从响应头获取会话ID
+    const sessionId = response.sessionId
+    if (sessionId) {
+        localStorage.sessionid = sessionId
+    }
+	else{
+		eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:"登录失败",action:null})
+		return
+	}
+    localStorage.username = response.userName //储存用户
+    localStorage.teamname = response.teamName //储存用户id
+    localStorage.role = response.role //储存用户权限
     router.push("/home")
 }
 </script>

@@ -8,7 +8,7 @@ var listdata=null
 
 async function read_conf(){ //读取配置和打印机
   try{
-    let data=fs.readFileSync('./conf.txt').toString()
+    let data=fs.readFileSync('./conf.txt', 'utf8').toString()
     data=JSON.parse(data)
     let printerlist = await  mainWindow.webContents.getPrintersAsync()
     data.printerlist=printerlist
@@ -30,7 +30,7 @@ async function saveconf(in_printername,in_select_printerid,in_allowprint,in_scal
   writedata.allow_print=in_allowprint
   writedata.scale=in_scale
   writedata=JSON.stringify(writedata);
-  fs.writeFileSync('./conf.txt',writedata)
+  fs.writeFileSync('./conf.txt',writedata, 'utf8')
 }
 
 async function gotoprint(inputlistdata){  //打印数据传输给主进程 
@@ -82,12 +82,14 @@ function createWindow () {
     printWindow.webContents.openDevTools()
     mainWindow.loadURL('http://localhost:5173') 
     printWindow.loadURL('http://localhost:5173/#/print')  
+    app.commandLine.appendSwitch('ignore-certificate-errors') //忽略证书错误
     // 添加开发时刷新快捷键菜单
     // const menu = Menu.buildFromTemplate(template);
     // Menu.setApplicationMenu(menu);
   }
   else{
     mainWindow.setMenu(null);
+    mainWindow.webContents.openDevTools()
     printWindow.loadFile('./out/renderer/index.html', {hash: 'print'})
     mainWindow.loadFile('./out/renderer/index.html') 
   }
@@ -97,21 +99,15 @@ function createWindow () {
 
 
 
-
-
 app.whenReady().then(() => {
   createWindow()
   app.on('activate', function () {
-    // 通常在 macOS 上，当点击 dock 中的应用程序图标时，如果没有其他
-    // 打开的窗口，那么程序会重新创建一个窗口。
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
 
   })
   mainWindow.on('close',()=>{app.quit()})
 })
 
-// 除了 macOS 外，当所有窗口都被关闭的时候退出程序。 因此，通常对程序和它们在
-// 任务栏上的图标来说，应当保持活跃状态，直到用户使用 Cmd + Q 退出。
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 

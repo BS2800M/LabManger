@@ -23,8 +23,9 @@ export const api_inventory_dashboard=(params)=>{
 
 export const api_inventory_statistics=(params)=>{
       return myrequest.get('/inventory/statistics/',{
+            onlylot:params.onlylot,
             reagentid:params.reagentId,
-            lotid:1,
+            lotid:params.lotId,
             starttime:params.starttime,
             endtime:params.endtime,
             intervalday:params.intervalday,

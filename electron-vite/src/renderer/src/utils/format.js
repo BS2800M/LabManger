@@ -60,3 +60,22 @@ export const format_operation_action=(row,column,cellValue)=>{
   return table[cellValue]
 }
 
+export const format_xAxisLabels=(xAxisLabels)=>{
+  return xAxisLabels.map(label => {
+    // 将日期字符串转换为时间戳
+    if (typeof label === 'string' && label.includes('-')) {
+      
+      // 获取本地时区偏移量（分钟）
+      const timezoneOffset = new Date().getTimezoneOffset();
+      
+      // 先对 label 进行时间偏移
+      const offsetLabel = dayjs(label).add(timezoneOffset, 'minute');
+
+      // 最后转换为时间戳
+      const finalTimestamp = offsetLabel.valueOf();
+    
+      return finalTimestamp;
+    }
+    return label;
+  })
+}
