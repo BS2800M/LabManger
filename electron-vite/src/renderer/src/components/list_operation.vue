@@ -100,8 +100,8 @@
               :data="state.tableData"
               :default-sort="{ prop: 'date', order: 'descending' }"
               :style="{width:'calc(100vw - 210px)'}"
-              row-class-name="rowstyle"
-              header-cell-class-name="rowstyle"
+              row-class-name="normal-row"
+              header-cell-class-name="normal-row-header"
               highlight-current-row
               @row-click="handleRowClick"
           > 

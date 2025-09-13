@@ -17,7 +17,7 @@ public class Lot
     public string Name { get; set; } = "";
     
     [SugarColumn(IsNullable = false)]
-    public int ReagentId { get; set; } = 0;
+    public int ReagentId { get; set; }
 
     [SugarColumn(ColumnDataType = "datetime")]
     public DateTime ExpirationDate { get; set; } = DateTime.Now;
@@ -25,8 +25,10 @@ public class Lot
     [SugarColumn(IsNullable = false)]
     public bool Active { get; set; } = true;
     
+    public bool IsDelete { get; set; } = false;
+    
     [SugarColumn(Length = 100, IsNullable = false)]
-    public int TeamId { get; set; } = 0;
+    public int TeamId { get; set; }
     
     [Navigate(NavigateType.ManyToOne, nameof(ReagentId))]
     public Reagent? Reagent { get; set; }

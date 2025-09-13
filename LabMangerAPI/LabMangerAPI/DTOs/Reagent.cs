@@ -21,7 +21,10 @@ public class RequestReagent
         public string Note { get; set; } = "";
         public int WarnNumber { get; set; } = 0;
         public int WarnDays { get; set; } = 0;
+        
+        public bool Active { get; set; } = true;
         public bool GenerateLot { get; set; } = false; //是否生成一个默认批号
+        
     }
 
     /// 查询试剂的请求模型
@@ -43,6 +46,8 @@ public class RequestReagent
         public string Note { get; set; } = "";
         public int WarnNumber { get; set; } = 0;
         public int WarnDays { get; set; } = 0;
+        
+        public bool Active { get; set; } = true;
 
     }
     

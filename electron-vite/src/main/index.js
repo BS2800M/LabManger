@@ -1,10 +1,9 @@
 // 控制应用生命周期和创建原生浏览器窗口的模组
-const { app, BrowserWindow, ipcMain, Menu } = require('electron')
+const { app, BrowserWindow, ipcMain} = require('electron')
 const path = require('path')
 const fs=require('fs')
 var mainWindow=null
 var printWindow=null
-var listdata=null
 
 async function read_conf(){ //读取配置和打印机
   try{
@@ -38,8 +37,7 @@ async function gotoprint(inputlistdata){  //打印数据传输给主进程
   printOptions={deviceName:printer.printername,
     silent: true
   }
-  listdata=inputlistdata
-  printWindow.webContents.send('printdata_send',listdata) //将打印数据传输给printwindows
+  printWindow.webContents.send('printdata_send',inputlistdata) //将打印数据传输给printwindows
 
   }
 

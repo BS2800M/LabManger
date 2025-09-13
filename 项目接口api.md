@@ -25,7 +25,8 @@ Base URLs:
 
 # Authentication
 
-- HTTP Authentication, scheme: bearer
+* API Key (session)
+    - Parameter Name: **X-Session-Id**, in: header. 
 
 - HTTP Authentication, scheme: bearer
 
@@ -1530,7 +1531,7 @@ PUT /operation/update/
   "reagentid": 69,
   "lotid": 16,
   "createtime": "2025-08-24T11:04:52.563",
-  "action": "inbound",
+  "action": "0",
   "note": "修改后"
 }
 ```
@@ -1545,8 +1546,9 @@ PUT /operation/update/
 |» reagentid|body|integer| 是 |none|
 |» lotid|body|integer| 是 |none|
 |» createtime|body|string(date-time)| 是 |none|
-|» action|body|string| 是 |none|
+|» action|body|integer| 是 |none|
 |» note|body|string| 是 |none|
+|» b|body|string| 是 |none|
 
 > 返回示例
 
@@ -2156,6 +2158,117 @@ GET /operation/exporttoexcel/
 |» status|integer|true|none||none|
 |» message|string|true|none||none|
 
+## GET 库存统计图
+
+GET /inventory/statistics/
+
+### 请求参数
+
+|名称|位置|类型|必选|说明|
+|---|---|---|---|---|
+|reagentid|query|integer| 否 |none|
+|lotid|query|integer| 否 |none|
+|intervalday|query|integer| 否 |none|
+|starttime|query|string| 否 |none|
+|endtime|query|string| 否 |none|
+|onlylot|query|boolean| 否 |none|
+
+> 返回示例
+
+> 200 Response
+
+```json
+{
+  "data": {
+    "xAxisLabels": [
+      "2025-08-20T12:38:24.707Z",
+      "2025-08-21T12:38:24.707Z",
+      "2025-08-22T12:38:24.707Z",
+      "2025-08-23T12:38:24.707Z",
+      "2025-08-24T12:38:24.707Z",
+      "2025-08-25T12:38:24.707Z",
+      "2025-08-26T12:38:24.707Z",
+      "2025-08-27T12:38:24.707Z",
+      "2025-08-28T12:38:24.707Z",
+      "2025-08-29T12:38:24.707Z",
+      "2025-08-30T12:38:24.707Z"
+    ],
+    "dataSet": [
+      {
+        "name": "库存",
+        "number": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          12
+        ]
+      },
+      {
+        "name": "入库",
+        "number": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          14
+        ]
+      },
+      {
+        "name": "出库",
+        "number": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ]
+      }
+    ]
+  },
+  "status": 0,
+  "message": "成功"
+}
+```
+
+### 返回结果
+
+|状态码|状态码含义|说明|数据模型|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|none|Inline|
+
+### 返回数据结构
+
+状态码 **200**
+
+|名称|类型|必选|约束|中文名|说明|
+|---|---|---|---|---|---|
+|» data|object|true|none||none|
+|»» xAxisLabels|[string]|true|none||none|
+|»» dataSet|[object]|true|none||none|
+|»»» name|string|true|none||none|
+|»»» number|[integer]|true|none||none|
+|» status|integer|true|none||none|
+|» message|string|true|none||none|
+
 # 登录登出
 
 ## POST 登录
@@ -2166,8 +2279,8 @@ POST /signinout/signin/
 
 ```json
 {
-  "username": "string",
-  "password": "string"
+  "username": "admin",
+  "password": ""
 }
 ```
 
@@ -2186,11 +2299,11 @@ POST /signinout/signin/
 ```json
 {
   "status": 0,
-  "message": "string",
-  "token": "string",
-  "userName": "string",
-  "teamName": "string",
-  "role": 0
+  "message": "登录成功",
+  "userName": "admin",
+  "teamName": "免疫小组1",
+  "sessionId": "200d89459ca34f71ae34f38b4ce760be",
+  "role": 3
 }
 ```
 
@@ -2208,9 +2321,9 @@ POST /signinout/signin/
 |---|---|---|---|---|---|
 |» status|integer|true|none||none|
 |» message|string|true|none||none|
-|» token|string|true|none||none|
 |» userName|string|true|none||none|
 |» teamName|string|true|none||none|
+|» sessionId|string|true|none||none|
 |» role|integer|true|none||none|
 
 ## GET 登出

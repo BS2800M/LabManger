@@ -26,6 +26,7 @@
             >修改批号</el-button>
             <el-button 
                 type="danger" 
+                v-if="get_permission('lot_delete')"
                 @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>lot_del(formData.id)})"
             >删除批号</el-button>
         </div>
@@ -38,8 +39,8 @@
             :data="state.tableData"
             :default-sort="{ prop: 'date', order: 'descending' }"
             :style="{width:'calc(100vw - 205px)'}"
-            row-class-name="rowstyle"
-            header-cell-class-name="rowstyle"
+            :row-class-name="tableRowClassName"
+            header-cell-class-name="normal-row-header"
         >
             <el-table-column prop="name" label="批号" min-width="150" show-overflow-tooltip/>
             <el-table-column prop="expirationDate" label="有效期" min-width="150" :formatter="formatDateColumn" show-overflow-tooltip/>
@@ -77,6 +78,8 @@
         <el-select-v2  v-model="formData.seletevalue" filterable :options="allreagentlist" placeholder="选择试剂" @change="checkinput"  :disabled="state.editbox_disable_selete" style="width: 240px"  />
         <p>所属试剂名字</p>  
         <el-input v-model="formData.reagentname" style="width: 300px"  disabled  />
+        <p>是否有效</p>
+        <el-switch v-model="formData.active" @change="checkinput" />
       </div>
     </template>
     </el-drawer>
@@ -94,6 +97,7 @@ import { api_lot_show,api_lot_del } from '@/api/lot'
 import {api_reagent_showall} from '@/api/reagent'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { format_YYYYMMDDHHmm_iso,formatDateColumn } from '@/utils/format'
+  import get_permission from '@/utils/permission'
 
 const state = reactive({
   name: '',    // 输入搜索名称
@@ -118,7 +122,8 @@ const formData = reactive({
   seletevalue: null,         // 选择的试剂值
   id: null  ,           // 选中的批号id
   reagentname:'',
-  reagentid:null
+  reagentid:null,
+  active:true
 })
 
 // 试剂列表数据
@@ -134,6 +139,7 @@ function handleRowClick(row, column, event) {
     formData.reagentid=null
     formData.reagentname=''
     formData.seletevalue=null
+    formData.active=true
   }
   else{
     formData.id=row.id
@@ -142,10 +148,17 @@ function handleRowClick(row, column, event) {
     formData.reagentid=row.reagentId
     formData.reagentname=row.reagentName
     formData.seletevalue=null
+    formData.active=row.active
     tableRef.value.setCurrentRow(row)
   }
 }
 
+function tableRowClassName({ row,rowindex }) { // 表格行样式
+  if (row.active===true ) {
+    return 'normal-row'
+  }
+  return 'unactive-row'
+}
 
 
 
@@ -161,6 +174,7 @@ async function add_drawer(){
   formData.reagentid=null
   formData.reagentname=''
   formData.seletevalue=null,
+  formData.active=true,
   state.drawer=true
 
 }
@@ -172,6 +186,7 @@ async function edit_drawer(){
   state.addbutton_show=false
   state.updatebutton_show=true
   state.editbox_disable_selete=true
+  formData.active=formData.active
   checkinput()
   state.drawer=true
   }
@@ -187,7 +202,7 @@ function checkinput(){
     formData.reagentid = allreagentlist.value[formData.seletevalue].id
   }
   const validationRules = {
-  required: ['name', 'expirationdate', 'reagentid']
+  required: ['name', 'expirationdate', 'reagentid', 'active']
 }
 
   // 检查必填字段

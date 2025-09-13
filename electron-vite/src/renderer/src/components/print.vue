@@ -32,7 +32,6 @@ async function loadstart(){
               }
 
   if (myconf.allow_print==true){
-    console.log(args)
     for(let i in args){
       reagentname.value=args[i].reagentlot.reagentname
       lot.value=args[i].reagentlot.lotname

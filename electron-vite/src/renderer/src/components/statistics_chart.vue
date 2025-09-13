@@ -234,8 +234,8 @@ const config = ref({
                             useUTC: false,
                             januaryAsYear: false,
                             options: {
-                            year: 'yyyy',
-                            month: 'yy/MM',
+                            year: 'yyyy年',
+                            month: 'yy年/MM',
                             day: 'MM/dd',
                             hour: 'dd HH',
                             minute: 'HH:mm',

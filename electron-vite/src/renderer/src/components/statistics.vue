@@ -46,7 +46,7 @@
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
           :style="{width:'calc(100vw - 205px)'}"
-          header-cell-class-name="rowstyle"
+          header-cell-class-name="normal-row-header"
           :row-class-name="tableRowClassName"
         >
           <el-table-column prop="reagentName" label="试剂名称" min-width="130" show-overflow-tooltip/>
@@ -122,7 +122,7 @@ import { formatDateColumn } from '@/utils/format'
 import statistics_chart from './statistics_chart.vue'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { getnowtime_previousmonth,getnowtime,format_xAxisLabels,format_YYYYMMDDHHmm_iso } from '@/utils/format'
+import { getnowtime_previousmonth,getnowtime,format_xAxisLabels } from '@/utils/format'
 
 
 const formData = reactive({
@@ -152,9 +152,14 @@ const tableRef = ref(null)
 
 function tableRowClassName({ row,rowindex }) { // 表格行样式
   if (row.warning==="" || row.warning===null ) {
-    return 'success-row'
+    return 'normal-row'
   }
+  if (row.active===false){
+    return 'unactive-row'
+  }
+  if (row.warning.includes("number") || row.warning.includes("time")){
   return 'warning-row'
+  }
 }
 
 function handleRowClick(row) { // 表格行点击事件

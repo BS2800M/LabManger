@@ -47,8 +47,8 @@
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
           :style="{width:'calc(100vw - 205px)'}"
-          row-class-name="rowstyle"
-          header-cell-class-name="rowstyle"
+          row-class-name="normal-row"
+          header-cell-class-name="normal-row-header"
         >
           <el-table-column prop="userName" label="用户名" sortable min-width="100" />
           <el-table-column prop="role" label="角色" min-width="100" :formatter="formatRole" />

@@ -15,6 +15,8 @@ public class RequestLot
         [Required(ErrorMessage = "批号名称不能为空")] public string Name { get; init; } = null!;
         [Range(1, int.MaxValue, ErrorMessage = "非法id")] public int ReagentId { get; set; }
         public DateTime ExpirationDate { get; set; } = DateTime.Now.AddYears(3);
+        
+        public bool Active { get; set; } = true;
 
     }
 
@@ -33,6 +35,8 @@ public class RequestLot
         [Required(ErrorMessage = "批号名称不能为空")] public string Name { get; init; } = null!;
         [Range(1, int.MaxValue, ErrorMessage = "非法id")]public int ReagentId { get; set; } = 0;
         public DateTime ExpirationDate { get; set; } = DateTime.Now;
+        
+        public bool Active { get; set; } = true;
 
     }
 
@@ -66,6 +70,8 @@ public class ResponseLot
         public DateTime ExpirationDate { get; set; } = DateTime.Now;
         
         public int TeamId { get; set; } 
+        
+        public bool Active { get; set; } = true;
 
         public string ReagentName { get; set; } = "";
     }

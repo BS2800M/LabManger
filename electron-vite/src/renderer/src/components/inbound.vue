@@ -33,8 +33,8 @@
             :data="formData.tableData"
             :default-sort="{ prop: 'date', order: 'descending' }"
             :style="{width:'calc(100vw - 210px)'}"
-            row-class-name="rowstyle"
-            header-cell-class-name="rowstyle"
+            row-class-name="normal-row"
+            header-cell-class-name="normal-row-header"
             height="480"
         >
             <el-table-column prop="reagentname" label="试剂名字" min-width="150" show-overflow-tooltip/>

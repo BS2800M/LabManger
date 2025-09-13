@@ -25,6 +25,7 @@ public class RepositoryLot : ICrud<Lot, ResponseLot.ShowData, RequestLot.Add, Re
             Name = body.Name,
             ExpirationDate = body.ExpirationDate,
             ReagentId = body.ReagentId,
+            Active = body.Active,   
 
         }).ExecuteReturnEntityAsync();
         
@@ -39,7 +40,7 @@ public class RepositoryLot : ICrud<Lot, ResponseLot.ShowData, RequestLot.Add, Re
         int pageSize = search.PageSize;
         
         var exp = Expressionable.Create<Lot>();
-        exp.And(l => l.Active == true);
+        exp.And(l=>l.IsDelete==false);
         exp.AndIF(string.IsNullOrEmpty(name) == false, l => l.Name.Contains(name!));
         
         // 基础数据访问权限（团队隔离）
@@ -48,6 +49,7 @@ public class RepositoryLot : ICrud<Lot, ResponseLot.ShowData, RequestLot.Add, Re
         var result = _db.Queryable<Lot>()
             .LeftJoin<Reagent>((l, r) => l.ReagentId == r.Id)
             .Where(exp.ToExpression())
+            .OrderBy(l => l.Active, OrderByType.Desc)
             .OrderBy(l => l.Id, OrderByType.Desc)
             .Select((l, r) => new ResponseLot.ShowData
             {
@@ -57,6 +59,7 @@ public class RepositoryLot : ICrud<Lot, ResponseLot.ShowData, RequestLot.Add, Re
                 ExpirationDate = l.ExpirationDate,
                 TeamId = l.TeamId,
                 ReagentName = r.Name,
+                Active = l.Active,
             })
             .ToPageListAsync(page, pageSize, totalcount, totalpage);
 
@@ -73,6 +76,7 @@ public class RepositoryLot : ICrud<Lot, ResponseLot.ShowData, RequestLot.Add, Re
             Name = body.Name,
             ExpirationDate = body.ExpirationDate,
             ReagentId = body.ReagentId,
+            Active = body.Active,
         }).ExecuteReturnEntityAsync();
         
         return await result;
@@ -82,7 +86,7 @@ public class RepositoryLot : ICrud<Lot, ResponseLot.ShowData, RequestLot.Add, Re
     {
         // 只负责数据删除，权限验证移到服务层
         await _db.Updateable<Lot>()
-            .SetColumns(it => it.Active == false)
+            .SetColumns(it => it.IsDelete == true)
             .Where(it => it.Id == body.Id)
             .ExecuteReturnEntityAsync();
         
@@ -93,6 +97,7 @@ public class RepositoryLot : ICrud<Lot, ResponseLot.ShowData, RequestLot.Add, Re
     {
         var exp = Expressionable.Create<Lot>();
         exp.And(l => l.Active == true);
+        exp.And(l=>l.IsDelete == false);
         exp.And(l => l.ReagentId == reagentId);
         
         // 基础数据访问权限（团队隔离）

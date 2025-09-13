@@ -342,15 +342,14 @@ public class ServiceOperation
         var search = new RequestReagent.Show
         {
             Name = "",
-            Page = query.Page,
-            PageSize = query.PageSize
+            Page =1 ,
+            PageSize = int.MaxValue
         };
         RefAsync<int> totalcount = new RefAsync<int>();
         RefAsync<int> totalpage = new RefAsync<int>();
             
-        // 1. 获取当前页试剂
+        // 1. 获取所有试剂
         var reagentlist = await _repositoryReagent.Show(search, totalcount, totalpage);
-        
         if (reagentlist.Count == 0)
         {
             return new ResponseOperation.ExportToExcel
@@ -361,33 +360,41 @@ public class ServiceOperation
             };
         }
         
-        // 2. 批量获取当前页试剂的操作记录（只查询需要的试剂ID）
-        var reagentIds = reagentlist.Select(r => r.Id).ToList();
-        var operations = await _repositoryoperation.ShowOperationsByReagentIds(reagentIds);
-        
-        // 3. 内存中分组处理
+        // 2. 分批处理试剂（每批20个，避免一次性查询过多数据）
+         int batchSize = query.batchsize;
         var resultdata = new List<ResponseOperation.ExportToExcelData>();
-        foreach (var reagent in reagentlist)
+        
+        for (int i = 0; i < reagentlist.Count; i += batchSize)
         {
-            var reagentOperations = operations
-                .Where(op => op.ReagentId == reagent.Id)
-                .ToList();
+            var batch = reagentlist.Skip(i).Take(batchSize).ToList();
+            var reagentIds = batch.Select(r => r.Id).ToList();
             
-            var mergedOperationList = BuildExportExcelOperation(reagentOperations);
+            // 获取当前批次的操作记录
+            var operations = await _repositoryoperation.ShowOperationsByReagentIds(reagentIds);
             
-            resultdata.Add(new ResponseOperation.ExportToExcelData{
-                ReagentId = reagent.Id,
-                ReagentName = reagent.Name,
-                StorageCondition = reagent.StorageCondition,
-                Manufacturer = reagent.Manufacturer,
-                OperationList = mergedOperationList,
-            });
+            // 处理当前批次的试剂
+            foreach (var reagent in batch)
+            {
+                var reagentOperations = operations
+                    .Where(op => op.ReagentId == reagent.Id)
+                    .ToList();
+                
+                var mergedOperationList = BuildExportExcelOperation(reagentOperations);
+                
+                resultdata.Add(new ResponseOperation.ExportToExcelData{
+                    ReagentId = reagent.Id,
+                    ReagentName = reagent.Name,
+                    StorageCondition = reagent.StorageCondition,
+                    Manufacturer = reagent.Manufacturer,
+                    OperationList = mergedOperationList,
+                });
+            }
         }
        
         return new ResponseOperation.ExportToExcel
         {
             Status = 0,
-            Message = $"第{query.Page}页，共{totalpage.Value}页，每页{query.PageSize}条",
+            Message = $"共{totalpage.Value}页，每页{query.batchsize}条",
             Data = resultdata,
         };
 

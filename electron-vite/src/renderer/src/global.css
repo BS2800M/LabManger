@@ -15,14 +15,35 @@
     .el-table{
      background-color:rgb(53, 73, 94) !important;
     }
-    .el-table .rowstyle
+    .el-table .normal-row-header{
+      color: rgb(255, 255, 255) !important;
+      background-color:rgb(53, 72, 94) !important;
+    }
+    .el-table .normal-row  
     {
       color: rgb(255, 255, 255) !important;
       background-color:rgb(53, 72, 94) !important;
-      --el-bg-color:green !important;
+      --el-table-current-row-bg-color: rgb(255, 255, 255) !important; /* 选中行背景 */
     }
-    .el-table .rowstyle:hover
+    .el-table .normal-row:hover
     {
+      color:rgb(53, 72, 94) !important;
+      background-color: rgb(255, 255, 255) !important;
+    }
+    .el-table__body tr.current-row>td.el-table__cell
+    {
+      background-color:rgb(255, 255, 255) !important;
+      color:rgb(53, 72, 94) !important;
+    }
+
+
+
+
+    .el-table .unactive-row {
+      color: rgb(140, 140, 140) !important;
+      background-color:rgb(53, 72, 94) !important;
+    }
+    .el-table .unactive-row:hover {
       color:rgb(53, 72, 94) !important;
       background-color: rgb(255, 255, 255) !important;
     }
@@ -33,19 +54,7 @@
     .el-table .warning-row:hover {
       color: rgb(211, 139, 6)!important;
     }
-    .el-table .success-row {
-      color: rgb(255, 255, 255) !important;
-      background-color:rgb(53, 72, 94) !important;
-    }
-    .el-table .success-row:hover {
-      color:rgb(53, 72, 94) !important;
-      background-color: rgb(255, 255, 255) !important;
-    }
 
-    .el-table__row.current-row td{
-      background-color:rgb(255, 255, 255) !important;
-      color:rgb(53, 72, 94) !important;
-    }
 
     .el-pagination{
       position: absolute;

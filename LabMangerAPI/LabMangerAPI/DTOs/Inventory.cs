@@ -54,6 +54,8 @@ public class ResponseInventory
         public int ReagentWarnNumber { get; set; }
         public DateTime LotExpirationDate { get; set; }
         public string Specifications { get; set; } = "";
+
+        public bool Active { get; set; } = true;
         
 
         public string Warning { get; set; } = "";

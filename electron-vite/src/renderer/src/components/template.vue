@@ -32,6 +32,7 @@
           <el-button 
             id="delete" 
             type="danger" 
+            v-if="get_permission('reagent_delete')"
             @click="eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'delete',message:'是否删除',action:()=>reagent_del(formData.id)})"
           >删除模板</el-button>
         </div>
@@ -44,8 +45,9 @@
           :data="state.tableData"
           :default-sort="{ prop: 'date', order: 'descending' }"
           :style="{width:'calc(100vw - 205px)'}"
-          row-class-name="rowstyle"
-          header-cell-class-name="rowstyle"
+          header-cell-class-name="normal-row-header"
+          :row-class-name="tableRowClassName"
+         
         >
         
           <el-table-column prop="name" label="试剂名称" min-width="150" show-overflow-tooltip/>
@@ -84,7 +86,7 @@
       </div>
       <div id="content2" style="position: absolute;left: 400px;top: 120px;">
         <p>预警数量</p>  
-        <el-input-number v-model="formData.warnNumber" :min="0" :max="9999" placeholder="0" @change="checkinput" />
+        <el-input-number v-model="formData.warnNumber" :min="-1" :max="9999" placeholder="0" @change="checkinput" />
         <p>预警天数</p>  
         <el-input-number v-model="formData.warnDays" :min="0" :max="9999" placeholder="0" @change="checkinput" />
         <p>价格</p>  
@@ -93,6 +95,8 @@
         <el-input disabled v-model="formData.createTime" style="width: 300px" placeholder="系统自动生成" />
         <p>生成初始批号</p>
         <el-switch v-model="formData.generateLot" :disabled="state.editbox_disablegeneratelot" size="large" @change="checkinput" />
+        <p>是否启用</p>
+        <el-switch v-model="formData.active" size="large" @change="checkinput" />
       </div>
     </template>
     </el-drawer>
@@ -102,6 +106,7 @@ import {  onMounted, reactive,ref } from 'vue'
 import { api_reagent_show,api_reagent_del,api_reagent_update,api_reagent_add } from '@/api/reagent'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { format_iso_YYYYMMDDHHmm } from '@/utils/format'
+  import get_permission from '@/utils/permission'
 
 // 状态管理
 const state = reactive({
@@ -131,7 +136,8 @@ const formData = reactive({
   generateLot: false,
   active:true,
   note:null,
-  createTime:null
+  createTime:null,
+  active:true
 })
 const tableRef = ref(null)
 function handleRowClick(row, column, event) {
@@ -148,6 +154,7 @@ function handleRowClick(row, column, event) {
     formData.generateLot=false
     formData.note=''
     formData.createTime=null
+    formData.active=true
     tableRef.value.setCurrentRow(null)
   }
   else{
@@ -162,11 +169,18 @@ function handleRowClick(row, column, event) {
     formData.generateLot=row.generateLot
     formData.note=row.note
     formData.createTime= format_iso_YYYYMMDDHHmm(row.createTime)
+    formData.active=row.active
     tableRef.value.setCurrentRow(row)
   }
 
 }
 
+function tableRowClassName({ row,rowindex }) { // 表格行样式
+  if (row.active===true ) {
+    return 'normal-row'
+  }
+  return 'unactive-row'
+}
 
 async function add_drawer(){
   state.drawer=true
@@ -184,6 +198,7 @@ async function add_drawer(){
   formData.generateLot=true
   formData.note=""
   formData.createTime=null
+  formData.active=true
   tableRef.value.setCurrentRow(null)
   state.drawer=true
 
@@ -196,7 +211,6 @@ async function edit_drawer(){
   state.addbutton_show=false
   state.updatebutton_show=true
   state.editbox_disablegeneratelot=true
-  
   state.drawer=true
   }
   else{

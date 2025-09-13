@@ -27,6 +27,8 @@ public class Reagent
     [SugarColumn(IsNullable = false)]
     public bool Active { get; set; } = true;
     
+    public bool IsDelete { get; set; } = false;
+    
     [SugarColumn(Length = 100, IsNullable = false)]
     public string Manufacturer { get; set; } = "";
     

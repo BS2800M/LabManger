@@ -72,8 +72,7 @@ public class RequestOperation
 
     public class ExportToExcel
     {
-        public int Page { get; set; } = 1;
-        public int PageSize { get; set; } = 50;
+        public int batchsize { get; set; } = 20;
         
     }
 
