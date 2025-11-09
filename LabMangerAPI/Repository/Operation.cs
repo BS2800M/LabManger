@@ -35,7 +35,7 @@ public class RepositoryOperation
     public async Task<List<ResponseOperation.InboundData>> GetOperationsWithDetailsAsync(int startId, int endId) //查找刚创建的数据
     {
         var exp = Expressionable.Create<Operation>();
-        exp.And(o => o.Active == true);
+        exp.And(o => o.Status == Status.Enable);
         exp.And(o => o.Id >= startId && o.Id <= endId);
         return await _db.Queryable<Operation>()
             .LeftJoin<Reagent>((o, r) => o.ReagentId == r.Id)
@@ -66,7 +66,7 @@ public class RepositoryOperation
     {
 
         int outcount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true && o.BarcodeNumber==barcodenumber && o.Action==OperationAction.Outbound)
+            .Where(o=>o.Status == Status.Enable && o.BarcodeNumber==barcodenumber && o.Action==OperationAction.Outbound)
             .CountAsync();
         return outcount;
     }
@@ -74,7 +74,7 @@ public class RepositoryOperation
     {
 
         int outcount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true && o.ReagentId==reagentid && o.LotId==lotid &&o.Action==OperationAction.Outbound)
+            .Where(o=>o.Status == Status.Enable && o.ReagentId==reagentid && o.LotId==lotid &&o.Action==OperationAction.Outbound)
             .CountAsync();
         return outcount;
     }
@@ -82,7 +82,7 @@ public class RepositoryOperation
     public async Task<int> OutboundCount(int reagentid,int lotid,bool onlylot, DateTime starttime, DateTime endtime)
     {
         var exp = Expressionable.Create<Operation>();
-        exp.And(o => o.Active == true && o.ReagentId == reagentid);
+        exp.And(o => o.Status == Status.Enable && o.ReagentId == reagentid);
         exp.And(o => o.CreateTime>=starttime&&o.CreateTime<=endtime);
         exp.And(o=>o.Action==OperationAction.Outbound);
         exp.AndIF(onlylot,o=>o.LotId==lotid);
@@ -96,7 +96,7 @@ public class RepositoryOperation
     public async Task<int> InboundCount(string barcodenumber) //得出入库数量
     {
         int incount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true && o.BarcodeNumber==barcodenumber && o.Action==OperationAction.Inbound)
+            .Where(o=>o.Status == Status.Enable && o.BarcodeNumber==barcodenumber && o.Action==OperationAction.Inbound)
             .CountAsync();
         return incount;
     }
@@ -104,7 +104,7 @@ public class RepositoryOperation
     public async Task<int> InboundCount(int reagentid ,int lotid) //得出入库数量
     {
         int incount=await _db.Queryable<Operation>()
-            .Where(o=>o.Active==true && o.ReagentId==reagentid&&o.LotId==lotid && o.Action==OperationAction.Inbound)
+            .Where(o=>o.Status == Status.Enable && o.ReagentId==reagentid&&o.LotId==lotid && o.Action==OperationAction.Inbound)
             .CountAsync();
         return incount;
     }
@@ -112,7 +112,7 @@ public class RepositoryOperation
     public async Task<int> InboundCount(int reagentid,int lotid,bool onlylot, DateTime starttime, DateTime endtime)
     {
         var exp = Expressionable.Create<Operation>();
-        exp.And(o => o.Active == true && o.ReagentId == reagentid);
+        exp.And(o => o.Status == Status.Enable && o.ReagentId == reagentid);
         exp.And(o => o.CreateTime>=starttime&&o.CreateTime<=endtime);
         exp.And(o=>o.Action==OperationAction.Inbound);
         exp.AndIF(onlylot,o=>o.LotId==lotid);
@@ -127,7 +127,7 @@ public class RepositoryOperation
     public Operation GetOperation(string barcodenumber)//输入条码号 查询对应的记录
     {
         var result =  _db.Queryable<Operation>()
-            .Single(o => o.Active == true && o.BarcodeNumber == barcodenumber && o.Action == OperationAction.Inbound);
+            .Single(o => o.Status == Status.Enable && o.BarcodeNumber == barcodenumber && o.Action == OperationAction.Inbound);
         return result;
     }
     
@@ -140,7 +140,7 @@ public class RepositoryOperation
         int page=search.Page;
         int pageSize=search.PageSize;
         var exp = Expressionable.Create<Operation>();
-        exp.And(o=>o.Active==true);
+        exp.And(o=>o.Status == Status.Enable);
         exp.AndIF(search.StartTime !=null, o => o.CreateTime >= search.StartTime);
         exp.AndIF(search.EndTime !=null, o => o.CreateTime <= search.EndTime);
         exp.AndIF(string.IsNullOrEmpty(reagentname)==false,o => o.Reagent!.Name.Contains(reagentname!));
@@ -204,7 +204,7 @@ public class RepositoryOperation
     public async Task<Operation> Del(int id) //删除
     {
         var result= await _db.Updateable<Operation>()
-            .SetColumns(it => it.Active == false)
+            .SetColumns(it => it.Status == Status.Delete)
             .Where(it => it.Id == id)
             .ExecuteReturnEntityAsync();
         return result;
@@ -213,31 +213,4 @@ public class RepositoryOperation
     
 
 
-    // 新增：根据试剂ID列表批量查询操作记录（智能分页用） 导出表格用
-    public async Task<List<ResponseOperation.ExportToExcelDataListData>> ShowOperationsByReagentIds(List<int> reagentIds) 
-    {
-        if (reagentIds.Count == 0)
-            return new List<ResponseOperation.ExportToExcelDataListData>();
-
-        var result = await _db.Queryable<Operation>()
-            .Where(o => o.Active == true && reagentIds.Contains(o.ReagentId))
-            .LeftJoin<Reagent>((o,r) => o.ReagentId == r.Id)
-            .LeftJoin<Lot>((o,r,l) => l.Id == o.LotId)
-            .LeftJoin<User>((o,r,l,u) => o.UserId == u.Id)
-            .Where((o,r,l,u) => r.Active == true)
-            .OrderBy(o => o.ReagentId, OrderByType.Asc)
-            .OrderBy(o => o.CreateTime, OrderByType.Asc)
-            .Select((o,r,l,u) => new ResponseOperation.ExportToExcelDataListData
-            {
-                ReagentId = o.ReagentId,
-                CreateTime = o.CreateTime,
-                LotId = o.LotId,
-                LotName = l.Name,
-                ExpirationDate = l.ExpirationDate,
-                UserName = u.UserName,
-                Action = o.Action,
-            })
-            .ToListAsync();
-        return result;
-    }
 }

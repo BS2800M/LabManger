@@ -2,7 +2,7 @@ using LabMangerAPI.Data;
 using LabMangerAPI.Validator;
 using LabMangerAPI.Repository;
 using LabMangerAPI.Service;
-
+using System.Text;
 
 namespace LabMangerAPI;
 
@@ -10,7 +10,8 @@ namespace LabMangerAPI;
     {
         public static async Task Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder();
+        var builder = WebApplication.CreateBuilder();
+            Console.OutputEncoding = Encoding.UTF8;
             AppConfig.ReadConfig(builder); //读取配置
             await Migrate.Run(); //迁移数据库
             

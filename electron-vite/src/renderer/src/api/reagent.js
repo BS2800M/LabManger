@@ -24,7 +24,7 @@ export let api_reagent_update=(body)=>{
         price:body.price,
         storageCondition:body.storageCondition,
         warnDays:body.warnDays,
-        active:body.active,   
+        status:body.status,   
         note:body.note,
         manufacturer:body.manufacturer
         
@@ -40,7 +40,7 @@ export let api_reagent_add=(body)=>{
         price:body.price,
         storageCondition:body.storageCondition,
         warnDays:body.warnDays,
-        active:body.active,   
+        status:body.status,   
         generateLot:body.generateLot,
         note:body.note,
         manufacturer:body.manufacturer

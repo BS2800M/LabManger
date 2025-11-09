@@ -32,7 +32,7 @@ public class RepositoryUser:ICrud<User,ResponseUser.ShowData,RequestUser.Add,Req
         int page=search.Page;
         int pageSize=search.PageSize;
         var exp = Expressionable.Create<User>();
-        exp.And(u=>u.Active==true);
+        exp.And(u=>u.Status == Status.Enable);
         exp.AndIF(string.IsNullOrEmpty(name)==false,u => u.UserName.Contains(name!) );
         ScopeVerification.CreateScope(ref exp,_userContext.TeamId,_userContext.Role);
         var result = _db.Queryable<User>()
@@ -71,7 +71,7 @@ public class RepositoryUser:ICrud<User,ResponseUser.ShowData,RequestUser.Add,Req
     public async Task<bool> Del(RequestUser.Del body)
     {
         await _db.Updateable<User>()
-            .SetColumns(it => it.Active == false)
+            .SetColumns(it => it.Status == Status.Delete)
             .Where(it => it.Id == body.Id)
             .ExecuteReturnEntityAsync();
         return  true;

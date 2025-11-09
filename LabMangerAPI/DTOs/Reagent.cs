@@ -22,7 +22,7 @@ public class RequestReagent
         public int WarnNumber { get; set; } = 0;
         public int WarnDays { get; set; } = 0;
         
-        public bool Active { get; set; } = true;
+        public Status Status { get; set; } = Status.Enable;
         public bool GenerateLot { get; set; } = false; //是否生成一个默认批号
         
     }
@@ -47,7 +47,7 @@ public class RequestReagent
         public int WarnNumber { get; set; } = 0;
         public int WarnDays { get; set; } = 0;
         
-        public bool Active { get; set; } = true;
+        public Status Status { get; set; } = Status.Enable;
 
     }
     

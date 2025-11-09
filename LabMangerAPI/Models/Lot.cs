@@ -5,9 +5,9 @@ namespace LabMangerAPI.Models;
 [SugarIndex("idx_lot_reagent_name",
     nameof(ReagentId), OrderByType.Asc,
     nameof(Name), OrderByType.Asc)]
-[SugarIndex("idx_lot_team_active",
+[SugarIndex("idx_lot_team_status",
     nameof(TeamId), OrderByType.Asc,
-    nameof(Active), OrderByType.Asc)]
+    nameof(Status), OrderByType.Asc)]
 public class Lot
 {    
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
@@ -21,11 +21,9 @@ public class Lot
 
     [SugarColumn(ColumnDataType = "datetime")]
     public DateTime ExpirationDate { get; set; } = DateTime.Now;
-    
+        
     [SugarColumn(IsNullable = false)]
-    public bool Active { get; set; } = true;
-    
-    public bool IsDelete { get; set; } = false;
+    public Status Status { get; set; } = Status.Enable;
     
     [SugarColumn(Length = 100, IsNullable = false)]
     public int TeamId { get; set; }

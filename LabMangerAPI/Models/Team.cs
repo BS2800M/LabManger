@@ -17,5 +17,5 @@ public class Team
     public string Note { get; set; } = "";
     
     [SugarColumn(Length = 150, IsNullable = false)] 
-    public bool Active { get; set; } = true;
+    public Status Status { get; set; } = Status.Enable;
 }

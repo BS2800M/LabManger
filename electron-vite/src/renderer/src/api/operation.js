@@ -50,7 +50,3 @@ return myrequest.put('/operation/del/',{
     })
 }
 
-export let api_operation_exporttoexcel=(body)=>{
-return myrequest.get('/operation/exporttoexcel/',{
-    })
-}

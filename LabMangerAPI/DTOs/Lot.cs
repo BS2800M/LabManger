@@ -16,7 +16,7 @@ public class RequestLot
         [Range(1, int.MaxValue, ErrorMessage = "非法id")] public int ReagentId { get; set; }
         public DateTime ExpirationDate { get; set; } = DateTime.Now.AddYears(3);
         
-        public bool Active { get; set; } = true;
+        public Status Status { get; set; } = Status.Enable;
 
     }
 
@@ -36,7 +36,7 @@ public class RequestLot
         [Range(1, int.MaxValue, ErrorMessage = "非法id")]public int ReagentId { get; set; } = 0;
         public DateTime ExpirationDate { get; set; } = DateTime.Now;
         
-        public bool Active { get; set; } = true;
+        public Status Status { get; set; } = Status.Enable;
 
     }
 
@@ -71,7 +71,7 @@ public class ResponseLot
         
         public int TeamId { get; set; } 
         
-        public bool Active { get; set; } = true;
+        public Status Status { get; set; } = Status.Enable;
 
         public string ReagentName { get; set; } = "";
     }

@@ -96,7 +96,7 @@
         <p>生成初始批号</p>
         <el-switch v-model="formData.generateLot" :disabled="state.editbox_disablegeneratelot" size="large" @change="checkinput" />
         <p>是否启用</p>
-        <el-switch v-model="formData.active" size="large" @change="checkinput" />
+        <el-switch v-model="formData.status" size="large" @change="checkinput" />
       </div>
     </template>
     </el-drawer>
@@ -134,10 +134,10 @@ const formData = reactive({
   id: null,
   warnDays: 0,
   generateLot: false,
-  active:true,
+  status:true,
   note:null,
   createTime:null,
-  active:true
+  status:0
 })
 const tableRef = ref(null)
 function handleRowClick(row, column, event) {
@@ -154,7 +154,7 @@ function handleRowClick(row, column, event) {
     formData.generateLot=false
     formData.note=''
     formData.createTime=null
-    formData.active=true
+    formData.status=true
     tableRef.value.setCurrentRow(null)
   }
   else{
@@ -169,17 +169,19 @@ function handleRowClick(row, column, event) {
     formData.generateLot=row.generateLot
     formData.note=row.note
     formData.createTime= format_iso_YYYYMMDDHHmm(row.createTime)
-    formData.active=row.active
+    formData.status=row.status===0?true:false
     tableRef.value.setCurrentRow(row)
   }
 
 }
 
 function tableRowClassName({ row,rowindex }) { // 表格行样式
-  if (row.active===true ) {
+  if (row.status===0 ) {
     return 'normal-row'
   }
+  if (row.status===1 ) {
   return 'unactive-row'
+  }
 }
 
 async function add_drawer(){
@@ -198,7 +200,7 @@ async function add_drawer(){
   formData.generateLot=true
   formData.note=""
   formData.createTime=null
-  formData.active=true
+  formData.status=true
   tableRef.value.setCurrentRow(null)
   state.drawer=true
 
@@ -251,11 +253,13 @@ async function reagent_del(id){
 }
 
 async function reagent_update() {
+  formData.status=formData.status===true?0:1
   await api_reagent_update(formData)
   state.drawer = false
   await reagent_show()
 }
 async function reagent_add() {
+  formData.status=formData.status===true?0:1
   await api_reagent_add(formData)
   state.drawer = false
   await reagent_show()

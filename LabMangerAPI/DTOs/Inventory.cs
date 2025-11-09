@@ -2,6 +2,7 @@
 
 using LabMangerAPI.DTOs.Common;
 using System.ComponentModel.DataAnnotations;
+using LabMangerAPI.Models;
 namespace LabMangerAPI.DTOs;
 
 public class RequestInventory
@@ -55,7 +56,7 @@ public class ResponseInventory
         public DateTime LotExpirationDate { get; set; }
         public string Specifications { get; set; } = "";
 
-        public bool Active { get; set; } = true;
+        public Status Status { get; set; } = Status.Enable;
         
 
         public string Warning { get; set; } = "";

@@ -25,7 +25,7 @@ public class User
     public UserRole Role { get; set; } = UserRole.Member;
 
     [SugarColumn(Length = 50, IsNullable = false)]
-    public bool Active { get; set; } = true;
+    public Status Status { get; set; } = Status.Enable;
     
     [SugarColumn(ColumnName = "Team_Id")]
     public int TeamId { get; set; } 

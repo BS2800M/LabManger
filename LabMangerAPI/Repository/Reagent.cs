@@ -26,7 +26,7 @@ public class RepositoryReagent : ICrud<Reagent, Reagent, RequestReagent.Add, Req
             Specifications = body.Specifications,
             Price = body.Price,
             StorageCondition = body.StorageCondition,
-            Active = body.Active,
+            Status = body.Status,
             Manufacturer = body.Manufacturer,
             Note = body.Note,
             WarnNumber = body.WarnNumber,
@@ -45,7 +45,7 @@ public class RepositoryReagent : ICrud<Reagent, Reagent, RequestReagent.Add, Req
         int pageSize = search.PageSize;
         
         var exp = Expressionable.Create<Reagent>();
-        exp = exp.And(r => r.IsDelete == false);
+        exp = exp.And(r => r.Status != Status.Delete);
         exp.AndIF(string.IsNullOrEmpty(name) == false, r => r.Name.Contains(name!));
         
         // 基础数据访问权限（团队隔离）
@@ -53,7 +53,7 @@ public class RepositoryReagent : ICrud<Reagent, Reagent, RequestReagent.Add, Req
         
         var result = _db.Queryable<Reagent>()
             .Where(exp.ToExpression())
-            .OrderBy(r=>r.Active, OrderByType.Desc)
+            .OrderBy(r=>r.Status, OrderByType.Asc)
             .OrderBy(r => r.Id, OrderByType.Desc)
             .ToPageListAsync(page, pageSize, totalcount, totalpage);
 
@@ -71,7 +71,7 @@ public class RepositoryReagent : ICrud<Reagent, Reagent, RequestReagent.Add, Req
             Specifications = body.Specifications,
             Price = body.Price,
             StorageCondition = body.StorageCondition,
-            Active = body.Active,
+            Status = body.Status,
             Manufacturer = body.Manufacturer,
             Note = body.Note,
             WarnNumber = body.WarnNumber,
@@ -86,7 +86,7 @@ public class RepositoryReagent : ICrud<Reagent, Reagent, RequestReagent.Add, Req
     {
         // 只负责数据删除，权限验证移到服务层
         await _db.Updateable<Reagent>()
-            .SetColumns(it => it.IsDelete == true)
+            .SetColumns(it => it.Status == Status.Delete)
             .Where(it => it.Id == body.Id)
             .ExecuteReturnEntityAsync();
         
@@ -96,8 +96,7 @@ public class RepositoryReagent : ICrud<Reagent, Reagent, RequestReagent.Add, Req
     public async Task<List<ResponseReagent.ShowAllData>> ShowAll()
     {
         var exp = Expressionable.Create<Reagent>();
-        exp.And(r => r.Active == true);
-        exp.And(r=>r.IsDelete == false);
+        exp.And(r => r.Status == Status.Enable);
         ScopeVerification.CreateScope(ref exp, _userContext.TeamId, _userContext.Role);
         var result = _db.Queryable<Reagent>()
             .Where(exp.ToExpression())

@@ -151,14 +151,16 @@ const tableRef = ref(null)
 
 
 function tableRowClassName({ row,rowindex }) { // 表格行样式
-  if (row.warning==="" || row.warning===null ) {
-    return 'normal-row'
+  if (row.status===0 ) {
+    if (row.warning==="" || row.warning===null ){
+      return 'normal-row'
+    }
+    else{
+      return 'warning-row'
+    }
   }
-  if (row.active===false){
-    return 'unactive-row'
-  }
-  if (row.warning.includes("number") || row.warning.includes("time")){
-  return 'warning-row'
+  if (row.status===1 ) {
+  return 'unactive-row'
   }
 }
 

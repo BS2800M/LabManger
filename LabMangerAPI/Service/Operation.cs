@@ -65,7 +65,7 @@ public class ServiceOperation
                     BarcodeNumber = GenerateBarcodeNumber(currentId), // 业务逻辑
                     Note = inbound.Note,
                     Action = OperationAction.Inbound,
-                    Active = true,
+                    Status = Status.Enable,
                     CreateTime = DateTime.Now
                 });
                 currentId++;
@@ -92,7 +92,7 @@ public class ServiceOperation
                     BarcodeNumber = GenerateBarcodeNumber(currentId), // 业务逻辑
                     Note = inbound.Note,
                     Action = OperationAction.Outbound,
-                    Active = true,
+                    Status = Status.Enable,
                     CreateTime = DateTime.Now
                 });
                 currentId++;
@@ -160,7 +160,7 @@ public class ServiceOperation
                     LotId = search.LotId,
                     UserId = int.Parse(_userContext.UserId),
                     Action = OperationAction.Outbound,
-                    Active = true,
+                    Status = Status.Enable,
                     BarcodeNumber = search.BarcodeNumber,
                     Note = search.Note,
                     CreateTime = DateTime.Now
@@ -286,118 +286,5 @@ public class ServiceOperation
         };
     }
 
-    private List<ResponseOperation.ExportToExcelDataListData> BuildExportExcelOperation(List<ResponseOperation.ExportToExcelDataListData> list) //业务逻辑 相同的操作合并起来
-    {
-        if (list.Count == 0)
-            return new List<ResponseOperation.ExportToExcelDataListData>();
-
-        List<ResponseOperation.ExportToExcelDataListData> mergedlist = new List<ResponseOperation.ExportToExcelDataListData>();
-        const double fiveSecondsMs = 5 * 1000;
-        
-
-        foreach (var item in list)
-        {
-            if (mergedlist.Count == 0)
-            {
-                // 初始化计数
-                item.InboundNumber = item.Action == OperationAction.Inbound ? 1 : 0;
-                item.OutboundNumber = item.Action == OperationAction.Outbound ? 1 : 0;
-                item.InventoryNumber = item.InboundNumber - item.OutboundNumber;
-                mergedlist.Add(item);
-                continue;
-            }
-
-            var last = mergedlist[mergedlist.Count - 1];
-
-            var timeDiffMs = Math.Abs((item.CreateTime - last.CreateTime).TotalMilliseconds);
-
-            if (timeDiffMs < fiveSecondsMs && item.LotId == last.LotId && item.Action == last.Action)
-            {
-                // 符合条件：累加对应计数
-                if (item.Action==OperationAction.Inbound ) // 入库
-                {
-                    last.InboundNumber++;
-                    last.InventoryNumber++;
-                }
-                else if (item.Action==OperationAction.Outbound) // 出库
-                {
-                    last.OutboundNumber++;
-                    last.InventoryNumber--;
-                }
-                continue;
-            }
-
-            // 不符合条件：开始新分组
-            item.InboundNumber = item.Action == OperationAction.Inbound ? 1 : 0;
-            item.OutboundNumber = item.Action == OperationAction.Outbound ? 1 : 0;
-            item.InventoryNumber = last.InventoryNumber + item.InboundNumber - item.OutboundNumber;
-
-            mergedlist.Add(item);
-        }
-        return mergedlist;
-    }
-
-      public async Task<ResponseOperation.ExportToExcel> ExportToExcel(RequestOperation.ExportToExcel query)
-    {
-        var search = new RequestReagent.Show
-        {
-            Name = "",
-            Page =1 ,
-            PageSize = int.MaxValue
-        };
-        RefAsync<int> totalcount = new RefAsync<int>();
-        RefAsync<int> totalpage = new RefAsync<int>();
-            
-        // 1. 获取所有试剂
-        var reagentlist = await _repositoryReagent.Show(search, totalcount, totalpage);
-        if (reagentlist.Count == 0)
-        {
-            return new ResponseOperation.ExportToExcel
-            {
-                Status = 0,
-                Message = "无数据",
-                Data = new List<ResponseOperation.ExportToExcelData>()
-            };
-        }
-        
-        // 2. 分批处理试剂（每批20个，避免一次性查询过多数据）
-         int batchSize = query.batchsize;
-        var resultdata = new List<ResponseOperation.ExportToExcelData>();
-        
-        for (int i = 0; i < reagentlist.Count; i += batchSize)
-        {
-            var batch = reagentlist.Skip(i).Take(batchSize).ToList();
-            var reagentIds = batch.Select(r => r.Id).ToList();
-            
-            // 获取当前批次的操作记录
-            var operations = await _repositoryoperation.ShowOperationsByReagentIds(reagentIds);
-            
-            // 处理当前批次的试剂
-            foreach (var reagent in batch)
-            {
-                var reagentOperations = operations
-                    .Where(op => op.ReagentId == reagent.Id)
-                    .ToList();
-                
-                var mergedOperationList = BuildExportExcelOperation(reagentOperations);
-                
-                resultdata.Add(new ResponseOperation.ExportToExcelData{
-                    ReagentId = reagent.Id,
-                    ReagentName = reagent.Name,
-                    StorageCondition = reagent.StorageCondition,
-                    Manufacturer = reagent.Manufacturer,
-                    OperationList = mergedOperationList,
-                });
-            }
-        }
-       
-        return new ResponseOperation.ExportToExcel
-        {
-            Status = 0,
-            Message = $"共{totalpage.Value}页，每页{query.batchsize}条",
-            Data = resultdata,
-        };
-
-    }
 
 }

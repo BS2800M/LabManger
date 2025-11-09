@@ -30,7 +30,7 @@ public class RepositoryTeam:ICrud<Team,Team,RequestTeam.Add,RequestTeam.Show,Req
         int page=search.Page;
         int pageSize=search.PageSize;
         var exp = Expressionable.Create<Team>();
-        exp.And(t=>t.Active==true);
+        exp.And(t=>t.Status == Status.Enable);
         exp.AndIF(string.IsNullOrEmpty(name)==false,t => t.Name.Contains(name!));
         var result = _db.Queryable<Team>()
             .Where(exp.ToExpression())
@@ -56,7 +56,7 @@ public class RepositoryTeam:ICrud<Team,Team,RequestTeam.Add,RequestTeam.Show,Req
     public async Task<bool> Del(RequestTeam.Del body)
     {
         await _db.Updateable<Team>()
-            .SetColumns(it => it.Active == false)
+            .SetColumns(it => it.Status == Status.Delete)
             .Where(it => it.Id == body.Id)
             .ExecuteReturnEntityAsync();
         return  true;

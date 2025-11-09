@@ -34,7 +34,7 @@ public class RepositoryInventory
         int page = search.Page;
         int pageSize = search.PageSize;
         var exp = Expressionable.Create<Inventory>();
-        exp.And(i=>i.Reagent!.IsDelete == false &&i.Lot!.IsDelete == false);
+        exp.And(i=>i.Reagent!.Status != Status.Delete &&i.Lot!.Status != Status.Delete);
         exp.AndIF(string.IsNullOrEmpty(reagentname) == false, i =>i.Reagent!.Name.Contains(reagentname!) );
         
         // 基础数据访问权限（团队隔离）
@@ -43,7 +43,7 @@ public class RepositoryInventory
             .LeftJoin<Reagent>((i, r) => i.ReagentId == r.Id)
             .LeftJoin<Lot>((i, r,l) => i.LotId == l.Id)
             .Where(exp.ToExpression())
-            .OrderBy((i,r,l)=>SqlFunc.IIF(r.Active==true && l.Active==true,true,false),OrderByType.Desc)
+            .OrderBy((i,r,l)=>SqlFunc.IIF(r.Status == Status.Enable && l.Status == Status.Enable,true,false),OrderByType.Desc)
             .OrderBy((i, r, l) => SqlFunc.IIF(
                 r.WarnNumber >= i.Number || l.ExpirationDate <= DateTime.Now, 
                 0,  // 有警告的排在前面 (0 < 1)
@@ -61,7 +61,7 @@ public class RepositoryInventory
                 ReagentWarnNumber = r.WarnNumber,
                 Specifications = r.Specifications,
                 WarnNumber = r.WarnNumber,
-                Active = SqlFunc.IIF(r.Active==true && l.Active==true,true,false),
+                Status = SqlFunc.IIF(r.Status == Status.Enable && l.Status == Status.Enable,Status.Enable,Status.Disable),
                 Warning = SqlFunc.IIF(r.WarnNumber >= i.Number, "number", "") + 
                           SqlFunc.IIF(l.ExpirationDate <= DateTime.Now, "time", "")
                 
@@ -148,7 +148,7 @@ public class RepositoryInventory
     public async Task<List<Inventory>> ShowAll() //展示所有库存 不受任何限制
     {
         var alllist =  _db.Queryable<Inventory>()
-            .Where(it => it.Reagent!.Active==true&&it.Lot!.Active==true)
+            .Where(it => it.Reagent!.Status == Status.Enable&&it.Lot!.Status == Status.Enable)
             .ToListAsync();
         return  await alllist;
 
@@ -157,14 +157,14 @@ public class RepositoryInventory
     public async Task<ResponseInventory.DashBoardData> DashBoard()
     {
         var exp = Expressionable.Create<Inventory>();
-        exp.And(i=>i.Reagent!.Active==true&&i.Lot!.Active==true&&i.Reagent!.IsDelete==false&&i.Lot!.IsDelete==false);
+        exp.And(i=>i.Reagent!.Status == Status.Enable&&i.Lot!.Status == Status.Enable);
         ScopeVerification.CreateScope(ref exp, _userContext.TeamId, _userContext.Role);
         var countall =  _db.Queryable<Inventory>()
             .Where(exp.ToExpression())
             .CountAsync();
         
         exp=Expressionable.Create<Inventory>();
-        exp.And(i=>i.Reagent!.Active==true&&i.Lot!.Active==true&&i.Reagent!.IsDelete==false&&i.Lot!.IsDelete==false);
+        exp.And(i=>i.Reagent!.Status == Status.Enable&&i.Lot!.Status == Status.Enable);
         exp.And(i=>i.Reagent!.WarnNumber>=i.Number || i.Lot!.ExpirationDate<=DateTime.Now);
         ScopeVerification.CreateScope(ref exp, _userContext.TeamId, _userContext.Role);
         var countwarn=_db.Queryable<Inventory>()
@@ -172,7 +172,7 @@ public class RepositoryInventory
             .CountAsync();
         
         exp=Expressionable.Create<Inventory>();
-        exp.And(i=>i.Reagent!.Active==true&&i.Lot!.Active==true&&i.Reagent!.IsDelete==false&&i.Lot!.IsDelete==false);
+        exp.And(i=>i.Reagent!.Status == Status.Enable&&i.Lot!.Status == Status.Enable);
         exp.And(i=>i.Reagent!.WarnNumber>=i.Number);
         ScopeVerification.CreateScope(ref exp, _userContext.TeamId, _userContext.Role);
         var countwarnnum=_db.Queryable<Inventory>()
@@ -180,7 +180,7 @@ public class RepositoryInventory
             .CountAsync();
         
         exp=Expressionable.Create<Inventory>();
-        exp.And(i=>i.Reagent!.Active==true&&i.Lot!.Active==true&&i.Reagent!.IsDelete==false&&i.Lot!.IsDelete==false);
+        exp.And(i=>i.Reagent!.Status == Status.Enable&&i.Lot!.Status == Status.Enable);
         exp.And(i=>i.Lot!.ExpirationDate<=DateTime.Now);
         ScopeVerification.CreateScope(ref exp, _userContext.TeamId, _userContext.Role);
         var countwarnexp=_db.Queryable<Inventory>()

@@ -50,14 +50,7 @@
                     type="primary" 
                     @click="operation_exporttoexcel_list"
                 >
-                    导出记录(列表版)
-                </el-button>
-                <el-button 
-                    id="export"
-                    type="primary" 
-                    @click="operation_exporttoexcel_info"
-                >
-                    导出记录(信息版)
+                    导出记录
                 </el-button>
                 <el-button 
                      id="barcodeprint"
@@ -185,9 +178,9 @@
   import {formatDateColumn,getnowtime,getnowtime_previousmonth,format_operation_action} from '@/utils/format'
   import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
   import {format_YYYYMMDDHHmm_iso} from '@/utils/format'
-  import {operation_exporttoexcel_info,operation_exporttoexcel_list } from '@/utils/exportexcel.js'
+  import {operation_exporttoexcel_list } from '@/utils/exportexcel.js'
   import get_permission from '@/utils/permission'
-  import reagentlot_select_test from './reagentlot_select_test.vue'
+  import reagentlot_select_test from './reagentlot_select_test.vue' //bugs
   // 状态管理
   const state = reactive({
     reagentName: '',    // 输入搜索名称

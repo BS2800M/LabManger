@@ -38,7 +38,7 @@ public class ServiceLot
                 Id = result.Id,
                 Name = result.Name,
                 ReagentId = result.ReagentId,
-                Active = result.Active,
+                Status = result.Status,
             }
         };
     }

@@ -15,9 +15,9 @@ namespace LabMangerAPI.Models;
 [SugarIndex("idx_operation_barcode_action",
     nameof(BarcodeNumber), OrderByType.Asc,
     nameof(Action), OrderByType.Asc)]
-// 复合普通索引：Active, TeamId, CreateTime
-[SugarIndex("idx_operation_active_team_createtime",
-    nameof(Active), OrderByType.Asc,
+// 复合普通索引：Status, TeamId, CreateTime
+[SugarIndex("idx_operation_status_team_createtime",
+    nameof(Status), OrderByType.Asc,
     nameof(TeamId), OrderByType.Asc,
     nameof(CreateTime), OrderByType.Asc)]
 
@@ -51,7 +51,7 @@ public class Operation
     public string Note { get; set; } = "";
     
     [SugarColumn(IsNullable = false)]
-    public bool Active { get; set; } = true;
+    public Status Status { get; set; } = Status.Enable;
     
     [Navigate(NavigateType.OneToOne, nameof(ReagentId))]
     public Reagent? Reagent { get; set; }

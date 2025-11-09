@@ -78,8 +78,8 @@
         <el-select-v2  v-model="formData.seletevalue" filterable :options="allreagentlist" placeholder="选择试剂" @change="checkinput"  :disabled="state.editbox_disable_selete" style="width: 240px"  />
         <p>所属试剂名字</p>  
         <el-input v-model="formData.reagentname" style="width: 300px"  disabled  />
-        <p>是否有效</p>
-        <el-switch v-model="formData.active" @change="checkinput" />
+        <p>是否启用</p>
+        <el-switch v-model="formData.status" @change="checkinput" />
       </div>
     </template>
     </el-drawer>
@@ -123,7 +123,7 @@ const formData = reactive({
   id: null  ,           // 选中的批号id
   reagentname:'',
   reagentid:null,
-  active:true
+  status:true
 })
 
 // 试剂列表数据
@@ -139,7 +139,7 @@ function handleRowClick(row, column, event) {
     formData.reagentid=null
     formData.reagentname=''
     formData.seletevalue=null
-    formData.active=true
+    formData.status=true
   }
   else{
     formData.id=row.id
@@ -148,14 +148,17 @@ function handleRowClick(row, column, event) {
     formData.reagentid=row.reagentId
     formData.reagentname=row.reagentName
     formData.seletevalue=null
-    formData.active=row.active
+    formData.status=row.status===0?true:false
     tableRef.value.setCurrentRow(row)
   }
 }
 
 function tableRowClassName({ row,rowindex }) { // 表格行样式
-  if (row.active===true ) {
+  if (row.status===0 ) {
     return 'normal-row'
+  }
+  if (row.status===1 ) {
+    return 'unactive-row'
   }
   return 'unactive-row'
 }
@@ -174,7 +177,7 @@ async function add_drawer(){
   formData.reagentid=null
   formData.reagentname=''
   formData.seletevalue=null,
-  formData.active=true,
+  formData.status=true,
   state.drawer=true
 
 }
@@ -186,7 +189,6 @@ async function edit_drawer(){
   state.addbutton_show=false
   state.updatebutton_show=true
   state.editbox_disable_selete=true
-  formData.active=formData.active
   checkinput()
   state.drawer=true
   }
@@ -202,7 +204,7 @@ function checkinput(){
     formData.reagentid = allreagentlist.value[formData.seletevalue].id
   }
   const validationRules = {
-  required: ['name', 'expirationdate', 'reagentid', 'active']
+  required: ['name', 'expirationdate', 'reagentid', 'status']
 }
 
   // 检查必填字段
@@ -237,6 +239,7 @@ async function lot_del(){
 
 async function lot_update(){
     formData.expirationdate = format_YYYYMMDDHHmm_iso(formData.expirationdate)
+    formData.status=formData.status===true?0:1
     await api_lot_update(formData)
     state.drawer = false
     await lot_show()
@@ -244,6 +247,7 @@ async function lot_update(){
 
 async function lot_add(){
     formData.expirationdate = format_YYYYMMDDHHmm_iso(formData.expirationdate)
+    formData.status=formData.status===true?0:1
     await api_lot_add(formData)
     state.drawer = false
     await lot_show()

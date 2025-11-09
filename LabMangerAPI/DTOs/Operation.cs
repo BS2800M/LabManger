@@ -70,11 +70,7 @@ public class RequestOperation
         public  int Id { get; set;}
     }
 
-    public class ExportToExcel
-    {
-        public int batchsize { get; set; } = 20;
-        
-    }
+
 
 
 
@@ -144,34 +140,6 @@ public class ResponseOperation
         
     }
 
-    public class ExportToExcelDataListData
-    {
-        public int ReagentId { get; set; } 
-        public DateTime CreateTime { get; set; } = DateTime.Now;
-        public int LotId { get; set; }
-        public string LotName { get; set; } = "";
-        public DateTime ExpirationDate {get; set;}= DateTime.Now;
-        public string UserName { get; set; } = "";
-        
-        public OperationAction Action { get; set; } 
-        public int InboundNumber { get; set; } 
-        public int OutboundNumber { get; set; } 
-        public int InventoryNumber { get; set; } 
-    }
 
-    public class ExportToExcelData
-    {
-        public int ReagentId { get; set; }
-        public string ReagentName { get; set; } = "";
-        public string StorageCondition { get; set; } = "";
-        public string Manufacturer { get; set; } = "";
-        public List<ExportToExcelDataListData> OperationList { get; set; } = new List<ExportToExcelDataListData>();
-
-    }
-
-    public class ExportToExcel:ApiResponse
-    {
-        public List<ExportToExcelData> Data { get; set; } = new List<ExportToExcelData>();
-    }
 
 }

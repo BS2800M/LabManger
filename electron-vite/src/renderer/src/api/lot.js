@@ -23,7 +23,7 @@ export let api_lot_update=(body)=>{
         reagentid:body.reagentid,
         name:body.name,
         expirationdate:body.expirationdate,
-        active:body.active
+        status:body.status
                 })
 }
 
@@ -32,7 +32,7 @@ export let api_lot_add=(body)=>{
         name:body.name,
         reagentid:body.reagentid,
         expirationdate:body.expirationdate,
-        active:body.active
+        status:body.status
                 })
 }
 
