@@ -1,7 +1,5 @@
-﻿using SqlSugar;
+﻿
 using LabMangerAPI.Models;
-using System.Threading.Tasks;
-using LabMangerAPI.Service;
 using System.Text;
 using System.Security.Cryptography;
 

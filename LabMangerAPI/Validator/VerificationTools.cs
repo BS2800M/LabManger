@@ -4,7 +4,7 @@ using LabMangerAPI.Models;
 namespace LabMangerAPI.Validator;
 
 
-public static class ScopeVerification
+public static class ScopeVerification //为不同用户创建不同的查看权限范围（如组员只能查看本组，管理员能查看全部）
 {
     public static void CreateScope( ref Expressionable<User> exp,int teamid,string role)
     {

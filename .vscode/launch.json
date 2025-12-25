@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "调试模式运行后端",
+      "type": "coreclr",
+      "preLaunchTask": "build",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "cwd": "${workspaceFolder}/LabMangerAPI",
+      "program": "${workspaceFolder}/LabMangerAPI/bin/Debug/net9.0/LabMangerAPI.dll",
+      "launchBrowser": { "enabled": false }
+    },
+    {
+      "name": "在终端运行后端",
+      "type": "node-terminal",
+      "preLaunchTask": "build",
+      "request": "launch",
+      "command": "dotnet run",
+      "cwd": "${workspaceFolder}/LabMangerAPI",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "PYTHONIOENCODING": "utf-8",
+        "LANG": "zh_CN.UTF-8"
+      }
+    },
+    {
+      "name": "启动前端Electron (开发模式)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/electron-vite",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+    },
+  ],
+  "compounds": [
+    {
+      "name": "组合调试：后端+前端",
+      "configurations": [
+        "在终端运行后端",
+        "启动前端Electron (开发模式)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

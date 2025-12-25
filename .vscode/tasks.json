@@ -1,0 +1,99 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-api",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/LabMangerAPI/LabMangerAPI.csproj",
+        "--runtime",
+        "win-x64",
+        "/p:SelfContained=true",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/LabMangerAPI"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-api-release",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/LabMangerAPI/LabMangerAPI.csproj",
+        "--configuration",
+        "Release",
+        "--runtime",
+        "win-x64",
+        "/p:SelfContained=true",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+    },
+    {
+      "label": "build-frontend",
+      "command": "npm",
+      "type": "process",
+      "args": ["run", "build:win"],
+      "options": {
+        "cwd": "${workspaceFolder}/electron-vite"
+      },
+     },
+     {
+       "label": "copy-to-release",
+       "type": "shell",
+       "command": "powershell",
+       "args": [
+         "-Command",
+         "if (Test-Path '${workspaceFolder}/release') { Remove-Item '${workspaceFolder}/release' -Recurse -Force }; New-Item -ItemType Directory -Path '${workspaceFolder}/release/backend' -Force; New-Item -ItemType Directory -Path '${workspaceFolder}/release/frontend' -Force; Write-Host '复制后端文件...'; Copy-Item '${workspaceFolder}/LabMangerAPI/bin/Release/net9.0/win-x64/*' '${workspaceFolder}/release/backend/' -Recurse -Force; Write-Host '复制前端文件...'; Copy-Item '${workspaceFolder}/electron-vite/dist/win-ia32-unpacked/*' '${workspaceFolder}/release/frontend/' -Recurse -Force; Write-Host '复制完成！'"
+       ],
+       "options": {
+         "cwd": "${workspaceFolder}"
+       },
+       "group": "build",
+       "presentation": {
+         "echo": true,
+         "reveal": "always",
+         "focus": false,
+         "panel": "new"
+       }
+     },
+    {
+      "label": "build-all",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "build-api-release",
+        "build-frontend",
+        "copy-to-release"
+      ],
+      "group": "build",
+    },
+    {
+        "label": "build",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+            "build",
+            "${workspaceFolder}/LabMangerAPI/LabMangerAPI.csproj",
+            "/property:GenerateFullPaths=true",
+            "/consoleloggerparameters:NoSummary;ForceNoAlign"
+        ],
+        "problemMatcher": "$msCompile"
+    }
+  ]
+}
+

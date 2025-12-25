@@ -143,9 +143,9 @@ const state = reactive({
   page: 1,       // 当前页
   totalpage: 1,        // 总页
   pagesize:13,
-  drawer:false,
-  statisticsbuttondisabled:true,
-  statisticsData: { }    
+  drawer:false, // 统计抽屉
+  statisticsbuttondisabled:true, // 统计按钮是否禁用
+  statisticsData: { }     // 统计数据
 })
 const tableRef = ref(null)
 

@@ -25,7 +25,7 @@ public class ApiResponse<T> : ApiResponse
     /// <summary>
     /// 响应数据
     /// </summary>
-    public T? Data { get; set; }
+    public T? Data { get; set;}
 }
 
 /// <summary>
