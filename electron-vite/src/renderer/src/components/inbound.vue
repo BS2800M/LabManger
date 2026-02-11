@@ -3,12 +3,16 @@
         <div id="background2">
             <span style=" position:absolute;width:150px;left:200px;top:20px;" >试剂</span>
             <div style=" position:absolute; width: 300px;left:250px;top:20px;">
-                <reagentlot_select v-model="formData.reagentlot" @change="checkinput" />
+                <el-select-v2  v-model="formData.reagentid" filterable :options="allreagentlist" placeholder="选择试剂" @change="checkinput"  style="width: 300px"  />
+            </div>
+            <span style=" position:absolute;width:150px;left:650px;top:20px;" >批号</span>
+            <div style=" position:absolute; width: 300px;left:700px;top:20px;">
+                <el-select-v2  v-model="formData.lotid" filterable :options="alllotlist" placeholder="选择批号" @change="checkinput"  style="width: 300px"  />
             </div>
 
-            <span style=" position:absolute;width:150px;left:650px;top:20px;" >注释</span>
+            <span style=" position:absolute;width:150px;left:650px;top:60px;" >注释</span>
             <el-input 
-            style="position:absolute;width:200px;left:700px;top:20px;"
+            style="position:absolute;width:200px;left:700px;top:60px;"
             v-model="formData.note" 
             placeholder="可填写注释" 
             />
@@ -58,9 +62,10 @@
 </template>
 
 <script setup>
-import {  reactive} from 'vue'
+import {  reactive,ref,onMounted} from 'vue'
 import { api_operation_inbound } from '@/api/operation'
-import reagentlot_select from './reagentlot_select.vue'
+import { api_reagent_showall } from '@/api/reagent'
+import { api_lot_showall } from '@/api/lot'
 import { toRaw } from 'vue';
 import { ElMessage } from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -70,18 +75,21 @@ import { h } from 'vue'
 const formData = reactive({
     number:1,//数量
     disablebutton: true, // 是否禁用按钮 默认禁用
-    reagentlot: {reagentid:null,lotid:null,reagentname:null,lotname:null}, // 选择试剂批号下拉菜单对应的id
+    reagentid:null,
+    lotid:null,
     tableData: [], // 表格数据  
-})
 
+})
+const allreagentlist = ref([])
+const alllotlist = ref([])
 
 async function ready_inbound() {
         formData.tableData.push({
         rowsid: formData.tableData.length + 1,
-        reagentid: formData.reagentlot.reagentid,
-        reagentname: formData.reagentlot.reagentname,
-        lotid: formData.reagentlot.lotid,
-        lot: formData.reagentlot.lotname,
+        reagentid: formData.reagentid,
+        reagentname: allreagentlist.value.find(item => item.value === formData.reagentid)?.name,
+        lotid: formData.lotid,
+        lot: alllotlist.value.find(item => item.value === formData.lotid)?.name,
         number: formData.number,
         note: formData.note,
     })
@@ -129,18 +137,36 @@ function delete_inbound(rowsid) {
 
 
 
-function checkinput(){
+async function checkinput(){
   // 检查必填字段
   const hasEmptyField = 
-    !formData.reagentlot.reagentid || 
-    !formData.reagentlot.lotid || 
+    !formData.reagentid || 
+    !formData.lotid || 
     !formData.number
   
   // 更新按钮禁用状态   
   formData.disablebutton = hasEmptyField
+  if (formData.reagentid) {
+    let data =  await api_lot_showall(formData.reagentid)
+    alllotlist.value = data.data.map(item => ({
+      value: item.id,
+      label: item.name,
+      name: item.name
+    }))
+  }
+  else {
+    alllotlist.value = []
+  }
 }
 
-
+onMounted(async () => {
+        let data = await api_reagent_showall()
+        allreagentlist.value = data.data.map(item => ({
+            value: item.id,
+            label: item.name,
+            name: item.name
+        }))
+    })
 </script>
 
 <style scoped>
@@ -164,6 +190,7 @@ height: 140px;
   font-size: 30px;
   font-weight:700;
   transition: all 0.3s ease-in-out;
+  border-radius: 15px; /* 设置圆角半径 */
 }
   #inbound:hover{
   color: rgb(25, 153, 11);

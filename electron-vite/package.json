@@ -15,7 +15,7 @@
     "@vitejs/plugin-vue": "^6.0.0",
     "axios": "^1.10.0",
     "dayjs": "^1.11.13",
-    "electron-vite": "^4.0.0",
+    "electron-vite": "^4.0.1",
     "element-plus": "^2.4.4",
     "exceljs": "^4.4.0",
     "jsbarcode": "^3.12.1",

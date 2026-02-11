@@ -10,17 +10,13 @@
     <p id="title2" style=" position:absolute; left:200px;top:120px;">特殊出库</p>
     <span style=" position:absolute; left:200px;top:230px;"   >试剂</span>
     <div style=" position:absolute; width: 300px;left:250px;top:230px;">
-            <el-tree-select
-            v-model="tree.select"
-            lazy
-            style="width: 350px;"
-            :load="load_tree"
-            :props="tree.props" 
-            @change="get_id"
-            filterable
-            placeholder="搜索试剂名称"
-        />
-            </div>
+        <el-select-v2  v-model="formData.reagentid" filterable :options="allreagentlist" placeholder="选择试剂" @change="checkinput"  style="width: 300px"  />
+    </div>
+    <span style=" position:absolute;left:200px;top:270px;" >批号</span>
+    <div style=" position:absolute; width: 300px;left:250px;top:270px;">
+        <el-select-v2  v-model="formData.lotid" filterable :options="alllotlist" placeholder="选择批号" @change="checkinput"  style="width: 300px"  />
+    </div>
+
             <span  style=" position:absolute;left:620px;top:230px;" >数量</span>
             <el-input-number 
                 class="searchinput"  
@@ -29,7 +25,7 @@
                 :max="9999" 
                 placeholder="0" 
                 style="width:150px;position:absolute;left:670px;top:230px" 
-                @change="get_id"  
+                @change="checkinput"  
             />
 
 
@@ -43,7 +39,7 @@
                 type="success"  
                 :disabled="formData.editbox_disablebutton" 
                 @click="ready_operation_special_outbound"
-                style="position:absolute;left:250px;top:280px" 
+                style="position:absolute;left:250px;top:320px" 
             >准备特殊出库</el-button>
  
         </div>
@@ -53,7 +49,7 @@
             :style="{width:'calc(100vw - 210px)'}"
             row-class-name="normal-row"
             header-cell-class-name="normal-row-header"
-            height="320"
+            height="270"
         >
 
         <el-table-column prop="reagentname" label="试剂名字" min-width="300" show-overflow-tooltip/>
@@ -82,11 +78,13 @@
 import { ElMessage } from 'element-plus'
 import { h } from 'vue'
 import 'element-plus/dist/index.css'
-import {reactive} from 'vue'
+import {reactive,ref,onMounted} from 'vue'
 import { api_operation_outbound,api_operation_special_outbound} from '../api/operation';
 import { api_reagent_showall } from '@/api/reagent'
 import { api_lot_showall } from '@/api/lot'
 
+const allreagentlist = ref([])  
+const alllotlist = ref([])
 
 
 
@@ -99,19 +97,10 @@ const formData = reactive({
     reagentid: null, // 选择试剂下拉菜单对应的id
     lotid: null, // 选择批号下拉菜单对应的id
     tableData: [], // 表格数据  
+
 })
 
-let tree=reactive({
-    props : {
-    label: 'label',
-    children: 'children',
-    isLeaf: 'isLeaf',
-    },
-    searchname:undefined,
-    select:null,
-    value:0,
-    bufferdata:[]
-})
+
 
 async function operation_outbound(){
     try {
@@ -144,9 +133,9 @@ function ready_operation_special_outbound(){
   formData.tableData.push({
         rowsid: formData.tableData.length + 1,
         reagentid: formData.reagentid,
-        reagentname: formData.reagentname,
+        reagentname: allreagentlist.value.find(item => item.value === formData.reagentid)?.name,
         lotid: formData.lotid,
-        lot: formData.lot,
+        lot: alllotlist.value.find(item => item.value === formData.lotid)?.name,
         number: formData.number,
         note: formData.note,
     })
@@ -177,64 +166,43 @@ function delete_outbound(rowsid) {
     formData.tableData = formData.tableData.filter(item => item.rowsid !== rowsid)
 }
 
-async function load_tree(node, resolve){
-    if (node.level === 0) {
-        const data = await api_reagent_showall()
-        let reagents = []
-        for (let i in data.data) {
-            reagents.push({
-                label: data.data[i].name,
-                id: data.data[i].id,
-                value: ++tree.value,
-                isLeaf: false
-            })
-        }
-        resolve(reagents)
+
+
+async function checkinput(){
+    if (formData.reagentid) {
+        let data = await api_lot_showall(formData.reagentid)
+        alllotlist.value = data.data.map(item => ({
+            value: item.id,
+            label: item.name,
+            name: item.name
+        }))
     }
-    if (node.level === 1) {
-        let bufferparmas = { reagentid: node.data.id }
-        const data = await api_lot_showall(bufferparmas)
-        let lots = []
-        for (let i in data.data) {
-            lots.push({
-                label: data.data[i].name,
-                id: data.data[i].id,
-                value: ++tree.value,
-                isLeaf: true,
-                reagentname: node.data.label,
-                reagentid: node.data.id
-            })
-        }
-        resolve(lots)
-        tree.bufferdata.push(...lots)
+    else {
+        alllotlist.value = []
+    }
+    if (formData.reagentid && formData.lotid && formData.number) {
+        formData.editbox_disablebutton = false
+    }
+    else {
+        formData.editbox_disablebutton = true
     }
 }
 
-function get_id(selectedValue){
-for (let i in tree.bufferdata){
-if (tree.bufferdata[i].value===selectedValue){
-    formData.lotid=tree.bufferdata[i].id
-    formData.lot=tree.bufferdata[i].label
-    formData.reagentid=tree.bufferdata[i].reagentid
-    formData.reagentname=tree.bufferdata[i].reagentname
-    }
-}
-if (tree.select!==null && formData.number!==null){
-formData.editbox_disablebutton=false
-}
-if (tree.select===null || formData.number===null){
-formData.editbox_disablebutton=true
-}
-}
-
-
+onMounted(async () => {
+    let data = await api_reagent_showall()
+    allreagentlist.value = data.data.map(item => ({
+        value: item.id,
+        label: item.name,
+        name: item.name
+    }))
+})
 </script>
 
 
 <style scoped>
 
 #background2{
-  height: 340px;
+  height: 380px;
 }
 #outbound {
     position: absolute;
@@ -248,6 +216,7 @@ formData.editbox_disablebutton=true
     border-style: solid;
     border-width: 3px;
     transition: all 0.3s ease-in-out;
+    border-radius: 15px; /* 设置圆角半径 */
   }
   #outbound:hover{
     position: absolute;
@@ -304,7 +273,7 @@ formData.editbox_disablebutton=true
 .el-table{
   position: absolute;
   left:200px;
-  top:350px;
+  top:400px;
 }
 #outbound2 {
     position: absolute;
@@ -318,6 +287,7 @@ formData.editbox_disablebutton=true
     border-style: solid;
     border-width: 3px;
     transition: all 0.3s ease-in-out;
+    border-radius: 15px; /* 设置圆角半径 */
   }
   #outbound2:hover{
     position: absolute;

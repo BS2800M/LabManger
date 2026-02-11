@@ -38,6 +38,6 @@ export let api_lot_add=(body)=>{
 
 export let api_lot_showall=(params)=>{
     return myrequest.get('/lot/showall/',{
-        reagentid:params.reagentid
+        reagentid:params
                 })
 }

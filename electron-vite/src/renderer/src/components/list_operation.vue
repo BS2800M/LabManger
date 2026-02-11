@@ -122,7 +122,10 @@
     <template #default>
         <div id="content1">
         <p>选择所属试剂</p> 
-        <reagentlot_select v-model="formData.reagentlot"  @change="checkinput" /> 
+        <el-select-v2  v-model="formData.reagentid" filterable :options="allreagentlist" placeholder="选择试剂" @change="checkinput"  style="width: 300px"  />
+        <p>选择所属批号</p> 
+        <el-select-v2  v-model="formData.lotid" filterable :options="alllotlist" placeholder="选择批号" @change="checkinput"  style="width: 300px"  />
+
         <p>动作</p>  
         <action_select v-model="formData.action" @input="checkinput" style="width: 300px" placeholder="输入动作"  />
         <p>操作时间</p>  
@@ -168,7 +171,6 @@
 
 
 <script setup>
-  import reagentlot_select from './reagentlot_select.vue'
   import action_select from './action_select.vue'
   import {ref,onMounted,reactive} from 'vue'
   import { ElConfigProvider } from 'element-plus'
@@ -180,7 +182,10 @@
   import {format_YYYYMMDDHHmm_iso} from '@/utils/format'
   import {operation_exporttoexcel_list } from '@/utils/exportexcel.js'
   import get_permission from '@/utils/permission'
-  import reagentlot_select_test from './reagentlot_select_test.vue' //bugs
+  import { api_reagent_showall } from '@/api/reagent'
+  import { api_lot_showall } from '@/api/lot'
+  const allreagentlist = ref([])  
+  const alllotlist = ref([])
   // 状态管理
   const state = reactive({
     reagentName: '',    // 输入搜索名称
@@ -207,13 +212,14 @@ let formData=reactive({
     id:null,
     action:'',
     createTime:'',
-    reagentlot:{reagentid:null,lotid:null,reagentname:null,lotname:null},
+    reagentid:null,
+    lotid:null,
     note:'',
     barcodeNumber:''
   })
 const tableRef=ref(null)
 
-function handleRowClick(row, column, event) {
+async function handleRowClick(row, column, event) {
   // 检查是否点击的是当前已选中的行
   if (formData.id === row.id) {
     // 如果点击的是当前选中的行，则取消选中
@@ -221,7 +227,8 @@ function handleRowClick(row, column, event) {
     formData.id = null
     formData.action = ''
     formData.createTime = ''
-    formData.reagentlot = {reagentid: null, lotid: null, reagentname: null, lotname: null}
+    formData.reagentid = null
+    formData.lotid = null
     formData.note = ''
     formData.barcodeNumber = ''
   } else {
@@ -229,7 +236,14 @@ function handleRowClick(row, column, event) {
     formData.id = row.id
     formData.action = row.action
     formData.createTime = row.createTime
-    formData.reagentlot = {reagentid: row.reagentId, lotid: row.lotId, reagentname: row.reagentName, lotname: row.lotName}
+    formData.reagentid = row.reagentId
+    let data = await api_lot_showall(row.reagentId)
+    alllotlist.value = data.data.map(item => ({
+      value: item.id,
+      label: item.name,
+      name: item.name
+    }))
+    formData.lotid = row.lotId
     formData.note = row.note
     formData.barcodeNumber = row.barcodeNumber
 
@@ -263,6 +277,7 @@ async function operation_show(){
     if(formData.id){
       state.drawer=true
       state.updatebutton_show=true
+      
     }
     else{
       eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要修改的记录'})
@@ -296,18 +311,29 @@ async function operation_show(){
     }
   }
 
-  function checkinput(){
+  async function checkinput(){
     const hasEmptyField=
-    !formData.reagentlot.reagentid ||
-    !formData.reagentlot.lotid ||
+    !formData.reagentid ||
+    !formData.lotid ||
     !formData.createTime 
     state.updatebutton_disable=hasEmptyField
+    if (formData.reagentid) {
+        let data = await api_lot_showall(formData.reagentid)
+        alllotlist.value = data.data.map(item => ({
+            value: item.id,
+            label: item.name,
+            name: item.name
+        }))
+    }
+    else {
+        alllotlist.value = []
+    }
   }
   async function operation_update(){
     let updateData={
       id:formData.id,
-      reagentid:formData.reagentlot.reagentid,
-      lotid:formData.reagentlot.lotid,
+      reagentid:formData.reagentid,
+      lotid:formData.lotid,
       action:formData.action,
       createtime:format_YYYYMMDDHHmm_iso(formData.createTime),
       note:formData.note,
@@ -328,8 +354,15 @@ async function operation_show(){
     }
   }
   
-  onMounted(() => {
+  onMounted(async () => {
     operation_show()
+    let data = await api_reagent_showall()
+    allreagentlist.value = data.data.map(item => ({
+      value: item.id,
+      label: item.name,
+      name: item.name
+    }))
+    data = await api_lot_showall()
 })
 
 
