@@ -6,18 +6,28 @@ using System.Security.Cryptography;
 using System.Net;
 using Microsoft.Extensions.Caching.Distributed;
 namespace LabMangerAPI.Service;
-
+/// <summary>
+/// 登录登出类（服务层）
+/// </summary>
 public class ServiceSigninout
 {
     private readonly IDistributedCache _cache;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    
+    /// <summary>
+    /// 构建登录登出类(服务层)
+    /// </summary>
+    /// <param name="cache"></param>
+    /// <param name="httpContextAccessor">http上下文</param>
     public ServiceSigninout(IDistributedCache cache, IHttpContextAccessor httpContextAccessor)
     {
         _cache = cache;
         _httpContextAccessor = httpContextAccessor;
     }
-    
+    /// <summary>
+    /// 登录
+    /// </summary>
+    /// <param name="body">登录时请求的数据</param>
+    ///  <returns>登录时返回的数据</returns>
     public async Task<ResponseSigninout.Signin> Signin(RequestSigninout.Signin query)
     {
         int responseStatus;
@@ -82,7 +92,11 @@ public class ServiceSigninout
             Role = role
         };
     }
-    
+    /// <summary>
+    /// 登出
+    /// </summary>
+    /// <param name="body">登出时请求的数据</param>
+    ///  <returns>登出时返回的数据</returns>
     public ResponseSigninout.Signout Signout(RequestSigninout.Signout query)
     {
         return new ResponseSigninout.Signout

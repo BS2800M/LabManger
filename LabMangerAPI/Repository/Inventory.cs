@@ -6,28 +6,44 @@ using LabMangerAPI.Models;
 using SqlSugar;
 
 namespace LabMangerAPI.Repository;
-
+/// <summary>
+/// 库存类(仓储层)
+/// </summary>
 public class RepositoryInventory
 {
     readonly SqlSugarClient _db=MySqlSugar.Db;
     readonly IUserContext _userContext;
+    /// <summary>
+    /// 构建库存类(服务层)
+    /// </summary>
+    /// <param name="userContext">用户和权限验证接口</param>
     public RepositoryInventory(IUserContext userContext)
     {
         _userContext = userContext;
     }
-
-    public async Task<Inventory> Add(int reagentId, int lotid) //创建一张新的库存行
+    /// <summary>
+    /// 增加库存（这里指的是在数据库里库存表中添加一行）
+    /// </summary>
+    /// <param name="reagentId">试剂id</param>
+    /// <param name="lotid">批号id</param>
+    public async Task<Inventory> Add(int reagentid, int lotid) 
     {
         var result = await _db.Insertable(new Inventory
-            {
-                ReagentId = reagentId,
-                LotId = lotid,
-                Number = 0,
-                TeamId = _userContext.TeamId
-            }).ExecuteReturnEntityAsync();
+        {
+            ReagentId = reagentid,
+            LotId = lotid,
+            Number = 0,
+            TeamId = _userContext.TeamId
+        }).ExecuteReturnEntityAsync();
         return result;
     }
-
+    /// <summary>
+    /// 展示多个库存
+    /// </summary>
+    /// <param name="search">展示库存时请求的数据</param>
+    ///  <param name="totalcount">展示库存总行数</param>
+    ///  <param name="totalpage">总页数</param>
+    ///  <returns>展示多个库存时返回的数据</returns>
     public async Task<List<ResponseInventory.ShowData>> Show(RequestInventory.Show search,RefAsync<int> totalcount, RefAsync<int> totalpage)
     {
         string? reagentname = search.ReagentName;
@@ -69,8 +85,14 @@ public class RepositoryInventory
             .ToPageListAsync(page, pageSize, totalcount, totalpage);
         return await result;
     }
-
-    public async Task<InventoryUpdateResult> UpdatePlus(int reagentId, int lotid, int number) //更新库存 在原来的基础上加减
+    /// <summary>
+    /// 更新库存数量 在原来的基础上加减
+    /// </summary>
+    /// <param name="reagentId">试剂id</param>
+    ///  <param name="lotid">批号id</param>
+    ///  <param name="number">加减个数</param>
+    ///  <returns> 更新试剂库存后的结果类</returns>
+    public async Task<InventoryUpdateResult> UpdatePlus(int reagentId, int lotid, int number) 
     {
         using var tran = _db.Ado.UseTran();
         try
@@ -119,7 +141,12 @@ public class RepositoryInventory
             throw;
         }
     }
-
+    /// <summary>
+    /// 更新库存数量 直接赋予数字
+    /// </summary>
+    /// <param name="id">库存id</param>
+    ///  <param name="number">库存数量</param>
+    ///  <returns> 更新库存返回的数据</returns>
     public async Task<Inventory> Audit(int id,int number) //更新库存 直接赋予数字
     {
         var update = await _db.Updateable(new Inventory
@@ -131,13 +158,20 @@ public class RepositoryInventory
             .ExecuteReturnEntityAsync();
         return  update;
     }
+    /// <summary>
+    /// 更新库存数量 直接赋予数字
+    /// </summary>
+    /// <param name="reagentId">试剂id</param>
+    ///  <param name="lotid">批号id</param>
+    ///  <param name="number">库存数量</param>
+    ///  <returns> 更新库存返回的数据</returns>
     
     public async Task<Inventory> Audit(int reagentid, int lotid, int number) //更新库存 直接赋予数字
     {
         var update = await _db.Updateable(new Inventory
-            {
-                Number = number,
-            })
+        {
+            Number = number,
+        })
             .Where(it => it.ReagentId == reagentid && it.LotId == lotid)
             .UpdateColumns(it => new { it.Number })
             .ExecuteReturnEntityAsync();
@@ -145,15 +179,23 @@ public class RepositoryInventory
 
     }
     
-    public async Task<List<Inventory>> ShowAll() //展示所有库存 不受任何限制
+    /// <summary>
+    /// 展示所有库存 不受任何限制
+    /// </summary>
+    ///  <returns>展示所有库存时返回的数据</returns>
+    public async Task<List<Inventory>> ShowAll() 
     {
-        var alllist =  _db.Queryable<Inventory>()
-            .Where(it => it.Reagent!.Status == Status.Enable&&it.Lot!.Status == Status.Enable)
+        var alllist = _db.Queryable<Inventory>()
+            .Where(it => it.Reagent!.Status == Status.Enable && it.Lot!.Status == Status.Enable)
             .ToListAsync();
-        return  await alllist;
+        return await alllist;
 
     }
-    
+    /// <summary>
+    /// 展示仪表盘（主页数据）
+    /// </summary>
+    /// <param name="search">仪表盘请求数据</param>
+    /// <returns>仪表盘返回数据</returns>
     public async Task<ResponseInventory.DashBoardData> DashBoard()
     {
         var exp = Expressionable.Create<Inventory>();

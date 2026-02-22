@@ -23,7 +23,7 @@ namespace LabMangerAPI.Controllers
         [HttpPost("add")]
         public async Task<ResponseTeam.Add> Add([FromBody] RequestTeam.Add body)
         {
-            var result = await (_service.Add(body));
+            var result = await _service.Add(body);
             return result;
         }
         
@@ -31,20 +31,20 @@ namespace LabMangerAPI.Controllers
         public async Task<ResponseTeam.Show> Show([FromQuery] RequestTeam.Show search)
         {
 
-            var result = await (_service.Show(search));
+            var result = await _service.Show(search);
             return result;
 
         }
         [HttpPut("update")]
         public async Task<ResponseTeam.Update> Post([FromBody] RequestTeam.Update body)
         {
-            var result = await (_service.Update(body));
+            var result = await _service.Update(body);
             return result;
         }
         [HttpPut("del")]
         public async Task<ResponseTeam.Del> Del ([FromBody] RequestTeam.Del body)
         {
-            var result = await (_service.Del(body));
+            var result = await _service.Del(body);
             return result;
         }
     }

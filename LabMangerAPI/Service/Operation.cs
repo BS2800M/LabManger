@@ -7,7 +7,9 @@ using LabMangerAPI.Models;
 using SqlSugar;
 using LabMangerAPI.Validator;
 namespace LabMangerAPI.Service;
-
+/// <summary>
+/// 操作类(服务层)
+/// </summary>
 public class ServiceOperation
 {
     
@@ -15,29 +17,42 @@ public class ServiceOperation
     private readonly RepositoryInventory _repositoryInventory;
     private readonly RepositoryReagent _repositoryReagent;
     private readonly IUserContext _userContext;
-    public ServiceOperation(RepositoryOperation repositoryoperation,RepositoryInventory repositoryInventory,RepositoryReagent repositoryReagent, IUserContext userContext)
+    /// <summary>
+    /// 构建操作类(服务层)
+    /// </summary>
+    /// <param name="repositoryoperation">操作类（仓储层）</param>
+    ///  <param name="repositoryInventory">库存类（仓储层）</param>
+    ///  <param name="repositoryReagent">试剂类（仓储层）</param>
+    /// <param name="userContext">用户和权限验证接口</param>
+    public ServiceOperation(RepositoryOperation repositoryoperation, RepositoryInventory repositoryInventory, RepositoryReagent repositoryReagent, IUserContext userContext)
     {
         _repositoryoperation = repositoryoperation;
         _repositoryInventory = repositoryInventory;
         _repositoryReagent = repositoryReagent;
         _userContext = userContext;
     }
+    /// <summary>
+    /// 入库
+    /// </summary>
+    /// <param name="body">入库时请求的数据</param>
+    ///  <returns>入库时返回的数据</returns>
+
     public async Task<ResponseOperation.Inbound> Inbound(RequestOperation.Inbound body) //入库逻辑
     {
-        int startId = await  _repositoryoperation.GetMaxOperationIdAsync()+1;
+        int startId = await _repositoryoperation.GetMaxOperationIdAsync() + 1;
         // 业务逻辑：构建操作列表
         var operations = await BuildOperationsAsync(body);
         // 数据访问：创建操作记录
         await _repositoryoperation.CreateOperationsAsync(operations);
-        
+
         // 获取ID范围用于查询
-        int endId = await  _repositoryoperation.GetMaxOperationIdAsync();
+        int endId = await _repositoryoperation.GetMaxOperationIdAsync();
         // 数据访问：查询操作详情
-        var result=await _repositoryoperation.GetOperationsWithDetailsAsync(startId, endId);
+        var result = await _repositoryoperation.GetOperationsWithDetailsAsync(startId, endId);
         //更新库存
         var inventoryResults = await BuildInventoryUpdatesAsync(body);
         var messages = inventoryResults.Select(r => r.Message).ToList();
-        
+
         return new ResponseOperation.Inbound
         {
             Status = 1,
@@ -45,8 +60,12 @@ public class ServiceOperation
             Data = result
         };
     }
-     
-    private async Task<List<Operation>> BuildOperationsAsync(RequestOperation.Inbound body) // 构建入库操作列表
+    /// <summary>
+    /// 根据入库参数生成操作记录列表
+    /// </summary>
+    /// <param name="body">入库时请求的数据</param>
+    ///  <returns>构建好的操作列表</returns>
+    private async Task<List<Operation>> BuildOperationsAsync(RequestOperation.Inbound body) 
     {
         var operations = new List<Operation>();
         int startId = await _repositoryoperation.GetMaxOperationIdAsync();
@@ -73,12 +92,17 @@ public class ServiceOperation
         }
         return operations;
     }
+    /// <summary>
+    /// 根据特殊出库参数生成操作记录列表
+    /// </summary>
+    /// <param name="body">特殊出库时请求的数据</param>
+    ///  <returns>构建好的操作列表</returns>
     private async Task<List<Operation>> BuildOperationsAsync(RequestOperation.SpecialOutbound body) // 构建出库操作列表
     {
         var operations = new List<Operation>();
         int startId = await _repositoryoperation.GetMaxOperationIdAsync();
         int currentId = startId;
-        
+
         foreach (var inbound in body.OutboundList)
         {
             for (int i = 0; i < inbound.Number; i++)
@@ -100,12 +124,20 @@ public class ServiceOperation
         }
         return operations;
     }
-    
-    private string GenerateBarcodeNumber(int id)  // 业务逻辑：条码生成规则
+    /// <summary>
+    /// 根据id生成唯一试剂条码号
+    /// </summary>
+    /// <param name="id">试剂id</param>
+    ///  <returns>唯一条码号</returns>
+    private string GenerateBarcodeNumber(int id)  
     {
         return (id + 100000).ToString();
     }
-
+    /// <summary>
+    /// 根据入库参数更新对应库存（多种试剂异步更新）
+    /// </summary>
+    /// <param name="body">入库时请求的数据</param>
+    ///  <returns>库存更新完成对象的集合列表</returns>
     private async Task<List<InventoryUpdateResult>> BuildInventoryUpdatesAsync(RequestOperation.Inbound body) //业务逻辑 批量入库更新库存
     {
         var tasks = new List<Task<InventoryUpdateResult>>();
@@ -117,7 +149,11 @@ public class ServiceOperation
         var result = await Task.WhenAll(tasks);
         return result.ToList();
     }
-    
+    /// <summary>
+    /// 根据出库参数更新对应库存（多种试剂异步更新）
+    /// </summary>
+    /// <param name="body">入库时请求的数据</param>
+    ///  <returns>库存更新完成对象的集合列表</returns>
     private async Task<List<InventoryUpdateResult>> BuildInventoryUpdatesAsync(RequestOperation.SpecialOutbound body) //业务逻辑 出库更新库存
     {
         var tasks = new List<Task<InventoryUpdateResult>>();
@@ -128,7 +164,11 @@ public class ServiceOperation
         var result = await Task.WhenAll(tasks);
         return result.ToList();
     }
-
+    /// <summary>
+    /// 根据条码号出库
+    /// </summary>
+    /// <param name="body">出库时请求的数据</param>
+    ///  <returns>出库完成后返回的数据</returns>
     public async Task<ResponseOperation.Outbound> Outbound(RequestOperation.Outbound body) //根据条码号出库
     {
         int incount= await _repositoryoperation.InboundCount(body.BarcodeNumber);
@@ -175,8 +215,12 @@ public class ServiceOperation
         }
         throw new HttpRequestException("出库失败",null,HttpStatusCode.Forbidden);
     }
-
-    public async Task<ResponseOperation.SpecialOutbound> SpecialOutbound(RequestOperation.SpecialOutbound body) // 特殊出库
+    /// <summary>
+    /// 特殊出库
+    /// </summary>
+    /// <param name="body">出库时请求的数据</param>
+    ///  <returns>出库完成后返回的数据</returns>
+    public async Task<ResponseOperation.SpecialOutbound> SpecialOutbound(RequestOperation.SpecialOutbound body) 
     {
 
         var inventoryResults = await BuildInventoryUpdatesAsync(body);
@@ -205,7 +249,11 @@ public class ServiceOperation
             Message = messages,
         };
     }
-
+    /// <summary>
+    /// 展示操作列表
+    /// </summary>
+    /// <param name="body">展示操作列表时请求的数据</param>
+    ///  <returns>展示操作列表后返回的数据</returns>
     public async Task<ResponseOperation.Show> Show(RequestOperation.Show search) //展示操作
     {
         RefAsync<int> totalcount=new RefAsync<int>();
@@ -220,7 +268,11 @@ public class ServiceOperation
             TotalCount = totalcount
         };
     }
-
+    /// <summary>
+    /// 更新一个操作（多种试剂异步更新）
+    /// </summary>
+    /// <param name="body">更新操作列表时请求的数据</param>
+    ///  <returns>更新操作列表后返回的数据</returns>
     public async Task<ResponseOperation.Update> Update(RequestOperation.Update body) //更新操作
     {
         if (!await ResourceVerification.CheckResourceExist<Operation>(MySqlSugar.Db, body.Id)) //资源存在性验证
@@ -261,7 +313,11 @@ public class ServiceOperation
             Data = updateafter,
         };
     }
-
+    /// <summary>
+    /// 删除一个操作（多种试剂异步更新）
+    /// </summary>
+    /// <param name="body">删除操作列表时请求的数据</param>
+    ///  <returns>删除操作列表后返回的数据</returns>
     public async Task<ResponseOperation.Del>  Del(RequestOperation.Del body) //删除操作
     {
         if (!await ResourceVerification.CheckResourceExist<Operation>(MySqlSugar.Db, body.Id)) //资源存在性验证

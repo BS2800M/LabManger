@@ -5,7 +5,9 @@ using LabMangerAPI.Models;
 using LabMangerAPI.DTOs.Common;
 
 namespace LabMangerAPI.DTOs;
-
+/// <summary>
+/// 有关小组请求的api类
+/// </summary>
 public class RequestTeam
 {
     /// 添加团队的请求模型
@@ -60,7 +62,9 @@ public class RequestTeam
 
     }
 }
-
+/// <summary>
+/// 有关小组回复的api类
+/// </summary>
 public class ResponseTeam
 {
     public class Add : ApiResponse<Team>

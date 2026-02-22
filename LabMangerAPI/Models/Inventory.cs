@@ -9,6 +9,9 @@ namespace LabMangerAPI.Models;
 [SugarIndex("idx_inventory_reagent_lot",
     nameof(ReagentId), OrderByType.Asc,
     nameof(LotId), OrderByType.Asc)]
+/// <summary>
+/// 一个库存的基本信息类
+/// </summary>
 public class Inventory
 {
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]

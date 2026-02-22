@@ -7,7 +7,9 @@ using LabMangerAPI.DTOs.Common;
 namespace LabMangerAPI.DTOs;
 
 
-/// 添加批号的请求模型
+/// <summary>
+/// 有关批号的请求api类
+/// </summary>
 public class RequestLot
 {
     public class Add
@@ -51,7 +53,9 @@ public class RequestLot
     }
 
 }
-
+/// <summary>
+/// 有关批号的回复api类
+/// </summary>
 public class ResponseLot
 {
 

@@ -7,6 +7,10 @@ namespace LabMangerAPI.Models;
     nameof(Status), OrderByType.Asc)]
 [SugarIndex("idx_reagent_name",
     nameof(Name), OrderByType.Asc)]
+
+/// <summary>
+/// 试剂的基本信息类
+/// </summary>
 public class Reagent
 {
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
@@ -48,7 +52,10 @@ public class Reagent
     public Status Status { get; set; } = Status.Enable;
 }
 
-public enum Status //状态
+/// <summary>
+/// 试剂状态（启用 禁用 删除）
+/// </summary>
+public enum Status
 {
     Enable = 0, //启用
     Disable = 1, //禁用

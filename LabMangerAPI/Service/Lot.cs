@@ -7,21 +7,32 @@ using LabMangerAPI.Models;
 
 namespace LabMangerAPI.Service;
 using Validator;
-
+/// <summary>
+/// 批号类(服务层)
+/// </summary>
 public class ServiceLot
 {
     private readonly RepositoryLot _repositorylot;
     private readonly RepositoryInventory _repositoryinventory;
     private readonly IUserContext _userContext;
 
-    
+    /// <summary>
+    /// 构建批号类(服务层)
+    /// </summary>
+    /// <param name="repositorylot">批号仓储层</param>
+    /// <param name="repositoryInventory">库存仓储层</param>
+    /// <param name="userContext">用户和权限验证接口</param>
     public ServiceLot(RepositoryLot repositorylot, RepositoryInventory repositoryInventory,IUserContext userContext)
     {
         _repositorylot = repositorylot;
         _repositoryinventory = repositoryInventory;
         _userContext = userContext;
     }
-    
+    /// <summary>
+    /// 增加一个批号
+    /// </summary>
+    /// <param name="body">增加批号时请求的数据</param>
+    ///  <returns>增加批号时返回的数据</returns>
     public async Task<ResponseLot.Add> Add(RequestLot.Add body)
     {
 
@@ -42,7 +53,11 @@ public class ServiceLot
             }
         };
     }
-    
+    /// <summary>
+    /// 展示多个批号
+    /// </summary>
+    /// <param name="search">展示批号时请求的数据</param>
+    ///  <returns>返回展示多个批号时返回的数据</returns>
     public async Task<ResponseLot.Show> Show(RequestLot.Show search)
     {
 
@@ -62,7 +77,11 @@ public class ServiceLot
             TotalCount = totalcount
         };
     }
-    
+    /// <summary>
+    /// 更新一个批号的信息
+    /// </summary>
+    /// <param name="body">更新批号信息时请求的数据</param>
+    ///  <returns>更新批号信息时返回的数据</returns>
     public async Task<ResponseLot.Update> Update(RequestLot.Update body)
     {
         if (!await ResourceVerification.CheckResourceExist<Lot>(MySqlSugar.Db, body.Id)) //资源存在性验证
@@ -87,7 +106,11 @@ public class ServiceLot
             Data = result
         };
     }
-    
+    /// <summary>
+    /// 删除一个批号的信息
+    /// </summary>
+    /// <param name="body">删除批号信息时请求的数据</param>
+    ///  <returns>删除批号信息时返回的数据</returns>
     public async Task<ResponseLot.Del> Del(RequestLot.Del body)
     {
         if (!await ResourceVerification.CheckResourceExist<Lot>(MySqlSugar.Db, body.Id)) //资源存在性验证
@@ -109,7 +132,11 @@ public class ServiceLot
             Message = "删除成功"
         };
     }
-    
+    /// <summary>
+    /// 展示所有批号的简易信息（不带过滤功能）
+    /// </summary>
+    /// <param name="body">展示所有批号信息时请求的数据</param>
+    ///  <returns>展示所有批号信息时返回的数据</returns>
     public async Task<ResponseLot.ShowAll> ShowAll(RequestLot.ShowAll query)
     {
         

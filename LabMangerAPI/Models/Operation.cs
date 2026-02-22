@@ -20,6 +20,9 @@ namespace LabMangerAPI.Models;
     nameof(Status), OrderByType.Asc,
     nameof(TeamId), OrderByType.Asc,
     nameof(CreateTime), OrderByType.Asc)]
+/// <summary>
+/// 一个操作的基本信息类
+/// </summary>
 
 public class Operation
 {

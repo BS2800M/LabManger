@@ -8,6 +8,10 @@ namespace LabMangerAPI.Models;
 [SugarIndex("idx_lot_team_status",
     nameof(TeamId), OrderByType.Asc,
     nameof(Status), OrderByType.Asc)]
+
+/// <summary>
+/// 一个批号的基本信息类
+/// </summary>
 public class Lot
 {    
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]

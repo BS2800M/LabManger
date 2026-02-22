@@ -7,13 +7,15 @@ using LabMangerAPI.DTOs.Common;
 namespace LabMangerAPI.DTOs;
 
 
-/// 添加试剂的请求模型
+/// <summary>
+/// 有关试剂的请求api类
+/// </summary>
 public class RequestReagent
 {
     
     public class Add
     {
-        [Required(ErrorMessage = "试剂名称不能为空")] public string Name { get; init; } = null!;
+        [Required(ErrorMessage = "试剂名称不能为空")] public string Name { get; init; } = null!; 
         public  string Specifications { get; set; } = "";
         public int Price { get; set; } = 0;
         public string StorageCondition { get; set; } = "";
@@ -59,7 +61,9 @@ public class RequestReagent
 
     }
 }
-
+/// <summary>
+/// 有关试剂的回复api类
+/// </summary>
 public class ResponseReagent
 {
     public class Add : ApiResponse<Reagent>

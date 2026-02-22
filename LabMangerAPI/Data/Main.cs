@@ -1,5 +1,8 @@
 ﻿using SqlSugar;
 namespace LabMangerAPI.Data;
+/// <summary>
+/// 数据库类
+/// </summary>
 public static class MySqlSugar
 {
     public static SqlSugarClient Db = new SqlSugarClient(new ConnectionConfig()

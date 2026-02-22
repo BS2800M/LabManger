@@ -5,7 +5,7 @@ namespace LabMangerAPI.DTOs.Common;
 /// <summary>
 /// 通用分页查询基类
 /// </summary>
-public abstract class PaginationDto
+public abstract class SearchablePaginationDto
 {
     /// <summary>
     /// 页码
@@ -20,22 +20,18 @@ public abstract class PaginationDto
     public int PageSize { get; set; } = 10;
 }
 
-/// <summary>
-/// 带搜索功能的分页查询基类
-/// </summary>
-public abstract class SearchablePaginationDto : PaginationDto
-{
 
-}
 
 /// <summary>
 /// 带时间范围的分页查询基类
 /// </summary>
-public abstract class TimeRangePaginationDto : PaginationDto
+public abstract class TimeRangePaginationDto : SearchablePaginationDto
 {
     /// <summary>
     /// 开始时间
     /// </summary>
+    /// 
+    /// 
     public DateTime? StartTime { get; set; }
     
     /// <summary>

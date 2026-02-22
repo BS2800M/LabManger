@@ -4,17 +4,19 @@ using LabMangerAPI.DTOs.Common;
 using System.ComponentModel.DataAnnotations;
 using LabMangerAPI.Models;
 namespace LabMangerAPI.DTOs;
-
+/// <summary>
+/// 有关库存的请求api类
+/// </summary>
 public class RequestInventory
 {
-    /// 查询试剂的请求模型
+
     public class Show : SearchablePaginationDto
     {
         /// 搜索的试剂名称 支持模糊搜索
         public string? ReagentName { get; set; } = "";
     }
 
-    public class  AuditAll
+    public class AuditAll
     {
         public int Id { get; set; } = 0;
 
@@ -26,20 +28,23 @@ public class RequestInventory
     }
 
     public class Statistics
-    {   
+    {
         public bool OnlyLot { get; set; } = false;
         public int ReagentId { get; set; } = 0;
         public int LotId { get; set; } = 0;
-        
+
         [Range(1, int.MaxValue, ErrorMessage = "天数间隔")]
         public int IntervalDay { get; set; } = 1;
-        public DateTime StartTime{ get; set; } = DateTime.Today;
-        public DateTime EndTime{ get; set; } = DateTime.Today;
+        public DateTime StartTime { get; set; } = DateTime.Today;
+        public DateTime EndTime { get; set; } = DateTime.Today;
 
     }
 
 
 }
+/// <summary>
+/// 有关库存的回复api类
+/// </summary>
 public class ResponseInventory
 {
     

@@ -6,7 +6,9 @@ using LabMangerAPI.DTOs.Common;
 using LabMangerAPI.Models;
 
 namespace LabMangerAPI.DTOs;
-
+/// <summary>
+/// 有关操作的请求api类
+/// </summary>
 public class RequestOperation
 {
     public class Inbound
@@ -75,7 +77,9 @@ public class RequestOperation
 
 
 }
-
+/// <summary>
+/// 有关操作的回复api类
+/// </summary>
 public class ResponseOperation
 {
     public class Inbound

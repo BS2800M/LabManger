@@ -5,7 +5,9 @@ using System.Security.Cryptography;
 
 
 namespace LabMangerAPI.Data;
-
+/// <summary>
+/// 初始化数据库类
+/// </summary>
 public class Migrate
 {
     public static async Task Run()

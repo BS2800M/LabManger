@@ -8,21 +8,32 @@ using LabMangerAPI.Validator;
 using LabMangerAPI.Data;
 using System.Net;
 namespace LabMangerAPI.Service;
-
+/// <summary>
+/// 库存类(服务层)
+/// </summary>
 public class ServiceInventory
 {
     private readonly RepositoryInventory _repository;
     private readonly RepositoryOperation _repositoryoperation;
-
-    public ServiceInventory(RepositoryInventory repository, RepositoryOperation repositoryoperation)
+    /// <summary>
+    /// 构建库存类(服务层)
+    /// </summary>
+    /// <param name="repositoryinventory">库存仓储层</param>
+    /// <param name="repositoryoperation">操作仓储层</param>
+    /// <param name="userContext">用户和权限验证接口</param>
+    public ServiceInventory(RepositoryInventory repositoryinventory, RepositoryOperation repositoryoperation)
     {
-        _repository = repository;
+        _repository = repositoryinventory;
         _repositoryoperation = repositoryoperation;
     }
 
+    /// <summary>
+    /// 展示多个库存
+    /// </summary>
+    /// <param name="search">展示库存时请求的数据</param>
+    ///  <returns>展示多个库存时返回的数据</returns>
     public async Task<ResponseInventory.Show> Show(RequestInventory.Show search)
     {
-
 
         RefAsync<int> totalcount = new RefAsync<int>();
         RefAsync<int> totalpage = new RefAsync<int>();
@@ -40,7 +51,10 @@ public class ServiceInventory
         };
     }
 
-
+    /// <summary>
+    /// 修正所有库存数量（需要大量数据库查询操作）
+    /// </summary>
+    /// <param name="search">暂无用处</param>
     public async Task<ResponseInventory.AuditAll> AuditAll(RequestInventory.AuditAll search)
     {
         var alllist = await _repository.ShowAll();
@@ -60,7 +74,11 @@ public class ServiceInventory
         };
 
     }
-
+    /// <summary>
+    /// 展示仪表盘（主页数据）
+    /// </summary>
+    /// <param name="search">仪表盘请求数据</param>
+    /// <returns>仪表盘返回数据</returns>
     public async Task<ResponseInventory.DashBoard> DashBoard(RequestInventory.DashBoard body)
     {
         var result = await _repository.DashBoard();
@@ -72,7 +90,11 @@ public class ServiceInventory
 
         };
     }
-
+    /// <summary>
+    /// 统计一段时间内的库存趋势（用于展示折线图）
+    /// </summary>
+    /// <param name="search">请求数据</param>
+    /// <returns>返回数据</returns>
     public async Task<ResponseInventory.Statistics> Statistics(RequestInventory.Statistics body) //统计图标数据生成
     {
         if (!await ResourceVerification.CheckResourceExist<Reagent>(MySqlSugar.Db, body.ReagentId)) //资源存在性验证

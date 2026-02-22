@@ -155,13 +155,9 @@ LabManger/
 
 4. **构建应用**
    ```bash
-   npm run build
+   npm run build:win
    ```
 
-5. **预览构建结果**
-   ```bash
-   npm run preview
-   ```
 
 ## 配置说明
 

@@ -7,19 +7,30 @@ using LabMangerAPI.Models;
 
 namespace LabMangerAPI.Service;
 using Validator;
+/// <summary>
+/// 小组类（服务层）
+/// </summary>
 
 public class ServiceTeam
 {
     private readonly RepositoryTeam _repositoryteam;
     private readonly IUserContext _userContext;
 
-    
+    /// <summary>
+    /// 构建小组类(服务层)
+    /// </summary>
+    /// <param name="repositoryteam">小组仓储层</param>
+    /// <param name="userContext">用户和权限验证接口</param>
     public ServiceTeam(RepositoryTeam repositoryteam,IUserContext userContext)
     {
         _repositoryteam = repositoryteam;
         _userContext = userContext;
     }
-    
+    /// <summary>
+    /// 增加一个小组
+    /// </summary>
+    /// <param name="body">增加小组时请求的数据</param>
+    ///  <returns>增加一个小组时返回的数据</returns>
     public async Task<ResponseTeam.Add> Add(RequestTeam.Add body)
     {
         var result = await (_repositoryteam.Add(body));
@@ -31,7 +42,11 @@ public class ServiceTeam
         };
 
     }
-    
+    /// <summary>
+    /// 展示多个小组
+    /// </summary>
+    /// <param name="search">展示小组时请求的数据</param>
+    ///  <returns>展示多个小组时返回的数据</returns>
     public async Task<ResponseTeam.Show> Show(RequestTeam.Show search)
     {
 
@@ -47,7 +62,11 @@ public class ServiceTeam
             TotalCount= reftotalcount
         };
     }
-    
+    /// <summary>
+    /// 更新一个小组的信息
+    /// </summary>
+    /// <param name="body">更新小组信息时请求的数据</param>
+    ///  <returns>更新小组信息时返回的数据</returns>
     public async Task<ResponseTeam.Update> Update(RequestTeam.Update body)
     {
         if (!await ResourceVerification.CheckResourceExist<Team>(MySqlSugar.Db, body.Id)) //资源存在性验证
@@ -62,7 +81,11 @@ public class ServiceTeam
             Data = result
         };
     }
-
+    /// <summary>
+    /// 删除一个小组的信息
+    /// </summary>
+    /// <param name="body">删除小组信息时请求的数据</param>
+    ///  <returns>删除小组信息时返回的数据</returns>
     public async Task<ResponseTeam.Del> Del(RequestTeam.Del body)
     {
         if (!await ResourceVerification.CheckResourceExist<Team>(MySqlSugar.Db, body.Id)) //资源存在性验证

@@ -7,8 +7,10 @@ using LabMangerAPI.DTOs.Common;
 namespace LabMangerAPI.DTOs;
 
 
-
-    public class RequestUser
+    /// <summary>
+    /// 有关用户请求的api类
+    /// </summary>
+    public class RequestUser 
     {
         public class Add
         {
@@ -56,7 +58,9 @@ namespace LabMangerAPI.DTOs;
         }
         
     }
-
+    /// <summary>
+    /// 有关用户回复的api类
+    /// </summary>
     public class ResponseUser
     {
         public class Add : ApiResponse<User>

@@ -8,22 +8,32 @@ using System.Text;
 using System.Security.Cryptography;
 namespace LabMangerAPI.Service;
 using Validator;
+/// <summary>
+/// 用户类(服务层)
+/// </summary>
 
 public class ServiceUser
 {
     private readonly RepositoryUser _repositoryuser;
     private readonly IUserContext _userContext;
 
-    
-    public ServiceUser(RepositoryUser repositoryuser,IUserContext userContext)
+    /// <summary>
+    /// 构建用户类(服务层)
+    /// </summary>
+    /// <param name="repositoryuser">用户仓储层</param>
+    /// <param name="userContext">用户和权限验证接口</param>
+    public ServiceUser(RepositoryUser repositoryuser, IUserContext userContext)
     {
         _repositoryuser = repositoryuser;
         _userContext = userContext;
     }
-    
+    /// <summary>
+    /// 增加一个用户
+    /// </summary>
+    /// <param name="body">增加用户时请求的数据</param>
+    ///  <returns>增加用户时返回的数据</returns>
     public async Task<ResponseUser.Add> Add(RequestUser.Add body)
     {
-        
         
         byte[] passwordbyte=Encoding.UTF8.GetBytes(body.PassWord);
         passwordbyte=SHA256.Create().ComputeHash(passwordbyte);
@@ -41,7 +51,11 @@ public class ServiceUser
         };
 
     }
-    
+    /// <summary>
+    /// 展示多个用户
+    /// </summary>
+    /// <param name="search">展示用户时请求的数据</param>
+    ///  <returns>展示多个用户时返回的数据</returns>
     public async Task<ResponseUser.Show> Show(RequestUser.Show search)
     {
 
@@ -57,7 +71,11 @@ public class ServiceUser
             TotalCount= reftotalcount
         };
     }
-    
+    /// <summary>
+    /// 更新一个用户的信息
+    /// </summary>
+    /// <param name="body">更新用户信息时请求的数据</param>
+    ///  <returns>更新用户信息时返回的数据</returns>
     public async Task<ResponseUser.Update> Update(RequestUser.Update body)
     {
         if (!await ResourceVerification.CheckResourceExist<User>(MySqlSugar.Db, body.Id)) //资源存在性验证
@@ -76,7 +94,11 @@ public class ServiceUser
             Data = result
         };
     }
-
+    /// <summary>
+    /// 删除一个用户的信息
+    /// </summary>
+    /// <param name="body">删除用户信息时请求的数据</param>
+    ///  <returns>删除用户信息时返回的数据</returns>
     public async Task<ResponseUser.Del> Del(RequestUser.Del body)
     {
         if (!await ResourceVerification.CheckResourceExist<User>(MySqlSugar.Db, body.Id)) //资源存在性验证
