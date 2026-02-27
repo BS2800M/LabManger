@@ -223,7 +223,7 @@ function checkinput(){
  async function lot_show() {
     const data = await api_lot_show(state)
     state.tableData = data.data
-    state.totalpage = data.totalPage
+    state.totalpage = data.meta.totalPage
 }
 async function lot_del(){
   if(formData.id){

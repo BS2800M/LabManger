@@ -192,9 +192,9 @@ state.addbutton_disable = hasEmptyField
 async function user_show() {
     const data = await api_user_show(state)
     state.tableData = data.data
-    state.total = data.total
-    state.pagesize = data.pagesize
-    state.totalpage = data.totalPage
+    state.total = data.meta.total
+    state.pagesize = data.meta.pageSize
+    state.totalpage = data.meta.totalPage
 }
 
 async function user_del(){

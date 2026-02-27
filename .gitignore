@@ -1,25 +1,10 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
 /electron-vite/node_modules
 /electron-vite/dist
 /electron-vite/electron-dist
-/electron-vite/out
-/LabMangerAPI/bin
-/LabMangerAPI/obj
-/LabMangerAPI/publish
-/fastify/node_modules
-db.sqlite3
-data.db
-/fastify/prisma/migrations
-/fastify/cilent
-release/
-mytools/
+/LabMangerNest/node_modules
+/LabMangerNest/prisma/migrations
+/LabMangerNest/prisma/cilent
+/LabMangerNest/prisma/data.db
+/LabMangerNest/dist
 
 

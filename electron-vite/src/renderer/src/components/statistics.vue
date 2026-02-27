@@ -221,8 +221,17 @@ function checkinput() { // 检查输入
 
 async function list_reagentnumber() { // 获取试剂列表
     const data = await api_inventory_show(state)
-    state.tableData = data.data
-    state.totalpage = data.totalPage
+    state.tableData = data.data.map(inv => ({
+        ...inv,
+        reagentId: inv.reagent.id,
+        reagentName: inv.reagent.name,
+        specifications: inv.reagent.specifications,
+        warnNumber: inv.reagent.warnNumber,
+        lotId: inv.lot.id,
+        lotName: inv.lot.name,
+        lotExpirationDate: inv.lot.expirationDate,
+    }))
+    state.totalpage = data.meta.totalPage
 }
 
 async function statistics_data() { // 获取统计数据

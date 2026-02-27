@@ -106,11 +106,12 @@ async function operation_outbound(){
     try {
         const data = await api_operation_outbound(formData)
         formData.barcodenumber = ""
+        const msg = data.data?.message ?? ''
         const warningKeyWord = ["库存不足", "已经出库", "条码未进行入库"]
         ElMessage({
-            type: warningKeyWord.some(item => data.message.includes(item)) ? "warning" : "success",
+            type: warningKeyWord.some(item => msg.includes(item)) ? "warning" : "success",
             message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-                h('span', null, data.message)
+                h('span', null, msg)
             ]),
         })
     } catch (err) {
@@ -144,19 +145,20 @@ function ready_operation_special_outbound(){
 async function operation_special_outbound(){
     const data = await api_operation_special_outbound(formData.tableData)
     formData.tableData = []
+    const messages = data.data?.messages ?? []
     let message_type = "error"
-    for (let i in data.message) {
-        if (data.message[i].includes("库存不足")) {
+    for (let i in messages) {
+        if (messages[i].includes("库存不足")) {
             message_type = "error"
-        } else if (data.message[i].includes("库存达到警告线")) {
+        } else if (messages[i].includes("库存达到警告线")) {
             message_type = "warning"
-        } else if (data.message[i].includes("库存更新成功")) {
+        } else if (messages[i].includes("库存更新成功")) {
             message_type = "success"
-        } 
+        }
         ElMessage({
             type: message_type,
             message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-                h('span', null, data.message[i])
+                h('span', null, messages[i])
             ]),
         })
     }

@@ -66,6 +66,7 @@ function saveprinter_conf(){
 
 async function readdashbord(){
     let data = await api_inventory_dashboard()
+    if (!data || !data.data) return
     dashbord.total = data.data.totalNum
     dashbord.warning_totalnum = data.data.warningTotalNum
     dashbord.warning_numnum = data.data.warningNumNum

@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./data.db"
+}
+
+model Team {
+  id        Int       @id @default(autoincrement())
+  name      String    @map("Name")
+  phone     String    @map("Phone")
+  note      String    @map("Note")
+  status    Int       @default(0) @map("Status") // 0: Enable, 1: Disable, 2: Delete
+
+  users     User[]
+  reagents  Reagent[]
+  lots      Lot[]
+  operations Operation[]
+  inventories Inventory[]
+
+  @@map("Team")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  userName  String    @map("UserName")
+  passWord  String    @map("PassWord")
+  role      Int       @default(0) @map("Role") // 0: Member, 1: Leader, 2: Director, 3: Admin
+  status    Int       @default(0) @map("Status")
+  teamId    Int       @map("Team_Id")
+
+  team      Team      @relation(fields: [teamId], references: [id])
+  operations Operation[]
+
+  @@map("User")
+}
+
+model Reagent {
+  id               Int       @id @default(autoincrement())
+  name             String    @map("Name")
+  specifications   String    @map("Specifications")
+  price            Int       @default(0) @map("Price")
+  storageCondition String    @map("StorageCondition")
+  manufacturer     String    @map("Manufacturer")
+  note             String    @map("Note")
+  warnNumber       Int       @default(0) @map("WarnNumber")
+  warnDays         Int       @default(0) @map("WarnDays")
+  createTime       DateTime  @default(now()) @map("CreateTime")
+  teamId           Int       @map("TeamId")
+  status           Int       @default(0) @map("Status")
+
+  team             Team      @relation(fields: [teamId], references: [id])
+  lots             Lot[]
+  operations       Operation[]
+  inventories      Inventory[]
+
+  @@map("Reagent")
+}
+
+model Lot {
+  id             Int       @id @default(autoincrement())
+  name           String    @map("Name")
+  reagentId      Int       @map("ReagentId")
+  expirationDate DateTime  @map("ExpirationDate")
+  status         Int       @default(0) @map("Status")
+  teamId         Int       @map("TeamId")
+
+  reagent        Reagent   @relation(fields: [reagentId], references: [id])
+  team           Team      @relation(fields: [teamId], references: [id])
+  operations     Operation[]
+  inventories    Inventory[]
+
+  @@map("Lot")
+}
+
+model Operation {
+  id             Int       @id @default(autoincrement())
+  reagentId      Int       @map("ReagentId")
+  lotId          Int       @map("LotId")
+  userId         Int       @map("UserId")
+  teamId         Int       @map("TeamId")
+  createTime     DateTime  @default(now()) @map("CreateTime")
+  barcodeNumber  String    @map("BarcodeNumber")
+  action         Int       @map("Action") // 0: NoInfo, 1: Inbound, 2: Outbound
+  note           String    @map("Note")
+  status         Int       @default(0) @map("Status")
+
+  reagent        Reagent   @relation(fields: [reagentId], references: [id])
+  lot            Lot       @relation(fields: [lotId], references: [id])
+  user           User      @relation(fields: [userId], references: [id])
+  team           Team      @relation(fields: [teamId], references: [id])
+
+  @@map("Operation")
+}
+
+model Inventory {
+  id             Int       @id @default(autoincrement())
+  reagentId      Int       @map("ReagentId")
+  lotId          Int       @map("LotId")
+  teamId         Int       @map("TeamId")
+  number         Int       @default(0) @map("Number")
+
+  reagent        Reagent   @relation(fields: [reagentId], references: [id])
+  lot            Lot       @relation(fields: [lotId], references: [id])
+  team           Team      @relation(fields: [teamId], references: [id])
+
+  @@map("Inventory")
+}
+
+model Session {
+  id         Int      @id @default(autoincrement())
+  sessionId  String   @unique @map("SessionId")
+  userId     Int      @map("UserId")
+  teamId     Int      @map("TeamId")
+  role       Int      @map("Role")
+  createTime DateTime @default(now()) @map("CreateTime")
+
+  @@map("Session")
+}

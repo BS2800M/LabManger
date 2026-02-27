@@ -1,21 +1,26 @@
 
 import {Workbook} from 'exceljs'
-import {api_operation_show} from '@/api/operation'
-import {api_inventory_show} from '@/api/inventory'
+import {api_operation_showall} from '@/api/operation'
+import {api_inventory_showall} from '@/api/inventory'
 import {formatDateColumn,format_operation_action} from '@/utils/format'
 
-  async  function operation_exporttoexcel_list() {
+  async  function operation_exporttoexcel_list(filter = {}) {
     
-    let result = await api_operation_show({page:1,pagesize:1000})
+    let result = await api_operation_showall({
+      reagentName: filter.reagentName ?? filter.name,
+      startTime: filter.startTime ?? filter.starttime,
+      endTime: filter.endTime ?? filter.endtime,
+      barcodeNumber: filter.barcodeNumber ?? filter.barcodenumber,
+    })
     // 取出数据数组
     let exportData = result.data || []
     // 准备导出数据
     exportData = exportData.map(item => ({
       '时间': formatDateColumn(null, null, item.createTime),
-      '试剂名称': item.reagentName,
-      '批号': item.lotName,
+      '试剂名称': item.reagent?.name ?? item.reagentName,
+      '批号': item.lot?.name ?? item.lotName,
       '动作': format_operation_action(null, null, item.action),
-      '用户': item.userName,
+      '用户': item.user?.userName ?? item.userName,
       '条码号': item.barcodeNumber,
       '注释': item.note
     }))
@@ -53,21 +58,19 @@ import {formatDateColumn,format_operation_action} from '@/utils/format'
     window.URL.revokeObjectURL(url)
   }
 async function inventory_exporttoexcel_list(){
-    let result = await api_inventory_show({page:1,pagesize:1000})
+    let result = await api_inventory_showall()
     // 取出数据数组
     let exportData = result.data || []
     // 准备导出数据
     exportData = exportData.map(item => ({
-      '试剂名称': item.reagentName,
-      '批号': item.lotName,
-      '规格': item.specifications,
+      '试剂名称': item.reagent?.name ?? item.reagentName,
+      '批号': item.lot?.name ?? item.lotName,
+      '规格': item.reagent?.specifications ?? item.specifications,
       '应库存': item.number,
       '实际库存': null,
-      '有效期':formatDateColumn(null, null, item.lotExpirationDate),
-      '警告数量': item.warnNumber,
-  
+      '有效期': formatDateColumn(null, null, item.lot?.expirationDate ?? item.lotExpirationDate),
+      '警告数量': item.reagent?.warnNumber ?? item.warnNumber,
     }))
-    console.log(exportData)
     // 使用 exceljs 创建工作簿和工作表
     const workbook = new Workbook()
     const worksheet = workbook.addWorksheet('盘库表')

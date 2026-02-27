@@ -10,11 +10,11 @@
       <li><RouterLink to="/home"><button>主页<svg class="icon"><use xlink:href="#icon-shouye"></use></svg></button></RouterLink>   </li>
       <li><button>试剂<svg class="icon"> <use xlink:href="#icon-huowudui"></use></svg></button>
         <ul>
-          <li><RouterLink to="/template"><button>模板</button></RouterLink></li>
+          <li><RouterLink to="/reagent"><button>模板</button></RouterLink></li>
           <li><RouterLink to="/lot"><button >批号</button></RouterLink></li>
           <li><RouterLink to="/inbound"><button >入库</button></RouterLink></li>
           <li><RouterLink to="/outbound"><button >出库</button></RouterLink></li>
-          <li><RouterLink to="/list_operation"><button >记录</button></RouterLink></li>
+          <li><RouterLink to="/operation"><button >记录</button></RouterLink></li>
           <li><RouterLink to="/statistics"><button >统计</button></RouterLink></li>
         </ul>
       </li>
@@ -24,7 +24,7 @@
           <li><RouterLink to="/user"><button>用户</button></RouterLink></li>
         </ul>
       </li>
-      <li><RouterLink to="/loginout"><button>登出<svg class="icon"> <use xlink:href="#icon-dengchu"></use></svg></button></RouterLink>   </li>
+      <li><RouterLink to="/signout"><button>登出<svg class="icon"> <use xlink:href="#icon-dengchu"></use></svg></button></RouterLink>   </li>
     </ul>
   </div>
 </div>

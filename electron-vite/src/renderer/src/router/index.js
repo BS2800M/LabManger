@@ -2,18 +2,18 @@ import {createRouter,createWebHashHistory} from 'vue-router'
 
 
 
-const login = () => import('@/components/login.vue');
+const signin = () => import('@/components/signin.vue');
 const home = () => import('@/components/home.vue');
-const template = () => import('@/components/template.vue');
+const reagent = () => import('@/components/reagent.vue');
 const homebar = () => import('@/components/homebar.vue');   
 const print = () => import('@/components/print.vue');
-const loginout = () => import('@/components/loginout.vue');
+const signout = () => import('@/components/signout.vue');
 const team = () => import('@/components/team.vue');
 const user = () => import('@/components/user.vue');
 const lot = () => import('@/components/lot.vue');
 const inbound = () => import('@/components/inbound.vue');
 const outbound = () => import('@/components/outbound.vue');
-const list_operation = () => import('@/components/list_operation.vue');
+const operation = () => import('@/components/operation.vue');
 const statistics = () => import('@/components/statistics.vue');
 
 
@@ -39,8 +39,8 @@ const router=createRouter({
             components:{main:home,bar:homebar,}
         },
         {
-            path:'/login',
-            components:{main:login}
+            path:'/signin',
+            components:{main:signin}
         },
         {
             path:'/home',
@@ -48,8 +48,8 @@ const router=createRouter({
             components:{main:home,bar:homebar}
         },
         {
-            path:'/template',
-            components:{main:template,bar:homebar}
+            path:'/reagent',
+            components:{main:reagent,bar:homebar}
         },
         {
             path:'/lot',
@@ -64,8 +64,8 @@ const router=createRouter({
             components:{main:outbound,bar:homebar}
         },
         {
-            path:'/list_operation',
-            components:{main:list_operation,bar:homebar}
+            path:'/operation',
+            components:{main:operation,bar:homebar}
         },
         {
             path:'/statistics',
@@ -84,8 +84,8 @@ const router=createRouter({
             components:{main:print}
         },
         {
-            path:'/loginout',
-            components:{main:loginout}
+            path:'/signout',
+            components:{main:signout}
         },
     ]
 })

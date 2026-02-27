@@ -1,22 +1,21 @@
 import { myrequest } from "./request"
 
-
 export let api_reagent_show=(params)=>{
-    return myrequest.get('/reagent/show/',{
+    return myrequest.get('/reagent/show',{
         name:params.name,
         page:params.page,
-        pagesize:params.pagesize
-                })
+        pageSize:params.pageSize
+    })
 }
 
 export let api_reagent_del=(id)=>{
-    return myrequest.put('/reagent/del/',{
+    return myrequest.put('/reagent/del',{
         id:id
-                })
+    })
 }
 
 export let api_reagent_update=(body)=>{
-    return myrequest.put('/reagent/update/',{
+    return myrequest.put('/reagent/update',{
         id:body.id,
         name:body.name,
         specifications:body.specifications,
@@ -24,34 +23,26 @@ export let api_reagent_update=(body)=>{
         price:body.price,
         storageCondition:body.storageCondition,
         warnDays:body.warnDays,
-        status:body.status,   
+        status:body.status,
         note:body.note,
         manufacturer:body.manufacturer
-        
     })
 }
 
-
 export let api_reagent_add=(body)=>{
-    return myrequest.post('/reagent/add/',{
+    return myrequest.post('/reagent/add',{
         name:body.name,
         specifications:body.specifications,
         warnNumber:body.warnNumber,
         price:body.price,
         storageCondition:body.storageCondition,
         warnDays:body.warnDays,
-        status:body.status,   
         generateLot:body.generateLot,
         note:body.note,
         manufacturer:body.manufacturer
-
     })
 }
 
 export let api_reagent_showall=()=>{
-    return myrequest.get('/reagent/showall/',{
-                })
+    return myrequest.get('/reagent/showAll',{})
 }
-
-
-

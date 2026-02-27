@@ -98,30 +98,22 @@ async function inbound() {
     let printdatalist=[]
     const data = await api_operation_inbound(formData.tableData)
     formData.tableData = []
+    const messages = data.data?.messages ?? []
     let message_type = "error"
-    for (let i in data.message) {
-        if (data.message[i].includes("库存不足")) {
+    for (let i in messages) {
+        if (messages[i].includes("库存不足")) {
             message_type = "error"
-        } else if (data.message[i].includes("库存达到警告线")) {
+        } else if (messages[i].includes("库存达到警告线")) {
             message_type = "warning"
-        } else if (data.message[i].includes("库存更新成功")) {
+        } else if (messages[i].includes("库存更新成功")) {
             message_type = "success"
         }
         ElMessage({
             type: message_type,
             message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-                h('span', null, data.message[i])
+                h('span', null, messages[i])
             ]),
         })
-    }
-    for (let i in data.data) {
-        printdatalist.push(toRaw({
-            reagentlot:{
-                reagentname:data.data[i].reagentname,
-                lotname:data.data[i].lotname
-            },
-            barcodeNumber:data.data[i].barcodeNumber
-        }))
     }
     myapi.gotoprint(printdatalist)
 }

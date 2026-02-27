@@ -1,43 +1,39 @@
 import { myrequest } from './request'
 
 export let api_lot_show=(params)=>{
-    return myrequest.get('/lot/show/',{
+    return myrequest.get('/lot/show',{
         name:params.name,
         page:params.page,
-        pagesize:params.pagesize
-                })
+        pageSize:params.pageSize
+    })
 }
-
-
 
 export let api_lot_del=(id)=>{
-    return myrequest.put('/lot/del/',{
-    "id":id
-                })
+    return myrequest.put('/lot/del',{
+        "id":id
+    })
 }
 
-
 export let api_lot_update=(body)=>{
-    return myrequest.put('/lot/update/',{
+    return myrequest.put('/lot/update',{
         id:body.id,
-        reagentid:body.reagentid,
+        reagentId:body.reagentid ?? body.reagentId,
         name:body.name,
-        expirationdate:body.expirationdate,
+        expirationDate:body.expirationdate ?? body.expirationDate,
         status:body.status
-                })
+    })
 }
 
 export let api_lot_add=(body)=>{
-    return myrequest.post('/lot/add/',{
+    return myrequest.post('/lot/add',{
         name:body.name,
-        reagentid:body.reagentid,
-        expirationdate:body.expirationdate,
-        status:body.status
-                })
+        reagentId:body.reagentid ?? body.reagentId,
+        expirationDate:body.expirationdate ?? body.expirationDate
+    })
 }
 
-export let api_lot_showall=(params)=>{
-    return myrequest.get('/lot/showall/',{
-        reagentid:params
-                })
+export let api_lot_showall=(reagentId)=>{
+    return myrequest.get('/lot/showAll',{
+        reagentId:reagentId
+    })
 }

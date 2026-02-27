@@ -112,16 +112,18 @@ const formData = reactive({
   name: '',
   phone: '',
   note:'',
+  status: 0,
 })
 
 const tableRef=ref(null)
 
 function handleRowClick(row, column, event) {
   if(formData.id===row.id){
-  formData.id=null
-  formData.name=''
+    formData.id=null
+    formData.name=''
     formData.phone=''
     formData.note=''
+    formData.status=0
     tableRef.value.setCurrentRow(null)
   }
   else{
@@ -129,6 +131,7 @@ function handleRowClick(row, column, event) {
     formData.name=row.name
     formData.phone=row.phone
     formData.note=row.note
+    formData.status=row.status
     tableRef.value.setCurrentRow(row)
   }
 }
@@ -139,6 +142,7 @@ function handleRowClick(row, column, event) {
   formData.name=''
   formData.phone=''
   formData.note=''
+  formData.status=0
   tableRef.value.setCurrentRow(null)
   state.drawer=true
   state.updatebutton_disable=true
@@ -162,9 +166,9 @@ async function edit_drawer(){
 async function team_show() {
     const data = await api_team_show(state)
     state.tableData = data.data
-    state.total = data.total
-    state.pagesize = data.pagesize
-    state.totalpage = data.totalPage
+    state.total = data.meta.total
+    state.pagesize = data.meta.pageSize
+    state.totalpage = data.meta.totalPage
 }
 
 async function team_del(){

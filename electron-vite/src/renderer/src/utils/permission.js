@@ -30,12 +30,11 @@ const permission = {
 }
 
 function get_permission(permission_name){
-    if(localStorage.role!==undefined && localStorage.role!==null){
-        return permission[localStorage.role][permission_name]
+    const role = localStorage.role
+    if(role && permission[role]){
+        return permission[role][permission_name] ?? false
     }
-    else{
-        return false
-    }
+    return false
 }
 
 export default get_permission

@@ -1,52 +1,69 @@
 import { myrequest } from './request'
-export let api_operation_inbound=(inboundlist)=>{
-    return myrequest.post('/operation/inbound/',{
-          "inboundlist":inboundlist,
-          
-          })
-    }
 
+export let api_operation_inbound=(inboundList)=>{
+    return myrequest.post('/operation/inbound',{
+        "inboundList": inboundList.map(item => ({
+            reagentId: item.reagentId ?? item.reagentid,
+            lotId: item.lotId ?? item.lotid,
+            number: item.number,
+            note: item.note ?? ''
+        }))
+    })
+}
 
 export let api_operation_outbound=(body)=>{
-          return myrequest.post('/operation/outbound/',{
-                barcodenumber:body.barcodenumber,
-                })
-          }
-
-export let api_operation_special_outbound=(body)=>{
-return myrequest.post('/operation/special_outbound/',{
-    outboundlist:body
+    return myrequest.post('/operation/outbound',{
+        "barcodeNumber": body.barcodeNumber ?? body.barcodenumber
     })
-}      
+}
 
-
-
+export let api_operation_special_outbound=(outboundList)=>{
+    return myrequest.post('/operation/specialOutbound',{
+        "outboundList": outboundList.map(item => ({
+            reagentId: item.reagentId ?? item.reagentid,
+            lotId: item.lotId ?? item.lotid,
+            number: item.number,
+            note: item.note ?? ''
+        }))
+    })
+}
 
 export let api_operation_show=(body)=>{
-return myrequest.get('/operation/show/',{
-    reagentname:body.reagentName,
-    starttime:body.starttime,
-    endtime:body.endtime,
-    barcodenumber:body.barcodeNumber,
-    page:body.page,
-    pagesize:body.pagesize
+    return myrequest.get('/operation/show',{
+        reagentName:body.reagentName ?? body.name,
+        startTime:body.startTime ?? body.starttime,
+        endTime:body.endTime ?? body.endtime,
+        barcodeNumber:body.barcodeNumber ?? body.barcodenumber,
+        page:body.page,
+        pageSize:body.pageSize ?? body.pagesize
+    })
+}
+
+export let api_operation_showall=(body={})=>{
+    return myrequest.get('/operation/showAll',{
+        reagentName:body.reagentName ?? body.name,
+        startTime:body.startTime ?? body.starttime,
+        endTime:body.endTime ?? body.endtime,
+        barcodeNumber:body.barcodeNumber ?? body.barcodenumber,
+        page:body.page,
+        pageSize:body.pageSize ?? body.pagesize
     })
 }
 
 export let api_operation_update=(body)=>{
-    return myrequest.put('/operation/update/',{
+    return myrequest.put('/operation/update',{
         id:body.id,
-        reagentid:body.reagentid,
-        lotid:body.lotid,
+        reagentId:body.reagentId ?? body.reagentid,
+        lotId:body.lotId ?? body.lotid,
         note:body.note,
         action:body.action,
-        createtime:body.createtime,
-        barcodenumber:body.barcodenumber
-    })
-}
-export let api_operation_del=(deleteid)=>{
-return myrequest.put('/operation/del/',{
-    id:deleteid
+        createTime:body.createTime ?? body.createtime,
+        barcodeNumber:body.barcodeNumber ?? body.barcodenumber
     })
 }
 
+export let api_operation_del=(deleteid)=>{
+    return myrequest.put('/operation/del',{
+        id:deleteid
+    })
+}
