@@ -124,13 +124,13 @@ function handleRowClick(row, column, event) {
   // 检查是否点击的是当前已选中的行
   if (formData.id === row.id) {
     // 如果点击的是当前选中的行，则取消选中
-    tableRef.value.setCurrentRow(null)
     formData.id = null
     formData.username = ''
     formData.role = 0
     formData.teamid = null
     formData.using = true
     formData.password = ''
+    tableRef.value.setCurrentRow(null)
   } else {
     // 选中新行时，更新 formData 的属性
     formData.id = row.id
@@ -140,20 +140,18 @@ function handleRowClick(row, column, event) {
     formData.using = row.using
     formData.password = row.password
 
-    // 手动设置当前行高亮
-    tableRef.value.setCurrentRow(row)
   }
 }
 
 
 async function add_drawer(){
+  tableRef.value.setCurrentRow(null)
   formData.id=null
   formData.username=''
   formData.role=0
   formData.teamid=null
   formData.using=true
   formData.password=''
-  tableRef.value.setCurrentRow(null)
   state.addbutton_disable=true
   state.addbutton_show=true
   state.updatebutton_show=false
@@ -213,6 +211,7 @@ async function user_update() {
     await api_user_update(formData)
     state.drawer = false
     await user_show()
+    formData.id=null
 }
 
 async function user_add() {

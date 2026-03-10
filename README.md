@@ -227,7 +227,8 @@ cd LabMangerNest
 
 # 安装依赖
 npm install
-
+#生成prisma客户端
+npx prisma generate
 # 初始化数据库（首次运行或 schema 变更后执行）
 npx prisma migrate dev
 

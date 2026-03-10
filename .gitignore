@@ -2,9 +2,7 @@
 /electron-vite/dist
 /electron-vite/electron-dist
 /LabMangerNest/node_modules
-/LabMangerNest/prisma/migrations
-/LabMangerNest/prisma/cilent
 /LabMangerNest/prisma/data.db
 /LabMangerNest/dist
-
+/LabMangerNest/generated
 

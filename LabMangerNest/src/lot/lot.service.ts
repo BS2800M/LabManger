@@ -1,5 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { InventoryService } from '../inventory/inventory.service';
 import { LotDto } from './lot.dto';
 import { Status } from '../common/enums/enums';
 import { SessionUser } from '../common/decorators/session-user.decorator';
@@ -7,7 +8,10 @@ import { teamScope } from '../common/utils/scope.util';
 
 @Injectable()
 export class LotService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly inventoryService: InventoryService,
+    ) { }
 
     async add(dto: LotDto['requestAdd'], session: SessionUser): Promise<LotDto['responseAdd']> {
         const reagent = await this.prisma.reagent.findFirst({ where: { id: dto.reagentId } });
@@ -87,9 +91,11 @@ export class LotService {
             include: { reagent: { select: { id: true, name: true } } },
         });
 
+        await this.inventoryService.updateExpirationWarning(dto.id);
+
         return {
             success: true,
-            data:lot,
+            data: lot,
         };
     }
 
@@ -102,7 +108,7 @@ export class LotService {
         const lot = await this.prisma.lot.update({
             where: { id: dto.id },
             data: { status: Status.Delete },
-            include: { reagent: true },
+            include: { reagent: { select: { id: true, name: true } } },
         });
 
         // 批号删除后同步删除对应库存记录
@@ -110,7 +116,7 @@ export class LotService {
 
         return {
             success: true,
-            data: { ...lot, reagentName: lot.reagent.name },
+            data: lot,
         };
     }
 

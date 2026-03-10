@@ -1,17 +1,29 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { execSync } from 'child_process';
 import { createHash } from 'crypto';
+import * as path from 'path';
 import { PrismaService } from '../../prisma/prisma.service';
+import { InventoryService } from '../../inventory/inventory.service';
+
+// 项目根目录（prisma.config.ts、prisma/ 所在位置）
+// 编译后 __dirname = dist/src/common/init，向上 4 级到项目根
+const PROJECT_ROOT = path.join(__dirname, '../../../../');
 
 @Injectable()
 export class InitService implements OnModuleInit {
     // 日志记录器
     private readonly logger = new Logger(InitService.name);
 
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly inventoryService: InventoryService,
+    ) { }
 
     async onModuleInit() {
         await this.migrate_init();
+        this.logger.log('服务启动，执行有效期预警检查...');
+        await this.inventoryService.updateExpirationWarning();
+        this.logger.log('启动时有效期预警检查完成');
     }
 
     /**
@@ -20,8 +32,17 @@ export class InitService implements OnModuleInit {
      */
     async migrate_init() {
         this.logger.log('开始执行数据库迁移...');
-        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-        this.logger.log('数据库迁移完成，开始执行初始化检查...');
+        try {
+            if(process.env.NODE_ENV=='production'){
+                execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+            }else{
+                execSync('npx prisma migrate dev', { stdio: 'inherit' });
+            }
+            this.logger.log('数据库迁移完成');
+        } catch (err) {
+            this.logger.error('数据库迁移失败', err instanceof Error ? err.message : String(err));
+            throw err;
+        }
         // 检查是否有小组，如果没有则创建默认小组
         const teamCount = await this.prisma.team.count();
         if (teamCount === 0) {

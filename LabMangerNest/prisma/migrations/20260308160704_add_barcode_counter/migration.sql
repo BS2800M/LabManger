@@ -1,0 +1,5 @@
+-- CreateTable
+CREATE TABLE "BarcodeCounter" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT DEFAULT 1,
+    "value" BIGINT NOT NULL DEFAULT 0
+);

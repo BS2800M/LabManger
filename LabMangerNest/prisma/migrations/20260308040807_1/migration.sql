@@ -1,0 +1,30 @@
+/*
+  Warnings:
+
+  - You are about to alter the column `MaxHumidity` on the `Location` table. The data in that column could be lost. The data in that column will be cast from `Int` to `Float`.
+  - You are about to alter the column `MaxTemperature` on the `Location` table. The data in that column could be lost. The data in that column will be cast from `Int` to `Float`.
+  - You are about to alter the column `MinHumidity` on the `Location` table. The data in that column could be lost. The data in that column will be cast from `Int` to `Float`.
+  - You are about to alter the column `MinTemperature` on the `Location` table. The data in that column could be lost. The data in that column will be cast from `Int` to `Float`.
+
+*/
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_Location" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "Name" TEXT NOT NULL,
+    "Note" TEXT NOT NULL,
+    "Status" INTEGER NOT NULL DEFAULT 0,
+    "TeamId" INTEGER NOT NULL,
+    "UploadIntervalMinutes" INTEGER NOT NULL DEFAULT 0,
+    "MaxTemperature" REAL NOT NULL DEFAULT -50,
+    "MinTemperature" REAL NOT NULL DEFAULT -50,
+    "MaxHumidity" REAL NOT NULL DEFAULT 100,
+    "MinHumidity" REAL NOT NULL DEFAULT 100,
+    CONSTRAINT "Location_TeamId_fkey" FOREIGN KEY ("TeamId") REFERENCES "Team" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+INSERT INTO "new_Location" ("MaxHumidity", "MaxTemperature", "MinHumidity", "MinTemperature", "Name", "Note", "Status", "TeamId", "UploadIntervalMinutes", "id") SELECT "MaxHumidity", "MaxTemperature", "MinHumidity", "MinTemperature", "Name", "Note", "Status", "TeamId", "UploadIntervalMinutes", "id" FROM "Location";
+DROP TABLE "Location";
+ALTER TABLE "new_Location" RENAME TO "Location";
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;

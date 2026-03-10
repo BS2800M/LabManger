@@ -44,7 +44,7 @@
         >
             <el-table-column prop="name" label="批号" min-width="150" show-overflow-tooltip/>
             <el-table-column prop="expirationDate" label="有效期" min-width="150" :formatter="formatDateColumn" show-overflow-tooltip/>
-            <el-table-column prop="reagentName" label="所属试剂名称" min-width="100" show-overflow-tooltip/>
+            <el-table-column prop="reagent.name" label="所属试剂名称" min-width="100" show-overflow-tooltip/>
         </el-table>
     </div>
 
@@ -75,9 +75,9 @@
           />   
         </el-config-provider>
         <p>选择所属试剂</p>  
-        <el-select-v2  v-model="formData.seletevalue" filterable :options="allreagentlist" placeholder="选择试剂" @change="checkinput"  :disabled="state.editbox_disable_selete" style="width: 240px"  />
+        <el-select-v2  v-model="formData.reagentId" filterable :options="allreagentlist" placeholder="选择试剂" @change="checkinput"  :disabled="state.editbox_disable_selete" style="width: 240px"  />
         <p>所属试剂名字</p>  
-        <el-input v-model="formData.reagentname" style="width: 300px"  disabled  />
+        <el-input v-model="formData.reagentName" style="width: 300px"  disabled  />
         <p>是否启用</p>
         <el-switch v-model="formData.status" @change="checkinput" />
       </div>
@@ -97,7 +97,7 @@ import { api_lot_show,api_lot_del } from '@/api/lot'
 import {api_reagent_showall} from '@/api/reagent'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { format_YYYYMMDDHHmm_iso,formatDateColumn } from '@/utils/format'
-  import get_permission from '@/utils/permission'
+import get_permission from '@/utils/permission'
 
 const state = reactive({
   name: '',    // 输入搜索名称
@@ -118,12 +118,10 @@ const state = reactive({
 const formData = reactive({
   name: '',                    // 批号数字  
   expirationdate: null,      // 批号有效期
-  reagentid: null,          // 所属试剂id
-  seletevalue: null,         // 选择的试剂值
   id: null  ,           // 选中的批号id
-  reagentname:'',
-  reagentid:null,
-  status:true
+  reagentId: null,      // 选择的试剂id
+  status:true,
+  reagentName: '',
 })
 
 // 试剂列表数据
@@ -132,25 +130,23 @@ const tableRef=ref(null)
 
 function handleRowClick(row, column, event) {
   if(formData.id===row.id){
-    tableRef.value.setCurrentRow(null)
     formData.id=null
     formData.name=''
     formData.expirationdate=null
-    formData.reagentid=null
-    formData.reagentname=''
-    formData.seletevalue=null
+    formData.reagentId=null
+    formData.reagentName=''
     formData.status=true
+    tableRef.value.setCurrentRow(null)
   }
   else{
     formData.id=row.id
     formData.name=row.name
     formData.expirationdate=row.expirationDate
-    formData.reagentid=row.reagentId
-    formData.reagentname=row.reagentName
-    formData.seletevalue=null
+    formData.reagentId=row.reagent.id
+    formData.reagentName=row.reagent.name
     formData.status=row.status===0?true:false
-    tableRef.value.setCurrentRow(row)
   }
+
 }
 
 function tableRowClassName({ row,rowindex }) { // 表格行样式
@@ -174,9 +170,8 @@ async function add_drawer(){
   formData.id=null
   formData.name=''
   formData.expirationdate=null
-  formData.reagentid=null
-  formData.reagentname=''
-  formData.seletevalue=null,
+  formData.reagentId=null
+  formData.reagentName='请选择试剂'
   formData.status=true,
   state.drawer=true
 
@@ -199,12 +194,10 @@ async function edit_drawer(){
 
 
 function checkinput(){
+  console.log(formData)
   // 如果选择了试剂，更新formdata中的选择的试剂对应的id
-  if (formData.seletevalue != null) {
-    formData.reagentid = allreagentlist.value[formData.seletevalue].id
-  }
   const validationRules = {
-  required: ['name', 'expirationdate', 'reagentid', 'status']
+  required: ['name', 'expirationdate', 'status','reagentId']
 }
 
   // 检查必填字段
@@ -243,6 +236,7 @@ async function lot_update(){
     await api_lot_update(formData)
     state.drawer = false
     await lot_show()
+    formData.id=null
 }
 
 async function lot_add(){
@@ -259,8 +253,7 @@ async function list_allreagent(){
     for (let i in data.data){
         allreagentlist.value.push({
             label: data.data[i].name,
-            value: i,
-            id: data.data[i].id,
+            value: data.data[i].id,
         })
     }
 }

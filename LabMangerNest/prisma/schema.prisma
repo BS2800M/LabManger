@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./data.db"
 }
 
 model Team {
@@ -17,8 +17,10 @@ model Team {
   users     User[]
   reagents  Reagent[]
   lots      Lot[]
+  locations Location[]
   operations Operation[]
   inventories Inventory[]
+  sensorRecords SensorRecord[]
 
   @@map("Team")
 }
@@ -105,6 +107,8 @@ model Inventory {
   reagent        Reagent   @relation(fields: [reagentId], references: [id])
   lot            Lot       @relation(fields: [lotId], references: [id])
   team           Team      @relation(fields: [teamId], references: [id])
+  warningNum     Boolean @default(false) @map("WarningNum")
+  warningExpirationDate   Boolean @default(false) @map("WarningExpirationDate")
 
   @@map("Inventory")
 }
@@ -118,4 +122,44 @@ model Session {
   createTime DateTime @default(now()) @map("CreateTime")
 
   @@map("Session")
+}
+
+model Location{
+  id         Int      @id @default(autoincrement())
+  name       String   @map("Name")
+  note       String   @map("Note")
+  status     Int      @default(0) @map("Status") // 0: Enable, 1: Disable, 2: Delete
+  teamId     Int      @map("TeamId")
+  team       Team     @relation(fields: [teamId], references: [id])
+  uploadIntervalMinutes Int      @default(0) @map("UploadIntervalMinutes")
+  maxTemperature Float      @default(-50) @map("MaxTemperature")
+  minTemperature Float      @default(-50) @map("MinTemperature")
+  maxHumidity Float      @default(100) @map("MaxHumidity")
+  minHumidity Float      @default(100) @map("MinHumidity")
+  lastUploadTime DateTime @default(now()) @map("LastUploadTime")
+  lastUploadTemperature Float @default(0) @map("LastUploadTemperature")
+  lastUploadHumidity Float @default(0) @map("LastUploadHumidity")
+  warningTemperature Boolean @default(false) @map("WarningTemperature")
+  warningHumidity Boolean @default(false) @map("WarningHumidity")
+  warningUploadTime Boolean @default(false) @map("WarningUploadTime")
+  sensorRecords SensorRecord[]
+  @@map("Location")
+}
+
+model SensorRecord {
+  id          Int      @id @default(autoincrement())
+  locationId  Int      @map("LocationId")
+  location    Location @relation(fields: [locationId], references: [id])
+  teamId      Int      @map("TeamId")
+  team        Team     @relation(fields: [teamId], references: [id])
+  createTime  DateTime @default(now()) @map("CreateTime")
+  temperature Float    @map("Temperature")
+  humidity    Float    @map("Humidity")
+  @@map("SensorRecord")
+}
+
+model BarcodeCounter {
+  id    Int    @id @default(1)
+  value BigInt @default(0)
+  @@map("BarcodeCounter")
 }

@@ -4,7 +4,7 @@ import { InventoryDto } from './inventory.dto';
 import { OperationAction } from '../common/enums/enums';
 import { SessionUser } from '../common/decorators/session-user.decorator';
 import { teamScope } from '../common/utils/scope.util';
-
+import { Status } from '../common/enums/enums';
 @Injectable()
 export class InventoryService {
     constructor(private readonly prisma: PrismaService) { }
@@ -15,48 +15,107 @@ export class InventoryService {
         return where;
     }
 
-    private mapInventory(inv: any) {
-        const status = (inv.reagent.status !== 0 || inv.lot.status !== 0) ? 1 : 0;
-        const warnings: string[] = [];
-        if (inv.number <= inv.reagent.warnNumber) warnings.push('数量警告');
-        if (inv.lot.expirationDate < new Date()) warnings.push('有效期警告');
-        return {
-            id: inv.id,
-            reagent: { id: inv.reagent.id, name: inv.reagent.name, specifications: inv.reagent.specifications, warnNumber: inv.reagent.warnNumber },
-            lot: { id: inv.lot.id, name: inv.lot.name, expirationDate: inv.lot.expirationDate },
-            teamId: inv.teamId,
-            number: inv.number,
-            status,
-            warning: warnings.join('，'),
-        };
+
+
+    // 更新指定批号数量（可选）并检查该试剂所有批号总数与预警数量，更新 warningNum 状态
+    // lotId + delta 不传或 delta=0 时只做警告检查（如修改试剂信息后调用）
+    public async updateInventory(
+        reagentId: number,
+        delta: number,
+        lotId?: number,
+    ): Promise<{ isSuccess: boolean; message: string }> {
+        const reagent = await this.prisma.reagent.findFirst({
+            where: { id: reagentId },
+            select: { name: true, warnNumber: true },
+        });
+        if (!reagent) return { isSuccess: false, message: '试剂不存在' };
+
+        if (lotId !== undefined && delta !== 0) {
+            const inv = await this.prisma.inventory.findFirst({ where: { reagentId, lotId } });
+            if (!inv) return { isSuccess: false, message: '库存记录不存在' };
+
+            if (delta < 0 && inv.number + delta < 0) {
+                return { isSuccess: false, message: `${reagent.name}库存不足` };
+            }
+
+            await this.prisma.inventory.updateMany({
+                where: { reagentId, lotId },
+                data: { number: { increment: delta } },
+            });
+        }
+
+        const total = (await this.prisma.inventory.aggregate({
+            where: { reagentId },
+            _sum: { number: true },
+        }))._sum.number ?? 0;
+
+        const isWarning = total <= reagent.warnNumber;
+        await this.prisma.inventory.updateMany({
+            where: { reagentId },
+            data: { warningNum: isWarning },
+        });
+
+        if (!isWarning) return { isSuccess: true, message: `${reagent.name}库存更新成功` };
+        return { isSuccess: true, message: `${reagent.name}库存达到警告线` };
     }
 
-    private readonly inventoryInclude = {
-        reagent: { select: { id: true, name: true, specifications: true, warnNumber: true, status: true } },
-        lot: { select: { id: true, name: true, expirationDate: true, status: true } },
-    };
+    // 检查库存的有效期预警：expirationDate <= 今天 + warnDays → warningExpirationDate = true
+    // lotId 不传 → 检查所有库存；传 lotId → 只检查该批号的库存
+    public async updateExpirationWarning(lotId?: number): Promise<void> {
+        const inventories = await this.prisma.inventory.findMany({
+            where: lotId !== undefined ? { lotId } : {},
+            include: {
+                lot: { select: { expirationDate: true } },
+                reagent: { select: { warnDays: true } },
+            },
+        });
+
+        const trueIds: number[] = [];
+        const falseIds: number[] = [];
+
+        for (const inv of inventories) {
+            const threshold = new Date();
+            threshold.setDate(threshold.getDate() + inv.reagent.warnDays);
+            if (inv.lot.expirationDate <= threshold) {
+                trueIds.push(inv.id);
+            } else {
+                falseIds.push(inv.id);
+            }
+        }
+
+        await Promise.all([
+            trueIds.length > 0 && this.prisma.inventory.updateMany({
+                where: { id: { in: trueIds } },
+                data: { warningExpirationDate: true },
+            }),
+            falseIds.length > 0 && this.prisma.inventory.updateMany({
+                where: { id: { in: falseIds } },
+                data: { warningExpirationDate: false },
+            }),
+        ]);
+    }
 
     async show(dto: InventoryDto['requestShow'], session: SessionUser): Promise<InventoryDto['responseShow']> {
         const where = this.buildInventoryWhere(dto.name, session);
         const page = dto.page || 1;
         const pageSize = dto.pageSize || 10;
 
-        const [inventories, total] = await Promise.all([
+        let [inventories, total] = await Promise.all([
             this.prisma.inventory.findMany({
                 where, skip: (page - 1) * pageSize, take: pageSize,
-                orderBy: { id: 'desc' }, include: this.inventoryInclude,
+                orderBy: [{ warningNum: 'desc' }, { warningExpirationDate: 'desc' }], 
+                include: { reagent: { select: { id: true, name: true, specifications: true, warnNumber: true, status: true } }, 
+                           lot: { select: { id: true, name: true, expirationDate: true, status: true } } },
             }),
             this.prisma.inventory.count({ where }),
         ]);
 
         const totalPage = Math.ceil(total / pageSize);
-        return {
-            success: true,
-            data: inventories.map(inv => {
-                return this.mapInventory(inv);
-            }),
-            meta: { total, page, pageSize, totalPage },
-        };
+        const inventoriesToReturn = inventories.map(inv => {
+            const status = (inv.reagent.status !== 0 || inv.lot.status !== 0) ? 1 : 0;
+            return { ...inv, status };
+        });
+        return { success: true, data: inventoriesToReturn, meta: { total, page, pageSize, totalPage } };
     }
 
     async showAll(dto: InventoryDto['requestShowAll'], session: SessionUser): Promise<InventoryDto['responseShowAll']> {
@@ -67,15 +126,21 @@ export class InventoryService {
         const [inventories, total] = await Promise.all([
             this.prisma.inventory.findMany({
                 where, skip: (page - 1) * pageSize, take: pageSize,
-                orderBy: { id: 'desc' }, include: this.inventoryInclude,
+                orderBy: { id: 'desc' }, 
+                include: { reagent: { select: { id: true, name: true, specifications: true, warnNumber: true, status: true } }, 
+                           lot: { select: { id: true, name: true, expirationDate: true, status: true } } },
             }),
             this.prisma.inventory.count({ where }),
         ]);
 
         const totalPage = Math.ceil(total / pageSize);
+        const inventoriesToReturn = inventories.map(inv => {
+            const status = (inv.reagent.status !== 0 || inv.lot.status !== 0) ? 1 : 0;
+            return { ...inv, status };
+        });
         return {
             success: true,
-            data: inventories.map(inv => this.mapInventory(inv)),
+            data: inventoriesToReturn,
             meta: { total, page, pageSize, totalPage },
         };
     }

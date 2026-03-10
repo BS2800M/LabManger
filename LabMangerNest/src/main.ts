@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
@@ -30,14 +31,13 @@ async function bootstrap() {
     console.log(`Worker ${process.pid} started on: ${await app.getUrl()}`);
 }
 
-if (cluster.isPrimary) {
+if (cluster.isPrimary&&process.env.NODE_ENV=='production') {
+    console.log('生产环境，启动集群模式');
     console.log(`Primary ${process.pid} is running`);
-    
     // Fork workers
     for (let i = 0; i < worker_number; i++) {
         cluster.fork();
     }
-    
     cluster.on('exit', (worker, code, signal) => {
         console.log(`Worker ${worker.process.pid} died`);
     });

@@ -49,7 +49,6 @@ POST /team/add
 
 |名称|位置|类型|必选|说明|
 |---|---|---|---|---|
-|Authorization|header|string| 否 |none|
 |body|body|object| 否 |none|
 |» name|body|string| 是 |名称|
 |» phone|body|string| 是 |none|

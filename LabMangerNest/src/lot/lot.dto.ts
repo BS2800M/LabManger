@@ -9,7 +9,6 @@ const responseLotData = z.object({
     expirationDate: z.coerce.date(),
     teamId: z.number(),
     status: z.number(),
-    reagentName: z.string().optional(),
 });
 
 const responseShowAllData = z.object({

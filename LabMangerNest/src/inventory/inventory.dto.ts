@@ -9,7 +9,8 @@ const responseShowData = z.object({
     teamId: z.number(),
     number: z.number(),
     status: z.number(),
-    warning: z.string(),
+    warningNum: z.boolean(),
+    warningExpirationDate: z.boolean(),
 });
 
 const responseStatisticsData = z.object({

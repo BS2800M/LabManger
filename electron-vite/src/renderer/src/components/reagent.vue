@@ -142,7 +142,6 @@ const formData = reactive({
 const tableRef = ref(null)
 function handleRowClick(row, column, event) {
   if(formData.id===row.id){
-    tableRef.value.setCurrentRow(null)
     formData.id=null
     formData.name=''
     formData.specifications=''
@@ -170,7 +169,6 @@ function handleRowClick(row, column, event) {
     formData.note=row.note
     formData.createTime= format_iso_YYYYMMDDHHmm(row.createTime)
     formData.status=row.status===0?true:false
-    tableRef.value.setCurrentRow(row)
   }
 
 }
@@ -185,11 +183,13 @@ function tableRowClassName({ row,rowindex }) { // 表格行样式
 }
 
 async function add_drawer(){
+  tableRef.value.setCurrentRow(null)
   state.drawer=true
   state.addbutton_disable=true
   state.addbutton_show=true
   state.updatebutton_show=false
   state.editbox_disablegeneratelot=false
+  formData.id=null
   formData.name=""
   formData.specifications=""
   formData.storageCondition=""
@@ -201,7 +201,6 @@ async function add_drawer(){
   formData.note=""
   formData.createTime=null
   formData.status=true
-  tableRef.value.setCurrentRow(null)
   state.drawer=true
 
 }
@@ -257,6 +256,7 @@ async function reagent_update() {
   await api_reagent_update(formData)
   state.drawer = false
   await reagent_show()
+  formData.id=null
 }
 async function reagent_add() {
   formData.status=formData.status===true?0:1

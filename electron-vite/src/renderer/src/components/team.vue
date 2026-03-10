@@ -132,18 +132,17 @@ function handleRowClick(row, column, event) {
     formData.phone=row.phone
     formData.note=row.note
     formData.status=row.status
-    tableRef.value.setCurrentRow(row)
   }
 }
 
 
   async function add_drawer(){
+  tableRef.value.setCurrentRow(null)
   formData.id=null
   formData.name=''
   formData.phone=''
   formData.note=''
   formData.status=0
-  tableRef.value.setCurrentRow(null)
   state.drawer=true
   state.updatebutton_disable=true
   state.addbutton_disable=true
@@ -186,6 +185,7 @@ async function team_update() {
     await api_team_update(formData)
     state.drawer = false
     await team_show()
+    formData.id=null
 }
 
 async function team_add() {
