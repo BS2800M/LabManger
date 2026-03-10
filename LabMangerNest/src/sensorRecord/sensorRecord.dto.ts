@@ -16,7 +16,7 @@ const sensorRecordItem = z.object({
     locationId: z.number().min(1),
     temperature: z.number(),
     humidity: z.number(),
-    createTime: z.coerce.date(),
+    createTime: z.coerce.date().default(new Date()),
 });
 
 export const SensorRecordZod = {
