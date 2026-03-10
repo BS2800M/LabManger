@@ -222,8 +222,6 @@ const tableRef=ref(null)
 async function handleRowClick(row, column, event) {
   // 检查是否点击的是当前已选中的行
   if (formData.id === row.id) {
-    // 如果点击的是当前选中的行，则取消选中
-    tableRef.value.setCurrentRow(null)
     formData.id = null
     formData.action = ''
     formData.createTime = ''
@@ -231,6 +229,7 @@ async function handleRowClick(row, column, event) {
     formData.lotid = null
     formData.note = ''
     formData.barcodeNumber = ''
+    tableRef.value.setCurrentRow(null)
   } else {
     // 选中新行时，更新 formData 的属性
     formData.id = row.id
@@ -238,7 +237,7 @@ async function handleRowClick(row, column, event) {
     formData.createTime = row.createTime
     formData.reagentid = row.reagentId
     let data = await api_lot_showall(row.reagentId)
-    alllotlist.value = data.data.map(item => ({
+    alllotlist.value = data.data.map(item => ({ //更新lot列表
       value: item.id,
       label: item.name,
       name: item.name
@@ -247,8 +246,6 @@ async function handleRowClick(row, column, event) {
     formData.note = row.note
     formData.barcodeNumber = row.barcodeNumber
 
-    // 手动设置当前行高亮
-    tableRef.value.setCurrentRow(row)
   }
 }
 
@@ -323,17 +320,6 @@ async function operation_show(){
     !formData.lotid ||
     !formData.createTime 
     state.updatebutton_disable=hasEmptyField
-    if (formData.reagentid) {
-        let data = await api_lot_showall(formData.reagentid)
-        alllotlist.value = data.data.map(item => ({
-            value: item.id,
-            label: item.name,
-            name: item.name
-        }))
-    }
-    else {
-        alllotlist.value = []
-    }
   }
   async function operation_update(){
     let updateData={
@@ -348,6 +334,7 @@ async function operation_show(){
     await api_operation_update(updateData)
     operation_show()
     state.drawer=false
+    formData.id=null
   }
   async function operation_del(){
     if(formData.id){

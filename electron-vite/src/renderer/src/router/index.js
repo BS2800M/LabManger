@@ -15,20 +15,8 @@ const inbound = () => import('@/components/inbound.vue');
 const outbound = () => import('@/components/outbound.vue');
 const operation = () => import('@/components/operation.vue');
 const statistics = () => import('@/components/statistics.vue');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+const location = () => import('@/components/location.vue');
+const sensorRecord = () => import('@/components/sensorRecord.vue');
 
 
 const router=createRouter({
@@ -86,6 +74,14 @@ const router=createRouter({
         {
             path:'/signout',
             components:{main:signout}
+        },
+        {
+            path:'/location',
+            components:{main:location,bar:homebar}
+        },
+        {
+            path:'/sensorRecord',
+            components:{main:sensorRecord,bar:homebar}
         },
     ]
 })

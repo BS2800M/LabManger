@@ -18,6 +18,12 @@
           <li><RouterLink to="/statistics"><button >统计</button></RouterLink></li>
         </ul>
       </li>
+      <li><button>监控<svg class="icon"> <use xlink:href="#icon-huowudui"></use></svg></button>
+      <ul>
+        <li><RouterLink to="/location"><button >位置</button></RouterLink></li>
+        <li><RouterLink to="/sensorRecord"><button >记录</button></RouterLink></li>
+      </ul>
+    </li>
       <li><button>管理 <svg class="icon"><use xlink:href="#icon-wendu"></use></svg></button>
         <ul>
           <li><RouterLink to="/team"><button>检验小组</button></RouterLink></li>
@@ -55,45 +61,50 @@ const teamname = ref(localStorage.teamname)
     color: white;
     margin: 0;
     top: 80px;
+
   }
   #Sidebar{
     position: absolute;
     background-color:rgb(39, 53, 65);
-    width: 190px;
+    width: 180px;
     height: 100%;
     top: 0px;
     left: 0px;
-
     z-index: 1;
     box-shadow: 0 0 10px #000;;
   }
   #Sidebar #silde{
     position: absolute;
-    top: 150px;
+    top: 110px;
   }
   #Sidebar ul{
     list-style-type: none;
     margin: 0;
     padding: 0;
+
+
   }
 
   #Sidebar ul li button {
     font-size: 20px;
     border-style: none;
     color: white;
-    width: 190px;
+    width: 180px;
     text-decoration: none;
     transition: 0.2s ease-in-out;
     background-color:rgb(39, 53, 65);
     border-radius: 10px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding-top: 8px;
+    padding-bottom: 8px;
   }
   #Sidebar ul li button:hover{
     color: rgb(79, 108, 140);
     background-color: white;
   }
 
+#Sidebar ul ul li button {
+  font-size: 15px;
+}
 
 
   #Sidebar ul li ul{
@@ -103,7 +114,7 @@ const teamname = ref(localStorage.teamname)
     transition: 0.5s ease-in-out;
   }
   #Sidebar ul li button:focus +ul{
-    max-height: 800px;
+    max-height: 400px;
   }
   
 .icon {

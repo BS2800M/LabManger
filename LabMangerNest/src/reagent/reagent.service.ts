@@ -4,10 +4,11 @@ import { ReagentDto } from './reagent.dto';
 import { Status } from '../common/enums/enums';
 import { SessionUser } from '../common/decorators/session-user.decorator';
 import { teamScope } from '../common/utils/scope.util';
-
+import { InventoryService } from '../inventory/inventory.service';
 @Injectable()
 export class ReagentService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly prisma: PrismaService, private readonly inventoryService: InventoryService) { }
+
 
     async add(dto: ReagentDto['requestAdd'], session: SessionUser): Promise<ReagentDto['responseAdd']> {
         const reagent = await this.prisma.reagent.create({
@@ -92,6 +93,7 @@ export class ReagentService {
                 teamId: session.teamId,
             },
         });
+        await this.inventoryService.updateInventory(reagent.id, 0);
 
         return { success: true, data: reagent };
     }
@@ -106,7 +108,8 @@ export class ReagentService {
             where: { id: dto.id },
             data: { status: Status.Delete },
         });
-
+        await this.prisma.lot.updateMany({ where: { reagentId: dto.id }, data: { status: Status.Delete } });
+        await this.prisma.inventory.deleteMany({ where: { reagentId: dto.id } });
         return { success: true, data: reagent };
     }
 

@@ -3,6 +3,50 @@ import {Workbook} from 'exceljs'
 import {api_operation_showall} from '@/api/operation'
 import {api_inventory_showall} from '@/api/inventory'
 import {formatDateColumn,format_operation_action} from '@/utils/format'
+import {api_sensorRecord_showAll} from '@/api/sensorRecord'
+async function sensorRecord_exporttoexcel_list(filter = {}) {
+  let result = await api_sensorRecord_showAll({
+    locationName: filter.locationName ?? '',
+    startTime: filter.startTime ?? '',
+    endTime: filter.endTime ?? '',
+    page: 1,
+    pageSize: 10000,
+  })
+  let exportData = result.data || []
+  exportData = exportData.map(item => ({
+    '时间': formatDateColumn(null, null, item.createTime),
+    '位置名称': item.location?.name ,
+    '温度': item.temperature,
+    '湿度': item.humidity,
+    '小组': item.team.name
+
+  }))
+  const workbook = new Workbook()
+  const worksheet = workbook.addWorksheet('传感器记录')
+  worksheet.columns = [
+    { header: '时间', key: '时间', width: 20 },
+    { header: '位置名称', key: '位置名称', width: 20 },
+    { header: '温度', key: '温度', width: 10 },
+    { header: '湿度', key: '湿度', width: 10 },
+    { header: '小组', key: '小组', width: 20 },
+  ]
+  exportData.forEach(row => {
+    worksheet.addRow(row)
+  })
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `传感器记录${new Date().toLocaleDateString()}.xlsx`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(url)
+}
+
+
+
 
   async  function operation_exporttoexcel_list(filter = {}) {
     
@@ -106,4 +150,4 @@ async function inventory_exporttoexcel_list(){
 
 
 
-export {operation_exporttoexcel_list,inventory_exporttoexcel_list}
+export {operation_exporttoexcel_list,inventory_exporttoexcel_list,sensorRecord_exporttoexcel_list}

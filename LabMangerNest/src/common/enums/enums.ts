@@ -16,3 +16,11 @@ export enum OperationAction {
   Inbound = 1,
   Outbound = 2,
 }
+
+export enum InventoryWarningType {
+  NoWarning = 0,
+  NumberWarning = 1,
+  ExpirationDateWarning = 2,
+  BothNumberAndExpirationDateWarning = 3,
+}
+

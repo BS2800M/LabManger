@@ -4,45 +4,29 @@ import { OperationDto } from './operation.dto';
 import { Status, OperationAction } from '../common/enums/enums';
 import { SessionUser } from '../common/decorators/session-user.decorator';
 import { teamScope } from '../common/utils/scope.util';
+import { InventoryService } from '../inventory/inventory.service';
 
 @Injectable()
 export class OperationService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly prisma: PrismaService, private readonly inventoryService: InventoryService) { }
 
-    // 生成条码号：(id + 100000).toString()
-    private generateBarcode(id: number): string {
-        return (id + 100000).toString();
+    // 从数据库原子分配 count 个连续 ID，返回起始值（BigInt）
+    private async reserveBarcodeRange(count: number): Promise<bigint> {
+        const row = await this.prisma.barcodeCounter.upsert({
+            where: { id: 1 },
+            create: { id: 1, value: count },
+            update: { value: { increment: count } },
+        });
+        return row.value - BigInt(count);
+    }
+
+    // 将整数转为 base36 大写，不足8位补0，超过后自动扩充
+    private encodeBarcode(n: bigint): string {
+        return n.toString(36).toUpperCase().padStart(8, '0');
     }
 
     // 更新库存（增减），出库时检查库存是否充足
-    private async updateInventory(
-        reagentId: number,
-        lotId: number,
-        delta: number,
-    ): Promise<{ isSuccess: boolean; message: string }> {
-        const inv = await this.prisma.inventory.findFirst({
-            where: { reagentId, lotId },
-            include: { reagent: true },
-        });
-        if (!inv) return { isSuccess: false, message: '库存记录不存在' };
-
-        if (delta < 0 && inv.number + delta < 0) {
-            return { isSuccess: false, message: `${inv.reagent.name}库存不足` };
-        }
-
-        const newNumber = inv.number + delta;
-        await this.prisma.inventory.updateMany({
-            where: { reagentId, lotId },
-            data: { number: newNumber },
-        });
-
-        if (newNumber <= inv.reagent.warnNumber) {
-            return { isSuccess: true, message: `${inv.reagent.name}库存达到警告线` };
-        }
-        return { isSuccess: true, message: `${inv.reagent.name}库存更新成功` };
-    }
-
-    // 库存修正：按入库次数 - 出库次数重新计算
+    // 库存修正：按入库次数 - 出库次数重新计算，再检查警告状态
     private async auditInventory(reagentId: number, lotId: number): Promise<void> {
         const [inboundCount, outboundCount] = await Promise.all([
             this.prisma.operation.count({
@@ -56,14 +40,15 @@ export class OperationService {
             where: { reagentId, lotId },
             data: { number: inboundCount - outboundCount },
         });
+        await this.inventoryService.updateInventory(reagentId, 0);
     }
 
     async inbound(dto: OperationDto['requestInbound'], session: SessionUser): Promise<OperationDto['responseInbound']> {
-        const maxIdResult = await this.prisma.operation.aggregate({ _max: { id: true } });
-        let currentId = (maxIdResult._max.id ?? 0) + 1;
+        const totalCount = dto.inboundList.reduce((sum, item) => sum + item.number, 0);
+        const startId = await this.reserveBarcodeRange(totalCount);
 
-        // 构建所有入库操作记录
         const operationsData: any[] = [];
+        let offset = 0;
         for (const item of dto.inboundList) {
             for (let i = 0; i < item.number; i++) {
                 operationsData.push({
@@ -71,23 +56,20 @@ export class OperationService {
                     lotId: item.lotId,
                     userId: session.userId,
                     teamId: session.teamId,
-                    barcodeNumber: this.generateBarcode(currentId),
+                    barcodeNumber: this.encodeBarcode(startId + BigInt(offset++)),
                     note: item.note,
                     action: OperationAction.Inbound,
                     status: Status.Enable,
                 });
-                currentId++;
             }
         }
 
-        // 批量创建操作记录
         await this.prisma.operation.createMany({ data: operationsData });
 
-        // 并发更新库存，收集结果消息
         const inventoryResults = await Promise.all(
-            dto.inboundList.map(item => this.updateInventory(item.reagentId, item.lotId, item.number)),
+            dto.inboundList.map(item => this.inventoryService.updateInventory(item.reagentId, item.number, item.lotId)),
         );
-
+        
         return {
             success: true,
             data: { messages: inventoryResults.map(r => r.message) },
@@ -128,7 +110,7 @@ export class OperationService {
                 },
             });
 
-            const result = await this.updateInventory(origin.reagentId, origin.lotId, -1);
+            const result = await this.inventoryService.updateInventory(origin.reagentId, -1, origin.lotId);
             return { success: true, data: { status: 0, message: result.message } };
         }
 
@@ -136,35 +118,32 @@ export class OperationService {
     }
 
     async specialOutbound(dto: OperationDto['requestSpecialOutbound'], session: SessionUser): Promise<OperationDto['responseSpecialOutbound']> {
-        // 并发尝试更新所有库存
         const inventoryResults = await Promise.all(
-            dto.outboundList.map(item => this.updateInventory(item.reagentId, item.lotId, -(item.number))),
+            dto.outboundList.map(item => this.inventoryService.updateInventory(item.reagentId, -(item.number), item.lotId)),
         );
 
-        // 只对库存充足的项创建出库记录
-        const maxIdResult = await this.prisma.operation.aggregate({ _max: { id: true } });
-        let currentId = (maxIdResult._max.id ?? 0) + 1;
+        const validCount = dto.outboundList.reduce((sum, item, i) => sum + (inventoryResults[i].isSuccess ? item.number : 0), 0);
 
         const validOperations: any[] = [];
-        for (let i = 0; i < dto.outboundList.length; i++) {
-            if (!inventoryResults[i].isSuccess) continue;
-            const item = dto.outboundList[i];
-            for (let j = 0; j < item.number; j++) {
-                validOperations.push({
-                    reagentId: item.reagentId,
-                    lotId: item.lotId,
-                    userId: session.userId,
-                    teamId: session.teamId,
-                    barcodeNumber: this.generateBarcode(currentId),
-                    note: item.note,
-                    action: OperationAction.Outbound,
-                    status: Status.Enable,
-                });
-                currentId++;
+        if (validCount > 0) {
+            const startId = await this.reserveBarcodeRange(validCount);
+            let offset = 0;
+            for (let i = 0; i < dto.outboundList.length; i++) {
+                if (!inventoryResults[i].isSuccess) continue;
+                const item = dto.outboundList[i];
+                for (let j = 0; j < item.number; j++) {
+                    validOperations.push({
+                        reagentId: item.reagentId,
+                        lotId: item.lotId,
+                        userId: session.userId,
+                        teamId: session.teamId,
+                        barcodeNumber: this.encodeBarcode(startId + BigInt(offset++)),
+                        note: item.note,
+                        action: OperationAction.Outbound,
+                        status: Status.Enable,
+                    });
+                }
             }
-        }
-
-        if (validOperations.length > 0) {
             await this.prisma.operation.createMany({ data: validOperations });
         }
 
