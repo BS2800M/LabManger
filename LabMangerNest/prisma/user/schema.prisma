@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma-user"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Team {
+  id     Int    @id @default(autoincrement())
+  name   String @map("Name")
+  phone  String @map("Phone")
+  note   String @map("Note")
+  status Int    @default(0) @map("Status")
+
+  users User[]
+
+  @@map("Team")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  userName String @map("UserName")
+  passWord String @map("PassWord")
+  role     Int    @default(0) @map("Role")
+  status   Int    @default(0) @map("Status")
+  teamId   Int    @map("Team_Id")
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@map("User")
+}
+
+model Session {
+  id         Int      @id @default(autoincrement())
+  sessionId  String   @unique @map("SessionId")
+  userId     Int      @map("UserId")
+  teamId     Int      @map("TeamId")
+  role       Int      @map("Role")
+  createTime DateTime @default(now()) @map("CreateTime")
+
+  @@map("Session")
+}

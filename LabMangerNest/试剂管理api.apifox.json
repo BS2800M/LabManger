@@ -156,7 +156,7 @@
               "api": {
                 "id": "328296021",
                 "method": "post",
-                "path": "/team/add",
+                "path": "/identity/team/add",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -304,7 +304,7 @@
               "api": {
                 "id": "328296023",
                 "method": "get",
-                "path": "/team/show",
+                "path": "/identity/team/show",
                 "parameters": {
                   "query": [
                     {
@@ -486,7 +486,7 @@
               "api": {
                 "id": "328296022",
                 "method": "put",
-                "path": "/team/update",
+                "path": "/identity/team/update",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -643,7 +643,7 @@
               "api": {
                 "id": "328296024",
                 "method": "put",
-                "path": "/team/del",
+                "path": "/identity/team/del",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -782,7 +782,7 @@
               "api": {
                 "id": "328296025",
                 "method": "post",
-                "path": "/user/add",
+                "path": "/identity/user/add",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -973,7 +973,7 @@
               "api": {
                 "id": "328296026",
                 "method": "get",
-                "path": "/user/show",
+                "path": "/identity/user/show",
                 "parameters": {
                   "query": [
                     {
@@ -1153,7 +1153,7 @@
               "api": {
                 "id": "328296027",
                 "method": "put",
-                "path": "/user/update",
+                "path": "/identity/user/update",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -1322,7 +1322,7 @@
               "api": {
                 "id": "328296028",
                 "method": "put",
-                "path": "/user/del",
+                "path": "/identity/user/del",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -1462,7 +1462,7 @@
               "api": {
                 "id": "328296029",
                 "method": "post",
-                "path": "/reagent/add",
+                "path": "/stock/reagents/add",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -1671,7 +1671,7 @@
               "api": {
                 "id": "328296030",
                 "method": "get",
-                "path": "/reagent/show",
+                "path": "/stock/reagents/show",
                 "parameters": {
                   "query": [
                     {
@@ -1877,7 +1877,7 @@
               "api": {
                 "id": "328296031",
                 "method": "put",
-                "path": "/reagent/update",
+                "path": "/stock/reagents/update",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -2097,7 +2097,7 @@
               "api": {
                 "id": "328296032",
                 "method": "put",
-                "path": "/reagent/del",
+                "path": "/stock/reagents/del",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -2259,7 +2259,7 @@
               "api": {
                 "id": "328296033",
                 "method": "post",
-                "path": "/lot/add",
+                "path": "/stock/lots/add",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -2422,7 +2422,7 @@
               "api": {
                 "id": "328296036",
                 "method": "get",
-                "path": "/lot/show",
+                "path": "/stock/lots/show",
                 "parameters": {
                   "query": [
                     {
@@ -2620,7 +2620,7 @@
               "api": {
                 "id": "328296034",
                 "method": "put",
-                "path": "/lot/update",
+                "path": "/stock/lots/update",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -2797,7 +2797,7 @@
               "api": {
                 "id": "328296035",
                 "method": "put",
-                "path": "/lot/del",
+                "path": "/stock/lots/del",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -2997,7 +2997,7 @@
               "api": {
                 "id": "328296037",
                 "method": "get",
-                "path": "/reagent/showAll",
+                "path": "/stock/reagents/showAll",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -3111,7 +3111,7 @@
               "api": {
                 "id": "328296038",
                 "method": "get",
-                "path": "/lot/showAll",
+                "path": "/stock/lots/showAll",
                 "parameters": {
                   "query": [
                     {
@@ -3238,7 +3238,7 @@
               "api": {
                 "id": "328296039",
                 "method": "post",
-                "path": "/operation/inbound",
+                "path": "/stock/operations/inbound",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -3387,7 +3387,7 @@
               "api": {
                 "id": "328296040",
                 "method": "post",
-                "path": "/operation/outbound",
+                "path": "/stock/operations/outbound",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -3511,7 +3511,7 @@
               "api": {
                 "id": "328296041",
                 "method": "post",
-                "path": "/operation/specialOutbound",
+                "path": "/stock/operations/specialOutbound",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -3678,7 +3678,7 @@
               "api": {
                 "id": "340402566",
                 "method": "put",
-                "path": "/operation/update",
+                "path": "/stock/operations/update",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -3870,7 +3870,7 @@
               "api": {
                 "id": "328296042",
                 "method": "put",
-                "path": "/operation/del",
+                "path": "/stock/operations/del",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -4024,7 +4024,7 @@
               "api": {
                 "id": "328296043",
                 "method": "get",
-                "path": "/operation/show",
+                "path": "/stock/operations/show",
                 "parameters": {
                   "query": [
                     {
@@ -4291,7 +4291,7 @@
               "api": {
                 "id": "328296044",
                 "method": "get",
-                "path": "/inventory/show",
+                "path": "/stock/inventory/show",
                 "parameters": {
                   "query": [
                     {
@@ -4495,7 +4495,7 @@
               "api": {
                 "id": "328296045",
                 "method": "post",
-                "path": "/inventory/auditAll",
+                "path": "/stock/inventory/auditAll",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -4607,7 +4607,7 @@
               "api": {
                 "id": "343406059",
                 "method": "get",
-                "path": "/inventory/statistics",
+                "path": "/stock/inventory/statistics",
                 "parameters": {
                   "query": [
                     {
@@ -4805,7 +4805,7 @@
               "api": {
                 "id": "424224171",
                 "method": "get",
-                "path": "/operation/showAll",
+                "path": "/stock/operations/showAll",
                 "parameters": {
                   "query": [
                     {
@@ -5072,7 +5072,7 @@
               "api": {
                 "id": "424224174",
                 "method": "get",
-                "path": "/inventory/showAll",
+                "path": "/stock/inventory/showAll",
                 "parameters": {
                   "query": [
                     {
@@ -5276,7 +5276,7 @@
               "api": {
                 "id": "424386863",
                 "method": "post",
-                "path": "/location/add",
+                "path": "/sensorMonitor/locations/add",
                 "parameters": {},
                 "auth": {},
                 "securityScheme": {},
@@ -5474,7 +5474,7 @@
               "api": {
                 "id": "424384655",
                 "method": "get",
-                "path": "/location/show",
+                "path": "/sensorMonitor/locations/show",
                 "parameters": {
                   "query": [
                     {
@@ -5575,7 +5575,7 @@
               "api": {
                 "id": "424387233",
                 "method": "put",
-                "path": "/location/update",
+                "path": "/sensorMonitor/locations/update",
                 "parameters": {},
                 "auth": {},
                 "securityScheme": {},
@@ -5773,7 +5773,7 @@
               "api": {
                 "id": "424387423",
                 "method": "put",
-                "path": "/location/del",
+                "path": "/sensorMonitor/locations/del",
                 "parameters": {},
                 "auth": {},
                 "securityScheme": {},
@@ -5936,7 +5936,7 @@
               "api": {
                 "id": "424406249",
                 "method": "post",
-                "path": "/sensorRecord/add",
+                "path": "/sensorMonitor/sensorRecord/add",
                 "parameters": {},
                 "auth": {},
                 "securityScheme": {},
@@ -6071,7 +6071,7 @@
               "api": {
                 "id": "424408888",
                 "method": "get",
-                "path": "/sensorRecord/show",
+                "path": "/sensorMonitor/sensorRecord/show",
                 "parameters": {
                   "query": [
                     {
@@ -6305,7 +6305,7 @@
               "api": {
                 "id": "424409444",
                 "method": "put",
-                "path": "/sensorRecord/update",
+                "path": "/sensorMonitor/sensorRecord/update",
                 "parameters": {},
                 "auth": {},
                 "securityScheme": {},
@@ -6489,7 +6489,7 @@
               "api": {
                 "id": "424409580",
                 "method": "put",
-                "path": "/sensorRecord/del",
+                "path": "/sensorMonitor/sensorRecord/del",
                 "parameters": {},
                 "auth": {},
                 "securityScheme": {},
@@ -6652,7 +6652,7 @@
               "api": {
                 "id": "424410251",
                 "method": "get",
-                "path": "/sensorRecord/showAll",
+                "path": "/sensorMonitor/sensorRecord/showAll",
                 "parameters": {
                   "query": [
                     {
@@ -6841,7 +6841,7 @@
               "api": {
                 "id": "424429946",
                 "method": "get",
-                "path": "/location/showAll",
+                "path": "/sensorMonitor/locations/showAll",
                 "parameters": {
                   "query": []
                 },
@@ -6978,7 +6978,7 @@
               "api": {
                 "id": "328296073",
                 "method": "post",
-                "path": "/auth/signin",
+                "path": "/identity/auth/signin",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -7196,7 +7196,7 @@
               "api": {
                 "id": "328296074",
                 "method": "get",
-                "path": "/auth/signout",
+                "path": "/identity/auth/signout",
                 "parameters": {
                   "query": [],
                   "path": [],
@@ -7568,7 +7568,7 @@
                 "id": 286139501,
                 "name": "小组列出",
                 "method": "get",
-                "path": "/team/show/",
+                "path": "/identity/team/show/",
                 "auth": {},
                 "type": "DEBUG_CASE",
                 "options": {},

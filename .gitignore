@@ -5,4 +5,6 @@
 /LabMangerNest/prisma/data.db
 /LabMangerNest/dist
 /LabMangerNest/generated
+*.db
+
 

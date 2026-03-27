@@ -1,13 +1,13 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from '../../prisma/prisma.service';
+import { UserPrismaService } from '../../prisma/user-prisma.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class SessionGuard implements CanActivate {
     constructor(
         private readonly reflector: Reflector,
-        private readonly prisma: PrismaService,
+        private readonly prisma: UserPrismaService,
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {

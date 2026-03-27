@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { InventoryModule } from '../../inventory/inventory.module';
-import { SensorRecordModule } from '../../sensorRecord/sensorRecord.module';
+import { StockModule } from '../../stock/stock.module';
+import { SensorMonitorModule } from '../../sensorMonitor/sensorMonitor.module';
 import { SchedulerService } from './scheduler.service';
 
 @Module({
-    imports: [InventoryModule, SensorRecordModule],
+    imports: [StockModule, SensorMonitorModule],
     providers: [SchedulerService],
 })
 export class SchedulerModule { }

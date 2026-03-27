@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { InventoryService } from '../../inventory/inventory.service';
-import { SensorRecordService } from '../../sensorRecord/sensorRecord.service';
+import { InventoryService } from '../../stock/inventory.service';
+import { SensorRecordService } from '../../sensorMonitor/sensorRecord.service';
 
 @Injectable()
 export class SchedulerService {

@@ -2,13 +2,13 @@ import { Controller, Get } from '@nestjs/common';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-import { AuthZod } from '../auth/auth.dto';
-import { TeamZod } from '../team/team.dto';
-import { UserZod } from '../user/user.dto';
-import { ReagentZod } from '../reagent/reagent.dto';
-import { LotZod } from '../lot/lot.dto';
-import { OperationZod } from '../operation/operation.dto';
-import { InventoryZod } from '../inventory/inventory.dto';
+import { AuthZod } from '../identity/auth.dto';
+import { TeamZod } from '../identity/team.dto';
+import { UserZod } from '../identity/user.dto';
+import { ReagentZod } from '../stock/reagent.dto';
+import { LotZod } from '../stock/lot.dto';
+import { OperationZod } from '../stock/operation.dto';
+import { InventoryZod } from '../stock/inventory.dto';
 interface SchemaInfo {
   $schema: string;
   title: string;
@@ -57,8 +57,6 @@ export class SchemasController {
         outbound: generateSchemaFromZod(OperationZod.requestOutbound, 'RequestOperationOutbound'),
         specialOutbound: generateSchemaFromZod(OperationZod.requestSpecialOutbound, 'RequestOperationSpecialOutbound'),
         show: generateSchemaFromZod(OperationZod.requestShow, 'RequestOperationShow'),
-        update: generateSchemaFromZod(OperationZod.requestUpdate, 'RequestOperationUpdate'),
-        del: generateSchemaFromZod(OperationZod.requestDel, 'RequestOperationDel'),
       },
       lot: {
         add: generateSchemaFromZod(LotZod.requestAdd, 'RequestLotAdd'),

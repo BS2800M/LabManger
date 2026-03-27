@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma-manger"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Reagent {
+  id               Int      @id @default(autoincrement())
+  name             String   @map("Name")
+  specifications   String   @map("Specifications")
+  price            Int      @default(0) @map("Price")
+  storageCondition String   @map("StorageCondition")
+  manufacturer     String   @map("Manufacturer")
+  note             String   @map("Note")
+  warnNumber       Int      @default(0) @map("WarnNumber")
+  warnDays         Int      @default(0) @map("WarnDays")
+  createTime       DateTime @default(now()) @map("CreateTime")
+  teamId           Int      @map("TeamId")
+  status           Int      @default(0) @map("Status")
+
+  lots        Lot[]
+  operations  Operation[]
+  inventories Inventory[]
+
+  @@map("Reagent")
+}
+
+model Lot {
+  id             Int      @id @default(autoincrement())
+  name           String   @map("Name")
+  reagentId      Int      @map("ReagentId")
+  expirationDate DateTime @map("ExpirationDate")
+  status         Int      @default(0) @map("Status")
+  teamId         Int      @map("TeamId")
+
+  reagent     Reagent     @relation(fields: [reagentId], references: [id])
+  operations  Operation[]
+  inventories Inventory[]
+
+  @@map("Lot")
+}
+
+model Operation {
+  id            Int      @id @default(autoincrement())
+  reagentId     Int      @map("ReagentId")
+  lotId         Int      @map("LotId")
+  userId        Int      @map("UserId")
+  teamId        Int      @map("TeamId")
+  createTime    DateTime @default(now()) @map("CreateTime")
+  barcodeNumber String   @map("BarcodeNumber")
+  action        Int      @map("Action")
+  note          String   @map("Note")
+  groupId       String   @map("GroupId")
+  status        Int      @default(0) @map("Status")
+  userNameSnapshot    String   @default("") @map("UserNameSnapshot")
+  reagentNameSnapshot String   @default("") @map("ReagentNameSnapshot")
+  lotNameSnapshot     String   @default("") @map("LotNameSnapshot")
+  reagent Reagent @relation(fields: [reagentId], references: [id])
+  lot     Lot     @relation(fields: [lotId], references: [id])
+
+  @@index([barcodeNumber])
+  @@index([createTime])
+  @@index([teamId])
+  @@index([groupId])
+  @@map("Operation")
+}
+
+model Inventory {
+  id                    Int     @id @default(autoincrement())
+  reagentId             Int     @map("ReagentId")
+  lotId                 Int     @map("LotId")
+  teamId                Int     @map("TeamId")
+  number                Int     @default(0) @map("Number")
+  warningNum            Boolean @default(false) @map("WarningNum")
+  warningExpirationDate Boolean @default(false) @map("WarningExpirationDate")
+
+  reagent Reagent @relation(fields: [reagentId], references: [id])
+  lot     Lot     @relation(fields: [lotId], references: [id])
+
+  @@map("Inventory")
+}
+
+model Location {
+  id                    Int            @id @default(autoincrement())
+  name                  String         @map("Name")
+  note                  String         @map("Note")
+  status                Int            @default(0) @map("Status")
+  teamId                Int            @map("TeamId")
+  uploadIntervalMinutes Int            @default(0) @map("UploadIntervalMinutes")
+  maxTemperature        Float          @default(-50) @map("MaxTemperature")
+  minTemperature        Float          @default(-50) @map("MinTemperature")
+  maxHumidity           Float          @default(100) @map("MaxHumidity")
+  minHumidity           Float          @default(100) @map("MinHumidity")
+  lastUploadTime        DateTime       @default(now()) @map("LastUploadTime")
+  lastUploadTemperature Float          @default(0) @map("LastUploadTemperature")
+  lastUploadHumidity    Float          @default(0) @map("LastUploadHumidity")
+  warningTemperature    Boolean        @default(false) @map("WarningTemperature")
+  warningHumidity       Boolean        @default(false) @map("WarningHumidity")
+  warningUploadTime     Boolean        @default(false) @map("WarningUploadTime")
+  lastUploadBattery     Int            @default(0) @map("LastUploadBattery")
+  sensorRecords         SensorRecord[]
+
+  @@map("Location")
+}
+
+model SensorRecord {
+  id                 Int      @id @default(autoincrement())
+  locationId         Int      @map("LocationId")
+  teamId             Int      @map("TeamId")
+  teamName           String   @default("") @map("TeamName")
+  createTime         DateTime @default(now()) @map("CreateTime")
+  temperature        Float    @map("Temperature")
+  humidity           Float    @map("Humidity")
+  battery            Int      @default(0) @map("Battery")
+  warningTemperature Boolean  @default(false) @map("WarningTemperature")
+  warningHumidity    Boolean  @default(false) @map("WarningHumidity")
+
+  location Location @relation(fields: [locationId], references: [id])
+
+  @@map("SensorRecord")
+}
+
+model BarcodeCounter {
+  id    Int    @id @default(1)
+  value BigInt @default(0)
+
+  @@map("BarcodeCounter")
+}

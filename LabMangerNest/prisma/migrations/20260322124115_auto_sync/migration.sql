@@ -1,0 +1,32 @@
+-- CreateTable
+CREATE TABLE "Team" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "Name" TEXT NOT NULL,
+    "Phone" TEXT NOT NULL,
+    "Note" TEXT NOT NULL,
+    "Status" INTEGER NOT NULL DEFAULT 0
+);
+
+-- CreateTable
+CREATE TABLE "User" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "UserName" TEXT NOT NULL,
+    "PassWord" TEXT NOT NULL,
+    "Role" INTEGER NOT NULL DEFAULT 0,
+    "Status" INTEGER NOT NULL DEFAULT 0,
+    "Team_Id" INTEGER NOT NULL,
+    CONSTRAINT "User_Team_Id_fkey" FOREIGN KEY ("Team_Id") REFERENCES "Team" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Session" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "SessionId" TEXT NOT NULL,
+    "UserId" INTEGER NOT NULL,
+    "TeamId" INTEGER NOT NULL,
+    "Role" INTEGER NOT NULL,
+    "CreateTime" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Session_SessionId_key" ON "Session"("SessionId");
