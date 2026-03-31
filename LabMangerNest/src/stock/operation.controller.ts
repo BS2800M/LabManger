@@ -8,6 +8,14 @@ import { SessionUser, SessionUser as ISessionUser } from '../common/decorators/s
 export class OperationController {
     constructor(private readonly operationService: OperationService) { }
 
+    @Post('fastInbound')
+    async fastInbound(
+        @ZodBody(OperationZod.requestFastInbound) body: OperationDto['requestFastInbound'],
+        @SessionUser() session: ISessionUser,
+    ) {
+        return this.operationService.fastInbound(body, session);
+    }
+
     @Post('inbound')
     async inbound(
         @ZodBody(OperationZod.requestInbound) body: OperationDto['requestInbound'],
@@ -16,20 +24,20 @@ export class OperationController {
         return this.operationService.inbound(body, session);
     }
 
-    @Post('outbound')
+    @Post('fastOutbound')
+    async fastOutbound(
+        @ZodBody(OperationZod.requestFastOutbound) body: OperationDto['requestFastOutbound'],
+        @SessionUser() session: ISessionUser,
+    ) {
+        return this.operationService.fastOutbound(body, session);
+    }
+
+    @Post('Outbound')
     async outbound(
         @ZodBody(OperationZod.requestOutbound) body: OperationDto['requestOutbound'],
         @SessionUser() session: ISessionUser,
     ) {
         return this.operationService.outbound(body, session);
-    }
-
-    @Post('specialOutbound')
-    async specialOutbound(
-        @ZodBody(OperationZod.requestSpecialOutbound) body: OperationDto['requestSpecialOutbound'],
-        @SessionUser() session: ISessionUser,
-    ) {
-        return this.operationService.specialOutbound(body, session);
     }
 
     @Get('show')

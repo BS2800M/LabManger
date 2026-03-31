@@ -5,7 +5,6 @@ import {createRouter,createWebHashHistory} from 'vue-router'
 const signin = () => import('@/components/signin.vue');
 const home = () => import('@/components/home.vue');
 const homebar = () => import('@/components/homebar.vue');   
-const signout = () => import('@/components/signout.vue');
 const team = () => import('@/components/team.vue');
 const user = () => import('@/components/user.vue');
 const inbound = () => import('@/components/inbound.vue');
@@ -63,18 +62,6 @@ const router=createRouter({
         {
             path:'/user',
             components:{main:user,bar:homebar}
-        },
-        {
-            path:'/signout',
-            components:{main:signout}
-        },
-        {
-            path:'/location',
-            redirect:'/location-sensor-record'
-        },
-        {
-            path:'/sensorRecord',
-            redirect:'/location-sensor-record'
         },
     ]
 })

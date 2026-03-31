@@ -52,10 +52,10 @@ async function sensorRecord_exporttoexcel_list(filter = {}) {
 
 async function operation_exporttoexcel_list(filter = {}) {
   const result = await api_operation_showall({
-    reagentName: filter.reagentName ?? filter.name,
-    startTime: filter.startTime ?? filter.starttime,
-    endTime: filter.endTime ?? filter.endtime,
-    barcodeNumber: filter.barcodeNumber ?? filter.barcodenumber,
+    reagentName: filter.reagentName,
+    startTime: filter.startTime,
+    endTime: filter.endTime,
+    barcodeNumber: filter.barcodeNumber,
     page: 1,
     pageSize: 9999999,
   })

@@ -5,28 +5,43 @@ import { UserRole } from '../common/enums/enums';
 
 const responseUserData = z.object({
     id: z.number(),
+    account: z.string(),
     userName: z.string(),
     role: z.enum(UserRole),
     status: z.number(),
     teamId: z.number(),
     teamName: z.string().optional(),
-    passWord: z.string().optional(),
+});
+
+const responseShowAllData = z.object({
+    id: z.number(),
+    account: z.string(),
+    userName: z.string(),
+    role: z.enum(UserRole),
+    status: z.number(),
+    teamId: z.number(),
+    teamName: z.string().optional(),
 });
 
 export const UserZod = {
     requestAdd: z.object({
+        account: z.string(),
         userName: z.string(),
-        passWord: z.string(),
+        checkerPassWord: z.string(),
+        reviewerPassWord: z.string(),
         role: z.enum(UserRole),
         teamId: z.number().min(1),
+        status: z.number().default(0),
     }),
     requestShow: ApiRequestZod.pageQuery.extend({
-        userName: z.string().optional(),
+        keyword: z.string().optional(),
     }),
     requestUpdate: z.object({
         id: z.number().min(1),
+        account: z.string(),
         userName: z.string(),
-        passWord: z.string(),
+        checkerPassWord: z.string(),
+        reviewerPassWord: z.string(),
         role: z.enum(UserRole),
         status: z.number(),
         teamId: z.number().min(1),
@@ -38,6 +53,7 @@ export const UserZod = {
     responseShow: ApiResponseZod.extend({ data: z.array(responseUserData) }),
     responseUpdate: ApiResponseZod.extend({ data: responseUserData }),
     responseDel: ApiResponseZod.extend({ data: responseUserData }),
+    responseShowAll: ApiResponseZod.extend({ data: z.array(responseShowAllData) }),
 } as const;
 
 export type UserDto = ZodToDto<typeof UserZod>;

@@ -14,6 +14,7 @@ const responseLotData = z.object({
 const responseShowAllData = z.object({
     id: z.number(),
     name: z.string(),
+    status: z.number(),
 });
 
 export const LotZod = {

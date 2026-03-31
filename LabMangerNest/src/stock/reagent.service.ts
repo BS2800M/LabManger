@@ -1,19 +1,62 @@
-﻿import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { MangerPrismaService } from '../prisma/manger-prisma.service';
 import { ReagentDto } from './reagent.dto';
 import { Status } from '../common/enums/enums';
 import { SessionUser } from '../common/decorators/session-user.decorator';
-import { teamScope } from '../common/utils/scope.util';
 import { InventoryService } from './inventory.service';
+import { LotService } from './lot.service';
+
 @Injectable()
 export class ReagentService {
-    constructor(private readonly prisma: MangerPrismaService, private readonly inventoryService: InventoryService) { }
+    constructor(
+        private readonly prisma: MangerPrismaService,
+        private readonly inventoryService: InventoryService,
+        private readonly lotService: LotService,
+    ) { }
 
+    private normalizeDi(di?: string): string {
+        return (di ?? '').trim();
+    }
+
+    private async isDiExists(di: string, excludeId?: number): Promise<boolean> {
+        const existing = await this.prisma.reagent.findFirst({
+            where: {
+                di,
+                ...(excludeId ? { id: { not: excludeId } } : {}),
+            },
+            select: { id: true },
+        });
+        return Boolean(existing);
+    }
+
+    private async resolveDiOrThrow(diInput: string | undefined, excludeId?: number): Promise<string> {
+        const normalizedDi = this.normalizeDi(diInput);
+
+        if (!normalizedDi) {
+            // DI 为空时自动生成唯一 UUID。
+            let generatedDi = randomUUID();
+            while (await this.isDiExists(generatedDi, excludeId)) {
+                generatedDi = randomUUID();
+            }
+            return generatedDi;
+        }
+
+        const exists = await this.isDiExists(normalizedDi, excludeId);
+        if (exists) {
+            throw new HttpException('此DI（标识符）已存在于其他试剂中', HttpStatus.BAD_REQUEST);
+        }
+
+        return normalizedDi;
+    }
 
     async add(dto: ReagentDto['requestAdd'], session: SessionUser): Promise<ReagentDto['responseAdd']> {
+        const di = await this.resolveDiOrThrow(dto.di);
+
         const reagent = await this.prisma.reagent.create({
             data: {
                 name: dto.name,
+                di,
                 specifications: dto.specifications,
                 price: dto.price,
                 storageCondition: dto.storageCondition,
@@ -29,30 +72,21 @@ export class ReagentService {
             const expirationDate = new Date();
             expirationDate.setFullYear(expirationDate.getFullYear() + 1);
 
-            const lot = await this.prisma.lot.create({
-                data: {
+            await this.lotService.add(
+                {
                     name: '默认' + reagent.name,
                     reagentId: reagent.id,
                     expirationDate,
-                    teamId: reagent.teamId,
                 },
-            });
-
-            await this.prisma.inventory.create({
-                data: {
-                    reagentId: reagent.id,
-                    lotId: lot.id,
-                    teamId: reagent.teamId,
-                    number: 0,
-                },
-            });
+                session,
+            );
         }
 
         return { success: true, data: reagent };
     }
 
     async show(dto: ReagentDto['requestShow'], session: SessionUser): Promise<ReagentDto['responseShow']> {
-        const where: any = { status: { not: Status.Delete }, ...teamScope(session) };
+        const where: any = { status: { not: Status.Delete } };
         if (dto.name) { where.name = { contains: dto.name }; }
 
         const page = dto.page || 1;
@@ -73,15 +107,18 @@ export class ReagentService {
     }
 
     async update(dto: ReagentDto['requestUpdate'], session: SessionUser): Promise<ReagentDto['responseUpdate']> {
-        const exists = await this.prisma.reagent.findFirst({ where: { id: dto.id, ...teamScope(session) } });
+        const exists = await this.prisma.reagent.findFirst({ where: { id: dto.id } });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
         }
+
+        const di = await this.resolveDiOrThrow(dto.di, dto.id);
 
         const reagent = await this.prisma.reagent.update({
             where: { id: dto.id },
             data: {
                 name: dto.name,
+                di,
                 specifications: dto.specifications,
                 price: dto.price,
                 storageCondition: dto.storageCondition,
@@ -93,13 +130,14 @@ export class ReagentService {
                 teamId: session.teamId,
             },
         });
+
         await this.inventoryService.updateInventory(reagent.id, 0);
 
         return { success: true, data: reagent };
     }
 
     async del(dto: ReagentDto['requestDel'], session: SessionUser): Promise<ReagentDto['responseDel']> {
-        const exists = await this.prisma.reagent.findFirst({ where: { id: dto.id, ...teamScope(session) } });
+        const exists = await this.prisma.reagent.findFirst({ where: { id: dto.id } });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
         }
@@ -108,14 +146,12 @@ export class ReagentService {
             where: { id: dto.id },
             data: { status: Status.Delete },
         });
-        await this.prisma.lot.updateMany({ where: { reagentId: dto.id }, data: { status: Status.Delete } });
-        await this.prisma.inventory.deleteMany({ where: { reagentId: dto.id } });
         return { success: true, data: reagent };
     }
 
     async showAll(session: SessionUser): Promise<ReagentDto['responseShowAll']> {
         const reagents = await this.prisma.reagent.findMany({
-            where: { status: Status.Enable, ...teamScope(session) },
+            where: { status: Status.Enable },
             select: { id: true, name: true },
             orderBy: { id: 'asc' },
         });
@@ -123,6 +159,3 @@ export class ReagentService {
         return { success: true, data: reagents };
     }
 }
-
-
-

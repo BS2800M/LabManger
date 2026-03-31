@@ -24,7 +24,6 @@
           <el-button type="primary" @click="openReagentEditDrawer">修改试剂</el-button>
           <el-button
             type="danger"
-            v-if="get_permission('reagent_delete')"
             @click="showDeleteReagentConfirm"
           >
             删除试剂
@@ -73,7 +72,6 @@
           <el-button type="primary" @click="openLotEditDrawer">修改批号</el-button>
           <el-button
             type="danger"
-            v-if="get_permission('lot_delete')"
             @click="showDeleteLotConfirm"
           >
             删除批号
@@ -98,9 +96,9 @@
       </div>
     </section>
 
-    <el-drawer v-model="reagentState.drawer" direction="rtl" size="60%">
+    <el-drawer v-model="reagentState.drawer" direction="rtl" size="60%" @open="reagentState.selectedRowId = null">
       <template #header>
-        <span class="drawer-title">试剂模板</span>
+        <span class="drawer-title">试剂管理</span>
       </template>
       <template #footer>
         <div style="flex: auto">
@@ -113,7 +111,12 @@
         <div class="drawer-grid">
           <div>
             <p>试剂名称</p>
-            <el-input v-model="reagentFormData.name" @input="reagentCheckInput" style="width: 300px" placeholder="输入试剂的名称" />
+            <el-input v-model="reagentFormData.name" @input="syncReagentSubmitDisabled" style="width: 300px" placeholder="输入试剂的名称" />
+            <p>DI（产品标识）</p>
+            <div class="di-input-row">
+              <el-input v-model="reagentFormData.di" class="di-input" placeholder="输入产品标识 DI" />
+              <el-button type="primary" plain @click="formatDi">格式化</el-button>
+            </div>
             <p>试剂规格</p>
             <el-input v-model="reagentFormData.specifications" style="width: 300px" placeholder="如：盒 箱 瓶" />
             <p>试剂的储存环境</p>
@@ -125,23 +128,29 @@
           </div>
           <div>
             <p>预警数量</p>
-            <el-input-number v-model="reagentFormData.warnNumber" :min="-1" :max="9999" placeholder="0" @change="reagentCheckInput" />
+            <el-input-number v-model="reagentFormData.warnNumber" :min="-1" :max="9999" placeholder="0" @change="syncReagentSubmitDisabled" />
             <p>预警天数</p>
-            <el-input-number v-model="reagentFormData.warnDays" :min="0" :max="9999" placeholder="0" @change="reagentCheckInput" />
+            <el-input-number v-model="reagentFormData.warnDays" :min="0" :max="9999" placeholder="0" @change="syncReagentSubmitDisabled" />
             <p>价格</p>
-            <el-input-number v-model="reagentFormData.price" :min="0" :max="99999999" placeholder="0" @change="reagentCheckInput" />
+            <el-input-number v-model="reagentFormData.price" :min="0" :max="99999999" placeholder="0" @change="syncReagentSubmitDisabled" />
             <p>创建时间</p>
             <el-input disabled v-model="reagentFormData.createTime" style="width: 300px" placeholder="系统自动生成" />
             <p>生成初始批号</p>
-            <el-switch v-model="reagentFormData.generateLot" :disabled="reagentState.editbox_disablegeneratelot" size="large" @change="reagentCheckInput" />
+            <el-switch v-model="reagentFormData.generateLot" :disabled="reagentState.editbox_disablegeneratelot" size="large" @change="syncReagentSubmitDisabled" />
             <p>是否启用</p>
-            <el-switch v-model="reagentFormData.status" size="large" @change="reagentCheckInput" />
+            <el-switch
+              v-model="reagentFormData.status"
+              size="large"
+              active-text="是"
+              inactive-text="否"
+              @change="syncReagentSubmitDisabled"
+            />
           </div>
         </div>
       </template>
     </el-drawer>
 
-    <el-drawer v-model="lotState.drawer" direction="rtl" size="30%">
+    <el-drawer v-model="lotState.drawer" direction="rtl" size="30%" @open="lotState.selectedRowId = null">
       <template #header>
         <span class="drawer-title">批号管理</span>
       </template>
@@ -167,12 +176,22 @@
               value-format="YYYY-MM-DD 23:59:59"
             />
           </el-config-provider>
-          <p>选择所属试剂</p>
-          <el-select-v2 v-model="lotFormData.reagentId" filterable :options="allReagentList" placeholder="选择试剂" @change="lotCheckInput" :disabled="lotState.editbox_disable_selete" style="width: 240px" />
-          <p>所属试剂名字</p>
-          <el-input v-model="lotFormData.reagentName" style="width: 300px" disabled />
+          <p>所属试剂名</p>
+          <reagent-select
+            class="lot-reagent-select"
+            v-model="lotFormData.reagentId"
+            :refresh-trigger="lotReagentRefreshTrigger"
+            placeholder="选择试剂"
+            @change="lotCheckInput"
+            @selected-change="handleLotReagentSelected"
+          />
           <p>是否启用</p>
-          <el-switch v-model="lotFormData.status" @change="lotCheckInput" />
+          <el-switch
+            v-model="lotFormData.status"
+            active-text="是"
+            inactive-text="否"
+            @change="lotCheckInput"
+          />
         </div>
       </template>
     </el-drawer>
@@ -183,11 +202,21 @@
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { onMounted, reactive, ref } from 'vue'
-import { api_reagent_show, api_reagent_del, api_reagent_update, api_reagent_add, api_reagent_showall } from '@/api/reagent'
+import ReagentSelect from '@/components/reagent_select.vue'
+import { api_reagent_show, api_reagent_del, api_reagent_update, api_reagent_add } from '@/api/reagent'
 import { api_lot_show, api_lot_del, api_lot_update, api_lot_add } from '@/api/lot'
-import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
+import { eventBus } from '@/utils/eventBus'
 import { format_iso_YYYYMMDDHHmm, format_YYYYMMDDHHmm_iso, formatDateColumn } from '@/utils/format'
-import get_permission from '@/utils/permission'
+import {
+  syncSubmitDisabledByFields,
+  toggleRowSelection,
+  showDeleteConfirmBySelection,
+  deleteWithSelection,
+  openDrawerByMode,
+  openAddDrawerFlow,
+  tryOpenEditDrawerBySelection,
+  resolveSelectableRowClass,
+} from '@/utils/crud'
 
 const reagentState = reactive({
   name: '',
@@ -204,6 +233,7 @@ const reagentState = reactive({
 const reagentFormData = reactive({
   id: null,
   name: '',
+  di: '',
   specifications: '',
   storageCondition: '',
   manufacturer: '',
@@ -219,6 +249,7 @@ const reagentFormData = reactive({
 const reagentRequiredFields = ['name']
 const reagentTableColumns = [
   { key: 'name', dataKey: 'name', title: '试剂名称', width: 180, flexGrow: 1 },
+  { key: 'di', dataKey: 'di', title: 'DI（产品标识）', width: 180, flexGrow: 1 },
   { key: 'specifications', dataKey: 'specifications', title: '规格', width: 140, flexGrow: 1 },
   { key: 'manufacturer', dataKey: 'manufacturer', title: '生产厂家', width: 160, flexGrow: 1 },
   { key: 'storageCondition', dataKey: 'storageCondition', title: '储存环境', width: 160, flexGrow: 1 },
@@ -233,7 +264,6 @@ const lotState = reactive({
   drawer: false,
   drawerMode: 'add',
   submitDisabled: true,
-  editbox_disable_selete: true,
   selectedRowId: null,
 })
 
@@ -247,7 +277,8 @@ const lotFormData = reactive({
 })
 
 const lotRequiredFields = ['name', 'expirationdate', 'status', 'reagentId']
-const allReagentList = ref([])
+const lotReagentRefreshTrigger = ref(0)
+
 const lotTableColumns = [
   { key: 'name', dataKey: 'name', title: '批号', width: 180, flexGrow: 1 },
   {
@@ -273,6 +304,7 @@ function resetReagentFormData(options = {}) {
   Object.assign(reagentFormData, {
     id: null,
     name: '',
+    di: '',
     specifications: '',
     storageCondition: '',
     manufacturer: '',
@@ -290,6 +322,7 @@ function fillReagentFormDataFromRow(rowData) {
   Object.assign(reagentFormData, {
     id: rowData.id,
     name: rowData.name,
+    di: rowData.di ?? '',
     specifications: rowData.specifications,
     storageCondition: rowData.storageCondition,
     manufacturer: rowData.manufacturer,
@@ -304,68 +337,80 @@ function fillReagentFormDataFromRow(rowData) {
 }
 
 function syncReagentSubmitDisabled() {
-  const hasAllRequiredFields = reagentRequiredFields.every((field) => {
-    const value = reagentFormData[field]
-    if (typeof value === 'string') return value.trim() !== ''
-    return value != null
+  syncSubmitDisabledByFields({
+    formData: reagentFormData,
+    requiredFields: reagentRequiredFields,
+    target: reagentState,
+    disabledKey: 'submitDisabled',
   })
-  reagentState.submitDisabled = !hasAllRequiredFields
+}
+
+function formatDi() {
+  const cleaned = String(reagentFormData.di ?? '')
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .trim()
+  reagentFormData.di = cleaned.slice(2, 16)
 }
 
 function openReagentDrawer(mode) {
-  reagentState.drawerMode = mode
-  reagentState.editbox_disablegeneratelot = mode === 'edit'
-  reagentState.drawer = true
-  syncReagentSubmitDisabled()
+  openDrawerByMode({
+    state: reagentState,
+    mode,
+    beforeOpen: () => { reagentState.editbox_disablegeneratelot = mode === 'edit' },
+    afterOpen: syncReagentSubmitDisabled,
+  })
 }
 
 function handleReagentRowClick({ rowData }) {
-  if (reagentFormData.id === rowData.id) {
-    reagentState.selectedRowId = null
-    resetReagentFormData()
-  } else {
-    reagentState.selectedRowId = rowData.id
-    fillReagentFormDataFromRow(rowData)
-  }
+  toggleRowSelection({
+    rowData,
+    isSameSelection: reagentState.selectedRowId === rowData.id,
+    setSelectedRowId: (value) => { reagentState.selectedRowId = value },
+    onSelect: fillReagentFormDataFromRow,
+    onDeselect: resetReagentFormData,
+  })
   syncReagentSubmitDisabled()
 }
 
 function getReagentRowClass(rowData, rowIndex) {
-  const statusClass = getReagentStatusClass({ row: rowData, rowindex: rowIndex }) || ''
-  if (reagentState.selectedRowId === rowData.id) return `${statusClass} current-row`.trim()
-  return statusClass
+  return resolveSelectableRowClass({
+    rowData,
+    rowIndex,
+    selectedRowId: reagentState.selectedRowId,
+    getStatusClass: ({ row }) => (row.status === 1 ? 'unactive-row' : 'normal-row'),
+  })
 }
 
-function getReagentStatusClass({ row }) {
-  if (row.status === 0) return 'normal-row'
-  if (row.status === 1) return 'unactive-row'
-  return ''
-}
+
 
 function openReagentAddDrawer() {
-  reagentState.selectedRowId = null
-  resetReagentFormData({ generateLot: true })
-  openReagentDrawer('add')
+  openAddDrawerFlow({
+    selectedRowId: reagentState.selectedRowId,
+    setSelectedRowId: (value) => { reagentState.selectedRowId = value },
+    resetFormData: () => resetReagentFormData({ generateLot: true }),
+    onOpen: () => openReagentDrawer('add'),
+  })
 }
 
 function openReagentEditDrawer() {
-  if (reagentFormData.id) {
-    openReagentDrawer('edit')
-  } else {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '修改试剂', message: '请选择要修改的记录' })
-  }
+  tryOpenEditDrawerBySelection({
+    selectedRowId: reagentState.selectedRowId,
+    eventBus,
+    title: '修改试剂',
+    emptyMessage: '请选择要修改的记录',
+    onOpen: () => openReagentDrawer('edit'),
+  })
 }
 
 function showDeleteReagentConfirm() {
-  if (!reagentFormData.id) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '删除试剂', message: '请选择要修改的记录' })
-    return
-  }
-  eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'confirm', title: '删除试剂', message: '是否删除该试剂,删除后将同时删除该试剂的全部批号', action: () => reagentDel() })
-}
-
-function reagentCheckInput() {
-  syncReagentSubmitDisabled()
+  showDeleteConfirmBySelection({
+    eventBus,
+    selectedRowId: reagentState.selectedRowId,
+    title: '删除试剂',
+    emptyMessage: '请选择要删除的试剂',
+    confirmMessage: '是否删除该试剂,删除后将同时删除该试剂的全部批号',
+    onConfirm: () => reagentDel(),
+  })
 }
 
 async function reagentShow() {
@@ -375,14 +420,20 @@ async function reagentShow() {
 }
 
 async function reagentDel() {
-  if (reagentFormData.id) {
-    await api_reagent_del(reagentFormData.id)
-    await reagentShow()
-    await lotShow()
-    eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
-  } else {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '删除试剂', message: '请选择要修改的记录' })
-  }
+  await deleteWithSelection({
+    eventBus,
+    selectedRowId: reagentState.selectedRowId,
+    title: '删除试剂',
+    emptyMessage: '请选择要删除的试剂',
+    deleteAction: (id) => api_reagent_del(id),
+    onAfterDelete: async () => {
+      await reagentShow()
+      await lotShow()
+      reagentState.selectedRowId = null
+      resetReagentFormData()
+      lotReagentRefreshTrigger.value += 1
+    },
+  })
 }
 
 async function reagentUpdate() {
@@ -393,6 +444,7 @@ async function reagentUpdate() {
   reagentState.selectedRowId = null
   reagentFormData.id = null
   await lotShow()
+  lotReagentRefreshTrigger.value += 1
 }
 
 async function reagentAdd() {
@@ -403,6 +455,7 @@ async function reagentAdd() {
   reagentState.selectedRowId = null
   reagentFormData.id = null
   await lotShow()
+  lotReagentRefreshTrigger.value += 1
 }
 
 function resetLotFormData() {
@@ -428,69 +481,79 @@ function fillLotFormDataFromRow(rowData) {
 }
 
 function syncLotSubmitDisabled() {
-  const hasAllRequiredFields = lotRequiredFields.every((field) => {
-    const value = lotFormData[field]
-    if (typeof value === 'string') return value.trim() !== ''
-    return value != null
+  syncSubmitDisabledByFields({
+    formData: lotFormData,
+    requiredFields: lotRequiredFields,
+    target: lotState,
+    disabledKey: 'submitDisabled',
   })
-  lotState.submitDisabled = !hasAllRequiredFields
 }
 
 function openLotDrawer(mode) {
-  lotState.drawerMode = mode
-  lotState.editbox_disable_selete = mode === 'edit'
-  lotState.drawer = true
-  syncLotSubmitDisabled()
+  openDrawerByMode({
+    state: lotState,
+    mode,
+    beforeOpen: () => { },
+    afterOpen: syncLotSubmitDisabled,
+  })
 }
 
 function handleLotRowClick({ rowData }) {
-  if (lotFormData.id === rowData.id) {
-    lotState.selectedRowId = null
-    resetLotFormData()
-  } else {
-    lotState.selectedRowId = rowData.id
-    fillLotFormDataFromRow(rowData)
-  }
+  toggleRowSelection({
+    rowData,
+    isSameSelection: lotState.selectedRowId === rowData.id,
+    setSelectedRowId: (value) => { lotState.selectedRowId = value },
+    onSelect: fillLotFormDataFromRow,
+    onDeselect: resetLotFormData,
+  })
   syncLotSubmitDisabled()
 }
 
 function getLotRowClass(rowData, rowIndex) {
-  const statusClass = getLotStatusClass({ row: rowData, rowindex: rowIndex }) || ''
-  if (lotState.selectedRowId === rowData.id) return `${statusClass} current-row`.trim()
-  return statusClass
-}
-
-function getLotStatusClass({ row }) {
-  if (row.status === 0) return 'normal-row'
-  if (row.status === 1) return 'unactive-row'
-  return 'unactive-row'
+  return resolveSelectableRowClass({
+    rowData,
+    rowIndex,
+    selectedRowId: lotState.selectedRowId,
+    getStatusClass: ({ row }) => (row.status === 1 ? 'unactive-row' : 'normal-row'),
+  })
 }
 
 function openLotAddDrawer() {
-  lotState.selectedRowId = null
-  resetLotFormData()
-  openLotDrawer('add')
+  openAddDrawerFlow({
+    selectedRowId: lotState.selectedRowId,
+    setSelectedRowId: (value) => { lotState.selectedRowId = value },
+    resetFormData: resetLotFormData,
+    onOpen: () => openLotDrawer('add'),
+  })
 }
 
 function openLotEditDrawer() {
-  if (lotFormData.id) {
-    openLotDrawer('edit')
-  } else {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '修改批号', message: '请选择要修改的记录' })
-  }
+  tryOpenEditDrawerBySelection({
+    selectedRowId: lotState.selectedRowId,
+    eventBus,
+    title: '修改批号',
+    emptyMessage: '请选择要修改的批号',
+    onOpen: () => openLotDrawer('edit'),
+  })
 }
 
 function showDeleteLotConfirm() {
-  if (!lotFormData.id) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '删除批号', message: '请选择要修改的记录' })
-    return
-  }
-  eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'confirm', title: '删除批号', message: '是否删除该批号', action: () => lotDel() })
+  showDeleteConfirmBySelection({
+    eventBus,
+    selectedRowId: lotState.selectedRowId,
+    title: '删除批号',
+    emptyMessage: '请选择要删除的批号',
+    confirmMessage: '是否删除该批号',
+    onConfirm: () => lotDel(),
+  })
 }
 
 function lotCheckInput() {
-  const selectedReagent = allReagentList.value.find((item) => item.value === lotFormData.reagentId)
-  if (selectedReagent) lotFormData.reagentName = selectedReagent.label
+  syncLotSubmitDisabled()
+}
+
+function handleLotReagentSelected(selectedReagent) {
+  lotFormData.reagentName = selectedReagent?.name ?? '请选择试剂'
   syncLotSubmitDisabled()
 }
 
@@ -501,19 +564,30 @@ async function lotShow() {
 }
 
 async function lotDel() {
-  if (lotFormData.id) {
-    await api_lot_del(lotFormData.id)
-    eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
-    await lotShow()
-  } else {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '删除批号', message: '请选择要修改的记录' })
-  }
+  await deleteWithSelection({
+    eventBus,
+    selectedRowId: lotState.selectedRowId,
+    title: '删除批号',
+    emptyMessage: '请选择要删除的批号',
+    deleteAction: (id) => api_lot_del(id),
+    onAfterDelete: async () => {
+      await lotShow()
+      lotState.selectedRowId = null
+      resetLotFormData()
+    },
+  })
 }
 
 async function lotUpdate() {
-  lotFormData.expirationdate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
+  const expirationDate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
   lotFormData.status = lotFormData.status === true ? 0 : 1
-  await api_lot_update(lotFormData)
+  await api_lot_update({
+    id: lotFormData.id,
+    reagentId: lotFormData.reagentId,
+    name: lotFormData.name,
+    expirationDate,
+    status: lotFormData.status,
+  })
   lotState.drawer = false
   await lotShow()
   lotState.selectedRowId = null
@@ -521,25 +595,21 @@ async function lotUpdate() {
 }
 
 async function lotAdd() {
-  lotFormData.expirationdate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
+  const expirationDate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
   lotFormData.status = lotFormData.status === true ? 0 : 1
-  await api_lot_add(lotFormData)
+  await api_lot_add({
+    name: lotFormData.name,
+    reagentId: lotFormData.reagentId,
+    expirationDate,
+  })
   lotState.drawer = false
   await lotShow()
   lotState.selectedRowId = null
   lotFormData.id = null
 }
 
-async function listAllReagent() {
-  const data = await api_reagent_showall()
-  allReagentList.value = data.data.map((item) => ({
-    label: item.name,
-    value: item.id,
-  }))
-}
-
 onMounted(async () => {
-  await Promise.all([reagentShow(), lotShow(), listAllReagent()])
+  await Promise.all([reagentShow(), lotShow()])
 })
 </script>
 
@@ -614,5 +684,20 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(2, minmax(320px, 1fr));
   gap: 24px;
+}
+
+.di-input-row {
+  width: 300px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.di-input {
+  flex: 1;
+}
+
+.lot-reagent-select {
+  width: 300px;
 }
 </style>

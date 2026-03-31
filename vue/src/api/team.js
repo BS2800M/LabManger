@@ -4,7 +4,7 @@ export let api_team_show=(params)=>{
     return myrequest.get('/identity/team/show',{
         "name":params.name,
         "page":params.page,
-        "pageSize":params.pageSize ?? params.pagesize
+        "pageSize":params.pageSize
     })
 }
 

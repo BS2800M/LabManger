@@ -38,6 +38,7 @@ export class SessionGuard implements CanActivate {
             userId: session.userId,
             teamId: session.teamId,
             role: session.role,
+            loginType: session.loginType as 'checker' | 'reviewer',
         };
 
         return true;

@@ -2,7 +2,6 @@
 import { UserPrismaService } from '../prisma/user-prisma.service';
 import { SessionUser } from '../common/decorators/session-user.decorator';
 import { Status, UserRole } from '../common/enums/enums';
-import { teamEntityScope } from '../common/utils/scope.util';
 import { TeamDto } from './team.dto';
 
 @Injectable()
@@ -27,7 +26,6 @@ export class TeamService {
     async show(dto: TeamDto['requestShow'], session: SessionUser): Promise<TeamDto['responseShow']> {
         const where: any = {
             status: { not: Status.Delete },
-            ...teamEntityScope(session),
         };
         if (dto.name) {
             where.name = { contains: dto.name };
@@ -51,7 +49,7 @@ export class TeamService {
 
     async update(dto: TeamDto['requestUpdate'], session: SessionUser): Promise<TeamDto['responseUpdate']> {
         const existing = await this.prisma.team.findFirst({
-            where: { id: dto.id, status: { not: Status.Delete }, ...teamEntityScope(session) },
+            where: { id: dto.id, status: { not: Status.Delete } },
         });
         if (!existing) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
@@ -72,7 +70,7 @@ export class TeamService {
 
     async del(dto: TeamDto['requestDel'], session: SessionUser): Promise<TeamDto['responseDel']> {
         const existing = await this.prisma.team.findFirst({
-            where: { id: dto.id, status: { not: Status.Delete }, ...teamEntityScope(session) },
+            where: { id: dto.id, status: { not: Status.Delete } },
         });
         if (!existing) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);

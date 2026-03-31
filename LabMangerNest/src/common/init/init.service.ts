@@ -54,13 +54,15 @@ export class InitService implements OnModuleInit {
 
             await this.userPrisma.user.create({
                 data: {
-                    userName: 'admin',
-                    passWord: password,
+                    account: '00010',
+                    userName: '管理员',
+                    checkerPassWord: password,
+                    reviewerPassWord: password,
                     teamId: 1,
                     role: 3,
                 },
             });
-            this.logger.log('没有用户，创建默认管理员用户 用户名admin 密码123456');
+            this.logger.log('没有用户，创建默认管理员用户 账号00010 用户名管理员 检验者密码123456 审核者密码123456');
         }
     }
 }

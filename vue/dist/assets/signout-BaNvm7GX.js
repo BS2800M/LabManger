@@ -1,1 +1,0 @@
-import{d as r,b as n}from"./index-D-iOqJd6.js";const c={__name:"signout",setup(s){const o=n();async function t(){try{localStorage.removeItem("token")}catch(e){openmessagebox("error",e.response.data.msg,null)}o.push("/signin")}return r(t),(e,a)=>null}};export{c as default};

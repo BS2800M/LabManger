@@ -2,7 +2,6 @@
 import { MangerPrismaService } from '../prisma/manger-prisma.service';
 import { SensorRecordDto } from './sensorRecord.dto';
 import { SessionUser } from '../common/decorators/session-user.decorator';
-import { teamScope } from '../common/utils/scope.util';
 import { Status } from '../common/enums/enums';
 import { UserPrismaService } from '../prisma/user-prisma.service';
 @Injectable()
@@ -55,9 +54,10 @@ export class SensorRecordService {
     async add(dto: SensorRecordDto['requestAdd'], session: SessionUser): Promise<SensorRecordDto['responseAdd']> {
         const locationIds = [...new Set(dto.data.map(item => item.locationId))];
         const validLocations = await this.prisma.location.findMany({
-            where: { id: { in: locationIds }, ...teamScope(session) },
+            where: { id: { in: locationIds } },
             select: {
                 id: true,
+                teamId: true,
                 maxTemperature: true,
                 minTemperature: true,
                 maxHumidity: true,
@@ -71,18 +71,20 @@ export class SensorRecordService {
             throw new HttpException(`不存在的位置id: ${invalidId}`, HttpStatus.FORBIDDEN);
         }
 
-        const team = await this.userPrisma.team.findFirst({
-            where: { id: session.teamId },
-            select: { name: true },
+        const teamIds = [...new Set(validLocations.map((location) => location.teamId))];
+        const teamRows = await this.userPrisma.team.findMany({
+            where: { id: { in: teamIds } },
+            select: { id: true, name: true },
         });
+        const teamNameMap = new Map(teamRows.map((team) => [team.id, team.name]));
 
         await this.prisma.sensorRecord.createMany({
             data: dto.data.map(item => {
                 const loc = locationMap.get(item.locationId)!;
                 return {
                     locationId: item.locationId,
-                    teamId: session.teamId,
-                    teamName:team?.name ?? '',
+                    teamId: loc.teamId,
+                    teamName: teamNameMap.get(loc.teamId) ?? '',
                     temperature: item.temperature,
                     humidity: item.humidity,
                     createTime: item.createTime,
@@ -118,7 +120,7 @@ export class SensorRecordService {
     
 
     async show(dto: SensorRecordDto['requestShow'], session: SessionUser): Promise<SensorRecordDto['responseShow']> {
-        const where: any = { ...teamScope(session) };
+        const where: any = {};
         if (dto.locationName) { where.location = { name: { contains: dto.locationName } }; }
         if (dto.startTime || dto.endTime) {
             where.createTime = {};
@@ -165,13 +167,13 @@ export class SensorRecordService {
 
     async update(dto: SensorRecordDto['requestUpdate'], session: SessionUser): Promise<SensorRecordDto['responseUpdate']> {
         const exists = await this.prisma.sensorRecord.findFirst({
-            where: { id: dto.id, ...teamScope(session) },
+            where: { id: dto.id },
         });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
         }
         const validLocation = await this.prisma.location.findFirst({
-            where: { id: dto.locationId, ...teamScope(session) },
+            where: { id: dto.locationId },
             select: { id: true },
         });
         if (!validLocation) {
@@ -201,7 +203,7 @@ export class SensorRecordService {
 
     async del(dto: SensorRecordDto['requestDel'], session: SessionUser): Promise<SensorRecordDto['responseDel']> {
         const exists = await this.prisma.sensorRecord.findFirst({
-            where: { id: dto.id, ...teamScope(session) },
+            where: { id: dto.id },
         });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
@@ -224,7 +226,6 @@ export class SensorRecordService {
 
     async showAll(session: SessionUser): Promise<SensorRecordDto['responseShowAll']> {
         const records = await this.prisma.sensorRecord.findMany({
-            where: { ...teamScope(session) },
             orderBy: { id: 'desc' },
             include: {
                 location: {

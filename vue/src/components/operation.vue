@@ -1,6 +1,10 @@
 <template>
   <div id="background" class="operation-page">
-    <section class="panel-section">
+    <section
+      class="panel-section"
+      v-loading="state.loading"
+      element-loading-text="正在加载操作记录..."
+    >
       <div class="panel-header">
         <h3>操作查询</h3>
       </div>
@@ -73,9 +77,9 @@
     </section>
   </div>
 
-  <el-drawer v-model="state.drawer" direction="rtl" size="70%" @open="clearOperationRowSelection">
+  <el-drawer v-model="state.drawer" direction="rtl" size="70%" @open="state.selectedRowId = null" @close="resetFormData">
     <template #header>
-      <span>查看操作</span>
+      <span class="drawer-title">操作查询</span>
     </template>
     <template #footer>
       <div style="flex: auto">
@@ -103,6 +107,8 @@
         </el-config-provider>
         <p>条码号</p>
         <el-select-v2  v-model="formData.barcodeNumberselected" filterable :options="formData.barcodes" placeholder="选择条码号"  style="width: 300px"  />
+        <p>序列号</p>
+        <el-select-v2 v-model="formData.serialNumberselected" filterable :options="formData.serialNumbers" placeholder="选择序列号" style="width: 300px" />
         <p>操作人</p>
         <el-input v-model="formData.userName" style="width: 300px" disabled />
       </div>
@@ -132,11 +138,13 @@ import { operation_exporttoexcel_list } from '@/utils/exportexcel.js'
 import { api_reagent_showall } from '@/api/reagent'
 import { api_lot_showall } from '@/api/lot'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
+import { resolveSelectableRowClass } from '@/utils/crud'
 
 const allreagentlist = ref([])
 
 const state = reactive({
-  selectedRowGroupId: null,
+  selectedRowId: null,
+  loading: false,
   reagentName: '',
   barcodeNumber: '',
   starttime: '',
@@ -149,6 +157,7 @@ const state = reactive({
   drawer: false,
   tableData: [],
 })
+let operationShowReqId = 0
 
 const formData = reactive({
   groupId: null,
@@ -159,6 +168,8 @@ const formData = reactive({
   note: '',
   barcodes: [],
   barcodeNumberselected: '',
+  serialNumbers: [],
+  serialNumberselected: '',
   userName: '',
   actualReagentName: '',
   actualLotName: '',
@@ -211,7 +222,7 @@ const tableColumns = [
 ]
 
 function resetFormData() {
-  state.selectedRowGroupId = null
+  state.selectedRowId = null
   Object.assign(formData, {
     groupId: null,
     action: '',
@@ -220,11 +231,14 @@ function resetFormData() {
     lotName: '',
     note: '',
     barcodes: [],
-    barcodeNumberselected: '',
+    barcodeNumberselected: null,
+    serialNumbers: [],
+    serialNumberselected: null,
     userName: '',
     actualReagentName: '',
     actualLotName: '',
     actualUserName: '',
+
   })
 }
 
@@ -240,6 +254,10 @@ function fillFormDataFromRow(rowData) {
       value: item,
       label: item,
     })),
+    serialNumbers: rowData.serialNumbers.map(item => ({
+      value: item,
+      label: item,
+    })),
     userName: rowData.snapshots.userName,
     actualReagentName: rowData.reagent.name,
     actualLotName: rowData.lot.name,
@@ -248,38 +266,49 @@ function fillFormDataFromRow(rowData) {
 }
 
 function getRowClass(rowData, rowIndex) {
-  const statusClass = tableRowClassName({ row: rowData, rowindex: rowIndex }) || ''
-  if (state.selectedRowGroupId === rowData.groupId) {
-    return `${statusClass} current-row`.trim()
-  }
-  return statusClass
+  return resolveSelectableRowClass({
+    rowData,
+    rowIndex,
+    selectedRowId: state.selectedRowId,
+    getRowId: (row) => row.groupId,
+    getStatusClass: ({ row }) => (row.status === 1 ? 'unactive-row' : 'normal-row'),
+  })
 }
 
-function tableRowClassName({ row,rowindex }) { // 表格行样式
-  if (row.status===0 ) {
-      return 'normal-row'
-  }
-  else if (row.status===1 ) {
-    return 'unactive-row'
-  }
-}
+
 async function handleRowClick({ rowData }) {
-  if (state.selectedRowGroupId === rowData.groupId) {
+  if (state.selectedRowId === rowData.groupId) {
     resetFormData()
   }
   else{
-    state.selectedRowGroupId = rowData.groupId
+    state.selectedRowId = rowData.groupId
     fillFormDataFromRow(rowData)
   }
 
 }
 
 async function operation_show() {
+  const reqId = ++operationShowReqId
+  state.loading = true
   state.starttime = format_YYYYMMDDHHmm_iso(state.starttime_show)
   state.endtime = format_YYYYMMDDHHmm_iso(state.endtime_show)
-  const data = await api_operation_show(state)
-  state.tableData = data.data
-  state.totalpage = data.meta?.totalPage ?? 1
+  try {
+    const data = await api_operation_show({
+      reagentName: state.reagentName,
+      startTime: state.starttime,
+      endTime: state.endtime,
+      barcodeNumber: state.barcodeNumber,
+      page: state.page,
+      pageSize: state.pagesize,
+    })
+    if (reqId !== operationShowReqId) return
+    state.tableData = data.data
+    state.totalpage = data.meta?.totalPage ?? 1
+  } finally {
+    if (reqId === operationShowReqId) {
+      state.loading = false
+    }
+  }
 }
 
 function barcodeprint() {
@@ -291,29 +320,25 @@ function barcodeprint() {
 }
 
 function view_record() {
-  clearOperationRowSelection()
+  state.selectedRowId = null
   state.drawer = true
-}
-
-function clearOperationRowSelection() {
-  state.selectedRowGroupId = null
 }
 
 
 function showDisableRecordConfirm() {
-  if (!state.selectedRowGroupId) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '禁用记录', message: '请选择要修改的记录' })
+  if (!state.selectedRowId) {
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '禁用记录', message: '请选择要禁用的记录' })
     return
   }
   eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'confirm', title: '禁用记录', message: '是否禁用该记录', action: () => disable_record() })
 }
 
 async function disable_record() {
-  if (!state.selectedRowGroupId) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '禁用记录', message: '请选择要修改的记录' })
+  if (!state.selectedRowId) {
+    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '禁用记录', message: '请选择要禁用的记录' })
     return
   }
-  await api_operation_disable({ groupId: state.selectedRowGroupId })
+  await api_operation_disable({ groupId: state.selectedRowId })
   resetFormData()
   state.drawer = false
   await operation_show()
@@ -396,5 +421,10 @@ onMounted(async () => {
   margin-top: 8px;
   flex: 1;
   min-height: 0;
+}
+.drawer-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--el-text-color-primary);
 }
 </style>

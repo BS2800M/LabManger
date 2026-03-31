@@ -6,7 +6,6 @@ import router from './router'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import './styles/global-theme.css'
 
-
 const app = createApp(App)
 app.use(router)
 app.mount('#app')

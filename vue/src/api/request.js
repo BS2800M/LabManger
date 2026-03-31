@@ -11,9 +11,16 @@ const myservice = axios.create({
 
 myservice.interceptors.request.use(
   (config) => {
-    if (config.url !== '/identity/auth/signin' && config.url !== '/identity/auth/signout') {
-      const sessionid = localStorage.getItem('sessionid')
-      config.headers.sessionid = sessionid
+    const publicUrls = [
+      '/identity/auth/signin-reviewer',
+      '/identity/auth/signin-checker',
+      '/identity/auth/signout',
+    ]
+    if (!publicUrls.includes(config.url || '')) {
+      const reviewerSessionId = localStorage.getItem('reviewerSessionId')
+      if (reviewerSessionId) {
+        config.headers.sessionid = reviewerSessionId
+      }
     }
     return config
   },
@@ -27,7 +34,7 @@ myservice.interceptors.response.use(
       eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {
         type: 'error',
         title: '网络连接错误',
-        message: "无法连接服务器或服务器内部错误",
+        message: err.response.data.message || "无法连接服务器或服务器内部错误",
         action: null
       })
       if (err.response.data) {

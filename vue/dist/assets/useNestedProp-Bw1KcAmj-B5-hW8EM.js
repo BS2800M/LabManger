@@ -1,1 +1,0 @@
-import{s as e,_ as f}from"./inventory-CGdkNDJh.js";function s({defaultConfig:t,userConfig:n}){if(!Object.keys(n||{}).length)return t;const o=e({defaultConfig:t,userConfig:n});return f(o)}export{s as c};

@@ -62,52 +62,65 @@
       </section>
       </div>
 
-    <el-drawer v-model="state.drawer" direction="rtl" size="80%" @close="handleStatisticsDrawerClose">
+    <el-drawer v-model="state.drawer" direction="rtl" size="80%" @open="state.selectedRowId = null">
       <template #header>
-      <span >统计</span>
+      <span class="drawer-title">库存查询</span>
     </template>
       <template #footer>
       <div style="flex: auto">
         <el-button type="primary" @click="state.drawer=false">关闭</el-button>
       </div>
     </template>
-          <template #default>
+      <template #default>
         <div class="drawer-content">
           <div class="chart-container">
             <statistics_chart v-model="state.statisticsData" />
           </div>
-            <div class="date-picker-container">
-              <el-config-provider :locale=zhCn> 
-                  <el-date-picker 
-                    v-model="formData.starttime" 
-                    type="datetime"
-                    placeholder="选择开始时间" 
-                    size="default" 
-                    @change="checkinput"
-                    value-format="YYYY-MM-DD HH:mm:ss"
-                  />   
-                </el-config-provider>
-                <el-config-provider :locale=zhCn> 
-                  <el-date-picker 
-                    v-model="formData.endtime" 
-                    type="datetime"
-                    placeholder="选择结束时间" 
-                    size="default" 
-                    @change="checkinput"
-                    value-format="YYYY-MM-DD HH:mm:ss"
-                  />   
-                </el-config-provider>
-                <el-input-number v-model="formData.intervalday" style="width: 150px; height: 33px; color: white;" :min="1" :max="365" placeholder="1" @change="checkinput" />
-                <el-switch v-model="formData.onlylot" size="large" active-text="是"inactive-text="否"    />
-                <el-button type="primary" @click="statistics_data" :disabled="state.statisticsbuttondisabled">查询</el-button>
-            </div>
-            <div class="date-picker-text">
-              <span style="margin-right: 150px;">开始时间</span>
-              <span style="margin-right: 150px;">结束时间</span>
-              <span style="margin-right: 70px;">间隔时间(天)</span>
-              <span style="margin-right: 0px;">只统计本批号</span>
+          <div class="drawer-form">
+            <p>开始时间</p>
+            <el-config-provider :locale="zhCn">
+              <el-date-picker
+                v-model="formData.starttime"
+                class="drawer-field"
+                type="datetime"
+                placeholder="选择开始时间"
+                size="default"
+                @change="syncSubmitDisabled"
+                value-format="YYYY-MM-DD HH:mm:ss"
+              />
+            </el-config-provider>
+
+            <p>结束时间</p>
+            <el-config-provider :locale="zhCn">
+              <el-date-picker
+                v-model="formData.endtime"
+                class="drawer-field"
+                type="datetime"
+                placeholder="选择结束时间"
+                size="default"
+                @change="syncSubmitDisabled"
+                value-format="YYYY-MM-DD HH:mm:ss"
+              />
+            </el-config-provider>
+
+            <p>间隔时间(天)</p>
+            <el-input-number
+              v-model="formData.intervalday"
+              class="drawer-field"
+              :min="1"
+              :max="365"
+              placeholder="1"
+              @change="syncSubmitDisabled"
+            />
+
+            <p>只统计本批号</p>
+            <el-switch v-model="formData.onlylot" size="large" active-text="是" inactive-text="否" />
+
+            <div class="drawer-form-actions">
+              <el-button type="primary" @click="statistics_data" :disabled="state.statisticsbuttondisabled">查询</el-button>
             </div>
           </div>
+        </div>
 
       </template>
     </el-drawer>
@@ -118,7 +131,7 @@
 
 
 
-import { ref, onMounted, reactive } from 'vue'
+import { onMounted, reactive } from 'vue'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { api_inventory_show,api_inventory_auditall,api_inventory_statistics } from '@/api/inventory'
 import {inventory_exporttoexcel_list} from '@/utils/exportexcel'
@@ -127,6 +140,7 @@ import statistics_chart from './statistics_chart.vue'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { getnowtime_previousmonth,getnowtime,format_xAxisLabels } from '@/utils/format'
+import { syncSubmitDisabledByFields, toggleRowSelection, resolveSelectableRowClass } from '@/utils/crud'
 
 
 const formData = reactive({
@@ -149,11 +163,11 @@ const state = reactive({
   page: 1,       // 当前页
   totalpage: 1,        // 总页
   pagesize:13,
+  selectedRowId: null,
   drawer:false, // 统计抽屉
   statisticsbuttondisabled:true, // 统计按钮是否禁用
   statisticsData: { }     // 统计数据
 })
-const selectedRowId = ref(null)
 const tableColumns = [
   { key: 'reagentName', dataKey: 'reagentName', title: '试剂名称', width: 180, flexGrow: 1 },
   { key: 'lotName', dataKey: 'lotName', title: '批号', width: 180, flexGrow: 1 },
@@ -172,26 +186,16 @@ const tableColumns = [
 const REQUIRED_FIELDS = ['starttime', 'endtime', 'intervalday', 'reagentId']
 
 function getRowClass(rowData, rowIndex) {
-  const statusClass = tableRowClassName({ row: rowData, rowindex: rowIndex }) || ''
-  if (selectedRowId.value === rowData.id) {
-    return `${statusClass} current-row`.trim()
-  }
-  return statusClass
-}
-
-
-function tableRowClassName({ row,rowindex }) { // 表格行样式
-  if (row.status===0 ) {
-    if (row.id === formData.id ){
-      return 'normal-row'
-    }
-    else{
-      return 'warning-row'
-    }
-  }
-  else if (row.status===1 ) {
-    return 'unactive-row'
-  }
+  return resolveSelectableRowClass({
+    rowData,
+    rowIndex,
+    selectedRowId: state.selectedRowId,
+    getStatusClass: ({ row }) => {
+      if (row.status !== 0) return 'unactive-row'
+      const isWarning = Boolean(row.warningNum || row.warningExpirationDate)
+      return isWarning ? 'warning-row' : 'normal-row'
+    },
+  })
 }
 
 function resetSelectedFormData() {
@@ -202,15 +206,6 @@ function resetSelectedFormData() {
     lotId: null,
     lotname: '',
   })
-}
-
-function clearSelectedRow() {
-  selectedRowId.value = null
-  resetSelectedFormData()
-}
-
-function handleStatisticsDrawerClose() {
-  clearSelectedRow()
 }
 
 function fillFormDataFromRow(rowData) {
@@ -224,16 +219,19 @@ function fillFormDataFromRow(rowData) {
 }
 
 function handleRowClick({ rowData }) { // 表格行点击事件
-  if(formData.reagentId === rowData.reagentId && formData.lotId === rowData.lotId){
-    clearSelectedRow()
-  }else{
-    selectedRowId.value = rowData.id
-    fillFormDataFromRow(rowData)
-  }
+  toggleRowSelection({
+    rowData,
+    selectedRowId: state.selectedRowId,
+    isSameSelection: state.selectedRowId === rowData.id,
+    getRowId: (row) => row.id,
+    setSelectedRowId: (value) => { state.selectedRowId = value },
+    onSelect: fillFormDataFromRow,
+    onDeselect: resetSelectedFormData,
+  })
 }
 
 function statistics(){ // 库存统计
-  selectedRowId.value = null
+  state.selectedRowId = null
   if (formData.reagentId === null || formData.lotId === null){
     eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'info',title:'库存统计',message:'请选择要统计的记录'})
   }else{
@@ -259,24 +257,26 @@ function statistics(){ // 库存统计
     formData.starttime = getnowtime_previousmonth()
     formData.endtime = getnowtime()
     formData.intervalday = 1
-    state.statisticsbuttondisabled = false
+    syncSubmitDisabled()
     state.drawer=true
   }
 }
 
-function checkinput() { // 检查输入
-  const hasAllRequiredFields = REQUIRED_FIELDS.every((field) => {
-    const value = formData[field]
-    if (typeof value === 'string') {
-      return value.trim() !== ''
-    }
-    return value != null
+function syncSubmitDisabled() { // 检查输入
+  syncSubmitDisabledByFields({
+    formData,
+    requiredFields: REQUIRED_FIELDS,
+    target: state,
+    disabledKey: 'statisticsbuttondisabled',
   })
-  state.statisticsbuttondisabled = !hasAllRequiredFields
 }
 
 async function list_reagentnumber() { // 获取试剂列表
-    const data = await api_inventory_show(state)
+    const data = await api_inventory_show({
+      name: state.reagentname,
+      page: state.page,
+      pageSize: state.pagesize,
+    })
     state.tableData = data.data.map(inv => ({
         ...inv,
         reagentId: inv.reagent.id,
@@ -291,7 +291,14 @@ async function list_reagentnumber() { // 获取试剂列表
 }
 
 async function statistics_data() { // 获取统计数据
-    const data = await api_inventory_statistics(formData)
+    const data = await api_inventory_statistics({
+      onlyLot: formData.onlylot,
+      reagentId: formData.reagentId,
+      lotId: formData.lotId,
+      startTime: formData.starttime,
+      endTime: formData.endtime,
+      intervalDay: formData.intervalday,
+    })
     if (formData.onlylot){
       state.statisticsData.title = `${formData.reagentname}  ${formData.lotname}`
     }
@@ -364,6 +371,12 @@ onMounted(() => {
   font-weight: 800;
 }
 
+.drawer-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--el-text-color-primary);
+}
+
 .toolbar {
   min-height: 90px;
   display: flex;
@@ -392,22 +405,35 @@ onMounted(() => {
   min-height: 0;
 }
 
-.date-picker-container {
-  display: flex;
-  gap: 15px;
-  position: relative;
-  left: 40px;
-  top: 20px;
-  width: 800px;
-
+.drawer-content {
+  display: grid;
+  grid-template-columns: minmax(560px, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
 }
-.date-picker-text {
-  display: flex;
-  gap: 0px;
-  position: relative;
-  left: 40px;
-  top: 20px;
-  width: 800px;
+
+.chart-container {
+  min-width: 0;
+  overflow: auto;
+}
+
+.drawer-form p {
+  margin: 0 0 6px 0;
+}
+
+.drawer-form :deep(.drawer-field) {
+  width: 300px;
+  margin-bottom: 12px;
+}
+
+.drawer-form-actions {
+  margin-top: 10px;
+}
+
+@media (max-width: 1200px) {
+  .drawer-content {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
 

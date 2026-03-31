@@ -57,7 +57,7 @@ const title = computed(() => {
 // 然后定义 config 对象
 const config = ref({
         theme: '',
-        responsive: true,
+        responsive: false,
         responsiveProportionalSizing: false,
         customPalette: [],
         useCssAnimation: true,
@@ -68,8 +68,8 @@ const config = ref({
             fontFamily: 'inherit',
             backgroundColor: 'var(--el-bg-color-overlay)',
             color: 'var(--el-text-color-primary)',
-            height: '512',
-            width: '100%',
+            height: '520',
+            width: '1080',
             annotations: [
                 {
                     show: false,
@@ -515,21 +515,30 @@ onBeforeUnmount(() => {
 </script>
 <template>
     <div class="chart-wrapper">
-        <VueUiXy
-            :config="config"
-            :dataset="dataset"
-        />
+      <div class="chart-fixed">
+          <VueUiXy
+              :config="config"
+              :dataset="dataset"
+          />
+      </div>
     </div>
 </template>
 <style scoped>
 .chart-wrapper {
   width: 100%;
-  min-height: 520px;
+  min-height: 560px;
   padding: 12px;
   border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   background-color: var(--el-bg-color-overlay);
   box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
 
+.chart-fixed {
+  width: 1080px;
+  min-width: 1080px;
+  height: 520px;
 }
 </style>

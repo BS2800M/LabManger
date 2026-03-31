@@ -9,9 +9,15 @@ export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
     @Public()
-    @Post('signin')
-    async signin(@ZodBody(AuthZod.requestSignin) body: AuthDto['requestSignin']) {
-        return this.authService.signin(body);
+    @Post('signin-reviewer')
+    async signinReviewer(@ZodBody(AuthZod.requestSigninReviewer) body: AuthDto['requestSigninReviewer']) {
+        return this.authService.signinReviewer(body);
+    }
+
+    @Public()
+    @Post('signin-checker')
+    async signinChecker(@ZodBody(AuthZod.requestSigninChecker) body: AuthDto['requestSigninChecker']) {
+        return this.authService.signinChecker(body);
     }
 
     @Public()

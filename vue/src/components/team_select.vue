@@ -22,7 +22,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 async function list_AllTeam(){
-let data= await  api_team_show({name:"",page:1,pagesize:99})
+let data= await  api_team_show({name:"",page:1,pageSize:99})
     for (let i in data.data)
     {
       allteamlist.value.push({

@@ -10,6 +10,7 @@ datasource db {
 model Reagent {
   id               Int      @id @default(autoincrement())
   name             String   @map("Name")
+  di               String   @default("") @map("DI")
   specifications   String   @map("Specifications")
   price            Int      @default(0) @map("Price")
   storageCondition String   @map("StorageCondition")
@@ -50,6 +51,7 @@ model Operation {
   userId        Int      @map("UserId")
   teamId        Int      @map("TeamId")
   createTime    DateTime @default(now()) @map("CreateTime")
+  serialNumber  String   @default("") @map("SerialNumber")
   barcodeNumber String   @map("BarcodeNumber")
   action        Int      @map("Action")
   note          String   @map("Note")
@@ -74,6 +76,7 @@ model Inventory {
   lotId                 Int     @map("LotId")
   teamId                Int     @map("TeamId")
   number                Int     @default(0) @map("Number")
+  status                Int     @default(0) @map("Status")
   warningNum            Boolean @default(false) @map("WarningNum")
   warningExpirationDate Boolean @default(false) @map("WarningExpirationDate")
 

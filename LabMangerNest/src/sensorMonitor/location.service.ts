@@ -2,7 +2,6 @@
 import { MangerPrismaService } from '../prisma/manger-prisma.service';
 import { LocationDto } from './location.dto';
 import { SessionUser } from '../common/decorators/session-user.decorator';
-import { teamScope } from '../common/utils/scope.util';
 import { Status } from '../common/enums/enums';
 import { SensorRecordService } from './sensorRecord.service';
 import { UserPrismaService } from '../prisma/user-prisma.service';
@@ -66,7 +65,7 @@ export class LocationService {
         };
     }
     async show(dto: LocationDto['requestShow'], session: SessionUser): Promise<LocationDto['responseShow']> {
-        const where: any = { status: { not: Status.Delete }, ...teamScope(session) };
+        const where: any = { status: { not: Status.Delete } };
         if (dto.name) { where.name = { contains: dto.name }; }
         const page = dto.page || 1;
         const pageSize = dto.pageSize || 10;
@@ -121,7 +120,7 @@ export class LocationService {
     }
     async showAll(session: SessionUser): Promise<LocationDto['responseShowAll']> {
         const locations = await this.prisma.location.findMany({
-            where: { status: { not: Status.Delete }, ...teamScope(session) },
+            where: { status: { not: Status.Delete } },
             select: { id: true, name: true },
         });
         return {
@@ -130,6 +129,5 @@ export class LocationService {
         };
     }
 }   
-
 
 

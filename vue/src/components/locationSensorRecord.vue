@@ -2,7 +2,7 @@
   <div class="location-sensor-page">
     <section class="panel-section">
       <div class="panel-header">
-        <h3>位置模板</h3>
+        <h3>位置管理</h3>
       </div>
       <div class="toolbar">
         <el-input
@@ -24,7 +24,6 @@
           <el-button type="primary" @click="openLocationEditDrawer">修改位置</el-button>
           <el-button
             type="danger"
-            v-if="get_permission('reagent_delete')"
             @click="showDeleteLocationConfirm"
           >
             删除位置
@@ -95,7 +94,6 @@
           <el-button type="primary" @click="openSensorEditDrawer">修改记录</el-button>
           <el-button
             type="danger"
-            v-if="get_permission('reagent_delete')"
             @click="showDeleteSensorConfirm"
           >
             删除记录
@@ -121,9 +119,9 @@
       </div>
     </section>
 
-    <el-drawer v-model="locationState.drawer" direction="rtl" size="60%">
+    <el-drawer v-model="locationState.drawer" direction="rtl" size="60%" @open="locationState.selectedRowId = null">
       <template #header>
-        <span class="drawer-title">位置模板</span>
+        <span class="drawer-title">位置管理</span>
       </template>
       <template #footer>
         <div style="flex: auto">
@@ -136,31 +134,31 @@
         <div class="drawer-grid">
           <div>
             <p>位置名称</p>
-            <el-input v-model="locationFormData.name" @input="locationCheckInput" style="width: 300px" placeholder="输入位置的名称" />
+            <el-input v-model="locationFormData.name" @input="syncLocationSubmitDisabled" style="width: 300px" placeholder="输入位置的名称" />
             <p>备注</p>
             <el-input v-model="locationFormData.note" style="width: 300px" placeholder="如：备注" />
             <p>最大温度</p>
-            <el-input-number v-model="locationFormData.maxTemperature" :min="-100" :max="100" :step="0.1" placeholder="0" @change="locationCheckInput" />
+            <el-input-number v-model="locationFormData.maxTemperature" :min="-100" :max="100" :step="0.1" placeholder="0" @change="syncLocationSubmitDisabled" />
             <p>最小温度</p>
-            <el-input-number v-model="locationFormData.minTemperature" :min="-100" :max="100" :step="0.1" placeholder="0" @change="locationCheckInput" />
+            <el-input-number v-model="locationFormData.minTemperature" :min="-100" :max="100" :step="0.1" placeholder="0" @change="syncLocationSubmitDisabled" />
             <p>最大湿度</p>
-            <el-input-number v-model="locationFormData.maxHumidity" :min="0" :max="100" :step="0.1" placeholder="0" @change="locationCheckInput" />
+            <el-input-number v-model="locationFormData.maxHumidity" :min="0" :max="100" :step="0.1" placeholder="0" @change="syncLocationSubmitDisabled" />
             <p>最小湿度</p>
-            <el-input-number v-model="locationFormData.minHumidity" :min="0" :max="100" :step="0.1" placeholder="0" @change="locationCheckInput" />
+            <el-input-number v-model="locationFormData.minHumidity" :min="0" :max="100" :step="0.1" placeholder="0" @change="syncLocationSubmitDisabled" />
           </div>
           <div>
             <p>是否启用</p>
-            <el-switch v-model="locationFormData.status" size="large" @change="locationCheckInput" />
+            <el-switch v-model="locationFormData.status" size="large" @change="syncLocationSubmitDisabled" />
             <p>上传间隔(分钟)</p>
-            <el-input-number v-model="locationFormData.uploadIntervalMinutes" :min="10" :max="1000" placeholder="0" @change="locationCheckInput" />
+            <el-input-number v-model="locationFormData.uploadIntervalMinutes" :min="10" :max="1000" placeholder="0" @change="syncLocationSubmitDisabled" />
           </div>
         </div>
       </template>
     </el-drawer>
 
-    <el-drawer v-model="sensorState.drawer" direction="rtl" size="60%">
+    <el-drawer v-model="sensorState.drawer" direction="rtl" size="60%" @open="sensorState.selectedRowId = null">
       <template #header>
-        <span class="drawer-title">监测记录</span>
+        <span class="drawer-title">监测管理</span>
       </template>
       <template #footer>
         <div style="flex: auto">
@@ -198,7 +196,16 @@ import { api_sensorRecord_show, api_sensorRecord_add, api_sensorRecord_update, a
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { sensorRecord_exporttoexcel_list } from '@/utils/exportexcel.js'
 import { formatDateColumn, getnowtime_previousmonth, getnowtime, format_YYYYMMDDHHmm_iso } from '@/utils/format'
-import get_permission from '@/utils/permission'
+import {
+  syncSubmitDisabledByFields,
+  toggleRowSelection,
+  showDeleteConfirmBySelection,
+  deleteWithSelection,
+  openDrawerByMode,
+  openAddDrawerFlow,
+  tryOpenEditDrawerBySelection,
+  resolveSelectableRowClass,
+} from '@/utils/crud'
 
 const locationState = reactive({
   name: '',
@@ -335,35 +342,41 @@ function fillLocationFormDataFromRow(rowData) {
 }
 
 function syncLocationSubmitDisabled() {
-  const hasAllRequiredFields = locationRequiredFields.every((field) => {
-    const value = locationFormData[field]
-    if (typeof value === 'string') return value.trim() !== ''
-    return value != null
+  syncSubmitDisabledByFields({
+    formData: locationFormData,
+    requiredFields: locationRequiredFields,
+    target: locationState,
+    disabledKey: 'submitDisabled',
   })
-  locationState.submitDisabled = !hasAllRequiredFields
 }
 
 function openLocationDrawer(mode) {
-  locationState.drawerMode = mode
-  locationState.drawer = true
-  syncLocationSubmitDisabled()
+  openDrawerByMode({
+    state: locationState,
+    mode,
+    afterOpen: syncLocationSubmitDisabled,
+  })
 }
 
 function handleLocationRowClick({ rowData }) {
-  if (locationFormData.id === rowData.id) {
-    locationState.selectedRowId = null
-    resetLocationFormData()
-  } else {
-    locationState.selectedRowId = rowData.id
-    fillLocationFormDataFromRow(rowData)
-  }
+  toggleRowSelection({
+    rowData,
+    isSameSelection: locationState.selectedRowId === rowData.id,
+    setSelectedRowId: (value) => { locationState.selectedRowId = value },
+    onSelect: fillLocationFormDataFromRow,
+    onDeselect: resetLocationFormData,
+  })
   syncLocationSubmitDisabled()
 }
 
 function getLocationRowClass(rowData, rowIndex) {
-  const statusClass = getLocationStatusClass({ row: rowData, rowindex: rowIndex }) || ''
-  if (locationState.selectedRowId === rowData.id) return `${statusClass} current-row`.trim()
-  return statusClass
+  return resolveSelectableRowClass({
+    rowData,
+    rowIndex,
+    selectedRowId: locationState.selectedRowId,
+    getStatusClass: getLocationStatusClass,
+    defaultClass: 'normal-row',
+  })
 }
 
 function getLocationStatusClass({ row }) {
@@ -376,29 +389,33 @@ function getLocationStatusClass({ row }) {
 }
 
 function openLocationAddDrawer() {
-  locationState.selectedRowId = null
-  resetLocationFormData()
-  openLocationDrawer('add')
+  openAddDrawerFlow({
+    selectedRowId: locationState.selectedRowId,
+    setSelectedRowId: (value) => { locationState.selectedRowId = value },
+    resetFormData: resetLocationFormData,
+    onOpen: () => openLocationDrawer('add'),
+  })
 }
 
 function openLocationEditDrawer() {
-  if (locationFormData.id) {
-    openLocationDrawer('edit')
-  } else {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '修改位置', message: '请选择要修改的记录' })
-  }
+  tryOpenEditDrawerBySelection({
+    selectedRowId: locationState.selectedRowId,
+    eventBus,
+    title: '修改位置',
+    emptyMessage: '请选择要修改的位置',
+    onOpen: () => openLocationDrawer('edit'),
+  })
 }
 
 function showDeleteLocationConfirm() {
-  if (!locationFormData.id) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '删除位置', message: '请选择要修改的记录' })
-    return
-  }
-  eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'confirm', title: '删除位置', message: '是否删除该位置', action: () => locationDel() })
-}
-
-function locationCheckInput() {
-  syncLocationSubmitDisabled()
+  showDeleteConfirmBySelection({
+    eventBus,
+    selectedRowId: locationState.selectedRowId,
+    title: '删除位置',
+    emptyMessage: '请选择要删除的位置',
+    confirmMessage: '是否删除该位置',
+    onConfirm: () => locationDel(),
+  })
 }
 
 async function locationShow() {
@@ -408,13 +425,18 @@ async function locationShow() {
 }
 
 async function locationDel() {
-  if (locationFormData.id) {
-    await api_location_del(locationFormData.id)
-    await Promise.all([locationShow(), listAllLocationsForSensor()])
-    eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
-  } else {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '删除位置', message: '请选择要修改的记录' })
-  }
+  await deleteWithSelection({
+    eventBus,
+    selectedRowId: locationState.selectedRowId,
+    title: '删除位置',
+    emptyMessage: '请选择要删除的位置',
+    deleteAction: (id) => api_location_del(id),
+    onAfterDelete: async () => {
+      await Promise.all([locationShow(), listAllLocationsForSensor()])
+      locationState.selectedRowId = null
+      resetLocationFormData()
+    },
+  })
 }
 
 async function locationUpdate() {
@@ -464,62 +486,74 @@ function fillSensorFormDataFromRow(rowData) {
 }
 
 function syncSensorSubmitDisabled() {
-  const hasAllRequiredFields = sensorRequiredFields.every((field) => {
-    const value = sensorFormData[field]
-    if (typeof value === 'string') return value.trim() !== ''
-    return value != null
+  syncSubmitDisabledByFields({
+    formData: sensorFormData,
+    requiredFields: sensorRequiredFields,
+    target: sensorState,
+    disabledKey: 'submitDisabled',
   })
-  sensorState.submitDisabled = !hasAllRequiredFields
 }
 
 function openSensorDrawer(mode) {
-  sensorState.drawerMode = mode
-  sensorState.drawer = true
-  syncSensorSubmitDisabled()
+  openDrawerByMode({
+    state: sensorState,
+    mode,
+    afterOpen: syncSensorSubmitDisabled,
+  })
 }
 
 function handleSensorRowClick({ rowData }) {
-  if (sensorFormData.id === rowData.id) {
-    sensorState.selectedRowId = null
-    resetSensorFormData()
-  } else {
-    sensorState.selectedRowId = rowData.id
-    fillSensorFormDataFromRow(rowData)
-  }
+  toggleRowSelection({
+    rowData,
+    isSameSelection: sensorState.selectedRowId === rowData.id,
+    setSelectedRowId: (value) => { sensorState.selectedRowId = value },
+    onSelect: fillSensorFormDataFromRow,
+    onDeselect: resetSensorFormData,
+  })
   syncSensorSubmitDisabled()
 }
 
 function getSensorRowClass(rowData, rowIndex) {
-  const statusClass = getSensorStatusClass({ row: rowData, rowindex: rowIndex }) || ''
-  if (sensorState.selectedRowId === rowData.id) return `${statusClass} current-row`.trim()
-  return statusClass
-}
-
-function getSensorStatusClass({ row }) {
-  if (row.warningTemperature === true || row.warningHumidity === true) return 'warning-row'
-  return 'normal-row'
+  return resolveSelectableRowClass({
+    rowData,
+    rowIndex,
+    selectedRowId: sensorState.selectedRowId,
+    getStatusClass: ({ row }) => (
+      row.warningTemperature === true || row.warningHumidity === true
+    )
+      ? 'warning-row'
+      : 'normal-row',
+  })
 }
 
 function openSensorAddDrawer() {
-  sensorState.selectedRowId = null
-  resetSensorFormData()
-  openSensorDrawer('add')
+  openAddDrawerFlow({
+    selectedRowId: sensorState.selectedRowId,
+    setSelectedRowId: (value) => { sensorState.selectedRowId = value },
+    resetFormData: resetSensorFormData,
+    onOpen: () => openSensorDrawer('add'),
+  })
 }
 
 function openSensorEditDrawer() {
-  if (sensorFormData.id) {
-    openSensorDrawer('edit')
-  } else {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '修改记录', message: '请选择要修改的记录' })
-  }
+  tryOpenEditDrawerBySelection({
+    selectedRowId: sensorState.selectedRowId,
+    eventBus,
+    title: '修改记录',
+    emptyMessage: '请选择要修改的记录',
+    onOpen: () => openSensorDrawer('edit'),
+  })
 }
 
 function showDeleteSensorConfirm() {
-  if (!sensorFormData.id) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '删除记录', message: '请选择要修改的记录' })
-    return
-  }
-  eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'confirm', title: '删除记录', message: '是否删除该记录', action: () => sensorRecordDel() })
+  showDeleteConfirmBySelection({
+    eventBus,
+    selectedRowId: sensorState.selectedRowId,
+    title: '删除记录',
+    emptyMessage: '请选择要删除的记录',
+    confirmMessage: '是否删除该记录',
+    onConfirm: () => sensorRecordDel(),
+  })
 }
 
 function sensorCheckInput() {
@@ -540,13 +574,18 @@ async function sensorRecordShow() {
 }
 
 async function sensorRecordDel() {
-  if (sensorFormData.id) {
-    await api_sensorRecord_del(sensorFormData.id)
-    await sensorRecordShow()
-    eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
-  } else {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '删除记录', message: '请选择要修改的记录' })
-  }
+  await deleteWithSelection({
+    eventBus,
+    selectedRowId: sensorState.selectedRowId,
+    title: '删除记录',
+    emptyMessage: '请选择要删除的记录',
+    deleteAction: (id) => api_sensorRecord_del(id),
+    onAfterDelete: async () => {
+      await sensorRecordShow()
+      sensorState.selectedRowId = null
+      resetSensorFormData()
+    },
+  })
 }
 
 async function sensorRecordUpdate() {

@@ -25,6 +25,7 @@ const responseShowData = z.object({
     lot: z.object({ id: z.number(), name: z.string() }),
     number: z.number(),
     barcodes: z.array(z.string()),
+    serialNumbers: z.array(z.string()),
     notes: z.string(),
     action: z.number(),
     status: z.number(),
@@ -37,13 +38,18 @@ const responseShowData = z.object({
 });
 
 export const OperationZod = {
+    requestFastInbound: z.object({
+        udi: z.string(),
+    }),
     requestInbound: z.object({
         inboundList: z.array(inboundListItem).min(1),
     }),
-    requestOutbound: z.object({
-        barcodeNumber: z.string(),
+    requestFastOutbound: z.object({
+        useUdi: z.boolean().default(false),
+        udi: z.string().default(''),
+        barcodeNumber: z.string().default(''),
     }),
-    requestSpecialOutbound: z.object({
+    requestOutbound: z.object({
         outboundList: z.array(outboundListItem).min(1),
     }),
     requestShow: ApiRequestZod.pageQuery.extend({
@@ -63,9 +69,10 @@ export const OperationZod = {
     requestDisable: z.object({
         groupId: z.string(),
     }),
+    responseFastInbound: ApiResponseZod.extend({ data: z.object({ status: z.number(), message: z.string() }) }),
     responseInbound: ApiResponseZod.extend({ data: z.object({ messages: z.array(z.string()) }) }),
-    responseOutbound: ApiResponseZod.extend({ data: z.object({ status: z.number(), message: z.string() }) }),
-    responseSpecialOutbound: ApiResponseZod.extend({ data: z.object({ messages: z.array(z.string()) }) }),
+    responseFastOutbound: ApiResponseZod.extend({ data: z.object({ status: z.number(), message: z.string() }) }),
+    responseOutbound: ApiResponseZod.extend({ data: z.object({ messages: z.array(z.string()) }) }),
     responseShow: ApiResponseZod.extend({ data: z.array(responseShowData) }),
     responseShowAll: ApiResponseZod.extend({ data: z.array(responseShowData) }),
     responseDisable: ApiResponseZod.extend({ data: z.object({ groupId: z.string() }) }),

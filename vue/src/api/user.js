@@ -2,10 +2,14 @@ import { myrequest } from "./request"
 
 export let api_user_show=(params)=>{
     return myrequest.get('/identity/user/show',{
-        "name":params.name,
+        "keyword":params.name,
         "page":params.page,
-        "pageSize":params.pageSize ?? params.pagesize
+        "pageSize":params.pageSize
     })
+}
+
+export let api_user_showall=()=>{
+    return myrequest.get('/identity/user/showAll')
 }
 
 export let api_user_del=(id)=>{
@@ -16,20 +20,25 @@ export let api_user_del=(id)=>{
 
 export let api_user_add=(body)=>{
     return myrequest.post('/identity/user/add',{
-        "userName":body.userName ?? body.username,
-        "passWord":body.passWord ?? body.password,
+        "account":body.account,
+        "userName":body.userName,
+        "checkerPassWord":body.checkerPassWord,
+        "reviewerPassWord":body.reviewerPassWord,
         "role":body.role,
-        "teamId":body.teamId ?? body.teamid
+        "teamId":body.teamId,
+        "status":body.status
     })
 }
 
 export let api_user_update=(body)=>{
     return myrequest.put('/identity/user/update',{
         "id":body.id,
-        "userName":body.userName ?? body.username,
-        "passWord":body.passWord ?? body.password,
+        "account":body.account,
+        "userName":body.userName,
+        "checkerPassWord":body.checkerPassWord,
+        "reviewerPassWord":body.reviewerPassWord,
         "role":body.role,
-        "teamId":body.teamId ?? body.teamid,
+        "teamId":body.teamId,
         "status":body.status
     })
 }

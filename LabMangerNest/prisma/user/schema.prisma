@@ -20,12 +20,14 @@ model Team {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  userName String @map("UserName")
-  passWord String @map("PassWord")
-  role     Int    @default(0) @map("Role")
-  status   Int    @default(0) @map("Status")
-  teamId   Int    @map("Team_Id")
+  account          String @unique @map("Account")
+  id               Int    @id @default(autoincrement())
+  userName         String @map("UserName")
+  checkerPassWord  String @map("CheckerPassWord")
+  reviewerPassWord String @map("ReviewerPassWord")
+  role             Int    @default(0) @map("Role")
+  status           Int    @default(0) @map("Status")
+  teamId           Int    @map("Team_Id")
 
   team Team @relation(fields: [teamId], references: [id])
 
@@ -38,6 +40,7 @@ model Session {
   userId     Int      @map("UserId")
   teamId     Int      @map("TeamId")
   role       Int      @map("Role")
+  loginType  String   @map("LoginType")
   createTime DateTime @default(now()) @map("CreateTime")
 
   @@map("Session")

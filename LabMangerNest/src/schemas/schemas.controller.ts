@@ -37,7 +37,8 @@ export class SchemasController {
         del: generateSchemaFromZod(TeamZod.requestDel, 'RequestTeamDel'),
       },
       auth: {
-        signin: generateSchemaFromZod(AuthZod.requestSignin, 'RequestAuthSignin'),
+        signinReviewer: generateSchemaFromZod(AuthZod.requestSigninReviewer, 'RequestAuthSigninReviewer'),
+        signinChecker: generateSchemaFromZod(AuthZod.requestSigninChecker, 'RequestAuthSigninChecker'),
         signout: generateSchemaFromZod(AuthZod.requestSignout, 'RequestAuthSignout'),
       },
       user: {
@@ -53,9 +54,10 @@ export class SchemasController {
         del: generateSchemaFromZod(ReagentZod.requestDel, 'RequestReagentDel'),
       },
       operation: {
+        fastInbound: generateSchemaFromZod(OperationZod.requestFastInbound, 'RequestOperationFastInbound'),
         inbound: generateSchemaFromZod(OperationZod.requestInbound, 'RequestOperationInbound'),
-        outbound: generateSchemaFromZod(OperationZod.requestOutbound, 'RequestOperationOutbound'),
-        specialOutbound: generateSchemaFromZod(OperationZod.requestSpecialOutbound, 'RequestOperationSpecialOutbound'),
+        fastOutbound: generateSchemaFromZod(OperationZod.requestFastOutbound, 'RequestOperationFastOutbound'),
+        Outbound: generateSchemaFromZod(OperationZod.requestOutbound, 'RequestOperationOutbound'),
         show: generateSchemaFromZod(OperationZod.requestShow, 'RequestOperationShow'),
       },
       lot: {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-dialog :class="type[state.type]" v-model="state.centerDialogVisible" :title="state.title" width="500"   center>
+    <el-dialog :class="['messagebox-dialog', type[state.type]]" v-model="state.centerDialogVisible" :title="state.title" width="500" center>
         <span  >
           {{state.message}}
         </span>
@@ -68,29 +68,19 @@ onMounted(() => {
 
 </script>
 <style>
-
-.dialog-error{
-  background-color: #d94141;
-  border-radius: 15px;
-  font-weight: bold;
-}
-.dialog-error  .el-dialog__body  {
-  color: rgb(255, 255, 255);
-  font-weight: 350;
-}
-.dialog-error  .el-dialog__title  {
-  color: rgb(255, 255, 255);
+.messagebox-dialog {
+  border-radius: 12px;
+  font-weight: 600;
+  overflow: hidden;
 }
 
-.dialog-info{
-  border-radius: 10px;
-  font-weight: bold;
+.dialog-info,
+.dialog-confirm {
+  border: 1px solid var(--el-color-primary);
 }
 
-.dialog-confirm{
-  border-radius: 10px;
-  font-weight: bold;
+.dialog-error {
+  border: 1px solid var(--el-color-danger);
 }
-
 
 </style>

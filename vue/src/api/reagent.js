@@ -18,6 +18,7 @@ export let api_reagent_update=(body)=>{
     return myrequest.put('/stock/reagents/update',{
         id:body.id,
         name:body.name,
+        di:body.di,
         specifications:body.specifications,
         warnNumber:body.warnNumber,
         price:body.price,
@@ -32,6 +33,7 @@ export let api_reagent_update=(body)=>{
 export let api_reagent_add=(body)=>{
     return myrequest.post('/stock/reagents/add',{
         name:body.name,
+        di:body.di,
         specifications:body.specifications,
         warnNumber:body.warnNumber,
         price:body.price,

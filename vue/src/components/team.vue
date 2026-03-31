@@ -1,39 +1,38 @@
 <template>
-    <div id="background" :style="null">
-      <div id="background2">
+    <div id="background" class="team-page">
+      <section class="panel-section">
+      <div class="panel-header">
+        <h3>小组管理</h3>
+      </div>
+      <div id="background2" class="toolbar">
         <el-input 
-          class="searchinput"
-          style="left:200px;top:10px;width:200px;" 
+          class="toolbar-input"
           v-model="state.name" 
           placeholder="搜索检验小组" 
           @input="team_show" 
         />
         <el-pagination 
-          style=" position: absolute;left: 200px;top: 50px;"
-          class="searchinput" 
+          class="toolbar-pagination" 
           background  
           layout="prev, pager, next"  
           v-model:current-page="state.page" 
           :page-count="state.totalpage" 
           @change="team_show" 
         />
-                 <div class="button-container">
+                 <div class="action-button-container">
            <el-button 
              id="add" 
              type="success" 
-             v-if="get_permission('team_add')"
              @click="add_drawer"
            >增加小组</el-button>
            <el-button 
              id="update" 
              type="primary" 
-             v-if="get_permission('team_edit')"
              @click="edit_drawer"
            >修改小组</el-button> 
            <el-button 
              id="delete" 
              type="danger" 
-             v-if="get_permission('team_delete')"
              @click="showDeleteTeamConfirm"
            >删除小组</el-button>
          </div>
@@ -55,11 +54,12 @@
           </template>
         </el-auto-resizer>
       </div>
+      </section>
     </div>
 
-    <el-drawer v-model="state.drawer" direction="rtl" size="30%" >
+    <el-drawer v-model="state.drawer" direction="rtl" size="30%" @open="state.selectedRowId = null">
       <template #header>
-      <span >检验小组</span>
+      <span class="drawer-title">小组管理</span>
     </template>
       <template #footer>
       <div style="flex: auto">
@@ -71,7 +71,7 @@
     <template #default>
       <div id="content1">
         <p>检验小组名称</p>  
-        <el-input v-model="formData.name" @input="checkinput" style="width: 300px" placeholder="检验小组名称"  />
+        <el-input v-model="formData.name" @input="syncSubmitDisabled" style="width: 300px" placeholder="检验小组名称"  />
         <p>联系电话</p>  
         <el-input v-model="formData.phone" style="width: 300px" placeholder="填写电话"  />
       </div>
@@ -91,7 +91,16 @@
 import { onMounted, reactive } from 'vue'
 import { api_team_show,api_team_del,api_team_update,api_team_add} from '@/api/team.js'
 import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
-import get_permission from '@/utils/permission'
+import {
+  syncSubmitDisabledByFields,
+  toggleRowSelection,
+  showDeleteConfirmBySelection,
+  deleteWithSelection,
+  openDrawerByMode,
+  openAddDrawerFlow,
+  tryOpenEditDrawerBySelection,
+  resolveSelectableRowClass,
+} from '@/utils/crud'
 
 // 状态管理
 const state = reactive({
@@ -122,10 +131,11 @@ const tableColumns = [
   { key: 'note', dataKey: 'note', title: '其他说明', width: 360, flexGrow: 1 },
 ]
 function getRowClass(rowData) {
-  if (state.selectedRowId === rowData.id) {
-    return 'normal-row current-row'
-  }
-  return 'normal-row'
+  return resolveSelectableRowClass({
+    rowData,
+    selectedRowId: state.selectedRowId,
+    defaultClass: 'normal-row',
+  })
 }
 
 function resetFormData() {
@@ -149,59 +159,69 @@ function fillFormDataFromRow(rowData) {
 }
 
 function syncSubmitDisabled() {
-  const hasAllRequiredFields = REQUIRED_FIELDS.every((field) => {
-    const value = formData[field]
-    if (typeof value === 'string') {
-      return value.trim() !== ''
-    }
-    return value != null
+  syncSubmitDisabledByFields({
+    formData,
+    requiredFields: REQUIRED_FIELDS,
+    target: state,
+    disabledKey: 'submitDisabled',
   })
-  state.submitDisabled = !hasAllRequiredFields
 }
 
 function openDrawer(mode) {
-  state.drawerMode = mode
-  state.drawer = true
-  syncSubmitDisabled()
+  openDrawerByMode({
+    state,
+    mode,
+    afterOpen: syncSubmitDisabled,
+  })
 }
 
 function handleRowClick({ rowData }) {
-  if(formData.id===rowData.id){
-    state.selectedRowId = null
-    resetFormData()
-  }
-  else{
-    state.selectedRowId = rowData.id
-    fillFormDataFromRow(rowData)
-  }
+  toggleRowSelection({
+    rowData,
+    isSameSelection: state.selectedRowId === rowData.id,
+    setSelectedRowId: (value) => { state.selectedRowId = value },
+    onSelect: fillFormDataFromRow,
+    onDeselect: resetFormData,
+  })
   syncSubmitDisabled()
 }
 
 
-  async function add_drawer(){
-  state.selectedRowId = null
-  resetFormData()
-  openDrawer('add')
+async function add_drawer(){
+  openAddDrawerFlow({
+    selectedRowId: state.selectedRowId,
+    setSelectedRowId: (value) => { state.selectedRowId = value },
+    resetFormData,
+    onOpen: () => openDrawer('add'),
+  })
 }
 
 async function edit_drawer(){
-  if(formData.id){
-    openDrawer('edit')
-  }
-  else{
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'error',message:'请选择要修改的记录'})
-  }
+  tryOpenEditDrawerBySelection({
+    selectedRowId: state.selectedRowId,
+    eventBus,
+    title: '修改小组',
+    emptyMessage: '请选择要修改的记录',
+    onOpen: () => openDrawer('edit'),
+  })
 }
 
 function showDeleteTeamConfirm() {
-  if (!formData.id) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'info',title:'删除小组',message:'请选择要修改的记录'})
-    return
-  }
-  eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'confirm',title:'删除小组',message:'是否删除该小组',action:()=>team_del()})
+  showDeleteConfirmBySelection({
+    eventBus,
+    selectedRowId: state.selectedRowId,
+    title: '删除小组',
+    emptyMessage: '请选择要删除的记录',
+    confirmMessage: '是否删除该小组',
+    onConfirm: () => team_del(),
+  })
 }
 async function team_show() {
-    const data = await api_team_show(state)
+    const data = await api_team_show({
+      name: state.name,
+      page: state.page,
+      pageSize: state.pagesize,
+    })
     state.tableData = data.data
     state.total = data.meta.total
     state.pagesize = data.meta.pageSize
@@ -209,14 +229,18 @@ async function team_show() {
 }
 
 async function team_del(){
-  if(formData.id){
-    await api_team_del(formData.id)
-    await team_show()
-    eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
-  }
-  else{
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'info',title:'删除小组',message:'请选择要修改的记录'})
-  }
+  await deleteWithSelection({
+    eventBus,
+    selectedRowId: state.selectedRowId,
+    title: '删除小组',
+    emptyMessage: '请选择要删除的记录',
+    deleteAction: (id) => api_team_del(id),
+    onAfterDelete: async () => {
+      await team_show()
+      state.selectedRowId = null
+      resetFormData()
+    },
+  })
 }
 
 async function team_update() {
@@ -235,12 +259,6 @@ async function team_add() {
     formData.id = null
 }
 
-function checkinput(){
-  syncSubmitDisabled()
-}
-
-
-
 // 生命周期钩子
 onMounted(() => {
     team_show()
@@ -249,29 +267,62 @@ onMounted(() => {
 
 </script >
 <style scoped>
+.team-page {
+  height: calc(100dvh - 82px);
+  margin: 72px auto 0;
+  padding: 8px 12px;
+  max-width: 1900px;
+  box-sizing: border-box;
+}
 
-.el-table{
-  position: absolute;
-  left: 200px;
-  top: 100px;
+.panel-section {
+  height: 100%;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 10px;
+  background: var(--el-bg-color-overlay);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
-#background2{
-  height: 90px;
+
+.panel-header h3 {
+  margin: 0 0 6px 0;
+  color: var(--el-text-color-primary);
+  font-size: 22px;
+  font-weight: 800;
 }
-.button-container {
-  position: absolute;
-  left: 800px;
-  top: 50px;
+
+.drawer-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--el-text-color-primary);
+}
+
+.toolbar {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbar-input {
+  width: 220px;
+}
+
+.toolbar-pagination {
+  margin-right: auto;
+}
+
+.action-button-container {
   display: flex;
   gap: 10px;
 }
 
 .team-table {
-  height: 680px;
+  margin-top: 8px;
+  flex: 1;
+  min-height: 0;
 }
-
-
-
-
 </style>
-

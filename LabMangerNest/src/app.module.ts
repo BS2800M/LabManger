@@ -11,9 +11,10 @@ import { SchemasModule } from './schemas/schemas.module';
 import { SessionGuard } from './common/guards/session.guard';
 import { SensorMonitorModule } from './sensorMonitor/sensorMonitor.module';
 import { SchedulerModule } from './common/scheduler/scheduler.module';
+import { OthersModule } from './others/others.module';
 
 @Module({
-    imports: [ScheduleModule.forRoot(), PrismaModule, AuthModule, TeamModule, UserModule, StockModule, InitModule, SchemasModule, SensorMonitorModule, SchedulerModule],
+    imports: [ScheduleModule.forRoot(), PrismaModule, AuthModule, TeamModule, UserModule, StockModule, InitModule, SchemasModule, SensorMonitorModule, SchedulerModule, OthersModule],
     controllers: [],
     providers: [
         { provide: APP_GUARD, useClass: SessionGuard },

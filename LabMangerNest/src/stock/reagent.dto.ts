@@ -5,6 +5,7 @@ import { ApiResponseZod } from '../common/dtos/api-response.dto';
 const responseReagentData = z.object({
     id: z.number(),
     name: z.string(),
+    di: z.string(),
     specifications: z.string(),
     price: z.number(),
     storageCondition: z.string(),
@@ -25,6 +26,7 @@ const responseShowAllData = z.object({
 export const ReagentZod = {
     requestAdd: z.object({
         name: z.string(),
+        di: z.string().default(''),
         specifications: z.string().default(''),
         price: z.number().default(0),
         storageCondition: z.string().default(''),
@@ -40,6 +42,7 @@ export const ReagentZod = {
     requestUpdate: z.object({
         id: z.number().min(1),
         name: z.string(),
+        di: z.string().default(''),
         specifications: z.string().default(''),
         price: z.number().default(0),
         storageCondition: z.string().default(''),
