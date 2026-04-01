@@ -21,6 +21,12 @@
           placeholder="条码号"
           @input="operation_show"
         />
+        <el-input
+          class="toolbar-input"
+          v-model="state.udi"
+          placeholder="UDI"
+          @input="operation_show"
+        />
         <el-config-provider :locale="zhCn">
           <el-date-picker
             v-model="state.starttime_show"
@@ -88,39 +94,55 @@
       </div>
     </template>
     <template #default>
-      <div id="content1">
-        <p>试剂名称</p>
-        <el-input v-model="formData.reagentName" style="width: 300px" disabled />
-        <p>试剂批号</p>
-        <el-input v-model="formData.lotName" style="width: 300px" disabled />
-        <p>动作</p>
-        <el-input v-model="formData.action" style="width: 300px" disabled />
-        <p>操作时间</p>
-        <el-config-provider :locale="zhCn">
-          <el-date-picker
-            v-model="formData.createTime"
-            type="datetime"
-            size="default"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            disabled
-          />
-        </el-config-provider>
-        <p>条码号</p>
-        <el-select-v2  v-model="formData.barcodeNumberselected" filterable :options="formData.barcodes" placeholder="选择条码号"  style="width: 300px"  />
-        <p>序列号</p>
-        <el-select-v2 v-model="formData.serialNumberselected" filterable :options="formData.serialNumbers" placeholder="选择序列号" style="width: 300px" />
-        <p>操作人</p>
-        <el-input v-model="formData.userName" style="width: 300px" disabled />
-      </div>
-      <div id="content2" style="position: absolute;left: 400px;top: 120px;">
-        <p>实际试剂名称</p>
-        <el-input v-model="formData.actualReagentName" style="width: 300px" disabled />
-        <p>实际试剂批号</p>
-        <el-input v-model="formData.actualLotName" style="width: 300px" disabled />
-        <p>实际操作人</p>
-        <el-input v-model="formData.actualUserName" style="width: 300px" disabled />
-        <p>注释</p>
-        <el-input v-model="formData.note" style="width: 300px" disabled />
+      <div class="drawer-form-grid">
+        <div id="content1">
+          <p>试剂名称</p>
+          <el-input v-model="formData.reagentName" style="width: 300px" disabled />
+          <p>试剂批号</p>
+          <el-input v-model="formData.lotName" style="width: 300px" disabled />
+          <p>动作</p>
+          <el-input v-model="formData.action" style="width: 300px" disabled />
+          <p>操作时间</p>
+          <el-config-provider :locale="zhCn">
+            <el-date-picker
+              v-model="formData.createTime"
+              type="datetime"
+              size="default"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              disabled
+            />
+          </el-config-provider>
+          <p>条码号</p>
+          <el-select-v2  v-model="formData.barcodeNumberselected" filterable :options="formData.barcodes" placeholder="选择条码号"  style="width: 300px"  />
+          <p>UDI</p>
+          <div class="udi-copy-row">
+            <el-select-v2
+              v-model="formData.udiSelected"
+              class="udi-select udi-select-wide"
+              filterable
+              :options="formData.udis"
+              placeholder="选择UDI"
+              popper-class="udi-select-popper"
+            >
+              <template #default="{ item }">
+                <span class="udi-option-label">{{ item.label }}</span>
+              </template>
+            </el-select-v2>
+            <el-button type="primary" plain @click="copySelectedUdi">复制</el-button>
+          </div>
+          <p>操作人</p>
+          <el-input v-model="formData.userName" style="width: 300px" disabled />
+        </div>
+        <div id="content2">
+          <p>实际试剂名称</p>
+          <el-input v-model="formData.actualReagentName" style="width: 300px" disabled />
+          <p>实际试剂批号</p>
+          <el-input v-model="formData.actualLotName" style="width: 300px" disabled />
+          <p>实际操作人</p>
+          <el-input v-model="formData.actualUserName" style="width: 300px" disabled />
+          <p>注释</p>
+          <el-input v-model="formData.note" style="width: 300px" disabled />
+        </div>
       </div>
 
     </template>
@@ -137,8 +159,8 @@ import { format_YYYYMMDDHHmm_iso } from '@/utils/format'
 import { operation_exporttoexcel_list } from '@/utils/exportexcel.js'
 import { api_reagent_showall } from '@/api/reagent'
 import { api_lot_showall } from '@/api/lot'
-import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { resolveSelectableRowClass } from '@/utils/crud'
+import { closeMessageBox, openConfirmMessageBox, openInfoMessageBox } from '@/utils/messagebox'
 
 const allreagentlist = ref([])
 
@@ -147,6 +169,7 @@ const state = reactive({
   loading: false,
   reagentName: '',
   barcodeNumber: '',
+  udi: '',
   starttime: '',
   endtime: '',
   page: 1,
@@ -168,8 +191,8 @@ const formData = reactive({
   note: '',
   barcodes: [],
   barcodeNumberselected: '',
-  serialNumbers: [],
-  serialNumberselected: '',
+  udis: [],
+  udiSelected: '',
   userName: '',
   actualReagentName: '',
   actualLotName: '',
@@ -232,8 +255,8 @@ function resetFormData() {
     note: '',
     barcodes: [],
     barcodeNumberselected: null,
-    serialNumbers: [],
-    serialNumberselected: null,
+    udis: [],
+    udiSelected: null,
     userName: '',
     actualReagentName: '',
     actualLotName: '',
@@ -254,7 +277,7 @@ function fillFormDataFromRow(rowData) {
       value: item,
       label: item,
     })),
-    serialNumbers: rowData.serialNumbers.map(item => ({
+    udis: rowData.udis.map(item => ({
       value: item,
       label: item,
     })),
@@ -298,6 +321,7 @@ async function operation_show() {
       startTime: state.starttime,
       endTime: state.endtime,
       barcodeNumber: state.barcodeNumber,
+      udi: state.udi,
       page: state.page,
       pageSize: state.pagesize,
     })
@@ -319,6 +343,44 @@ function barcodeprint() {
   ElMessage.warning('Web版本不支持自动补打，请使用浏览器打印')
 }
 
+function fallbackCopyText(text) {
+  const textArea = document.createElement('textarea')
+  textArea.value = text
+  textArea.setAttribute('readonly', 'readonly')
+  textArea.style.position = 'fixed'
+  textArea.style.top = '-9999px'
+  document.body.appendChild(textArea)
+  textArea.select()
+  const copied = document.execCommand('copy')
+  document.body.removeChild(textArea)
+  if (!copied) {
+    throw new Error('copy failed')
+  }
+}
+
+async function copySelectedUdi() {
+  const udi = String(formData.udiSelected ?? '').trim()
+  if (!udi) {
+    ElMessage.warning('请先选择UDI')
+    return
+  }
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(udi)
+    } else {
+      fallbackCopyText(udi)
+    }
+    ElMessage.success('UDI已复制')
+  } catch {
+    try {
+      fallbackCopyText(udi)
+      ElMessage.success('UDI已复制')
+    } catch {
+      ElMessage.error('复制失败，请手动复制')
+    }
+  }
+}
+
 function view_record() {
   state.selectedRowId = null
   state.drawer = true
@@ -327,22 +389,22 @@ function view_record() {
 
 function showDisableRecordConfirm() {
   if (!state.selectedRowId) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '禁用记录', message: '请选择要禁用的记录' })
+    openInfoMessageBox({ title: '禁用记录', message: '请选择要禁用的记录' })
     return
   }
-  eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'confirm', title: '禁用记录', message: '是否禁用该记录', action: () => disable_record() })
+  openConfirmMessageBox({ title: '禁用记录', message: '是否禁用该记录', action: () => disable_record() })
 }
 
 async function disable_record() {
   if (!state.selectedRowId) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title: '禁用记录', message: '请选择要禁用的记录' })
+    openInfoMessageBox({ title: '禁用记录', message: '请选择要禁用的记录' })
     return
   }
   await api_operation_disable({ groupId: state.selectedRowId })
   resetFormData()
   state.drawer = false
   await operation_show()
-  eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
+  closeMessageBox()
 }
 function handleExport() {
   operation_exporttoexcel_list({
@@ -350,6 +412,7 @@ function handleExport() {
     startTime: format_YYYYMMDDHHmm_iso(state.starttime_show),
     endTime: format_YYYYMMDDHHmm_iso(state.endtime_show),
     barcodeNumber: state.barcodeNumber,
+    udi: state.udi,
   })
 }
 
@@ -422,9 +485,58 @@ onMounted(async () => {
   flex: 1;
   min-height: 0;
 }
+
+.drawer-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 36px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .drawer-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .drawer-title {
   font-size: 24px;
   font-weight: 800;
   color: var(--el-text-color-primary);
+}
+
+.udi-copy-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width:660px;
+  max-width: 100%;
+}
+
+.udi-select-wide {
+  flex: 1;
+  min-width: 0;
+}
+
+.udi-select-wide :deep(.el-select-v2__wrapper) {
+  min-height: 44px;
+}
+
+.udi-select-wide :deep(.el-select-v2__selected-item) {
+  line-height: 1.3;
+}
+
+.udi-select :deep(.el-select-v2__wrapper),
+.udi-select :deep(.el-select-v2__selected-item) {
+  font-family: Consolas, "Courier New", monospace;
+}
+
+:deep(.udi-select-popper .udi-option-label) {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Consolas, "Courier New", monospace;
 }
 </style>

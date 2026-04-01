@@ -25,8 +25,8 @@ const responseShowData = z.object({
     lot: z.object({ id: z.number(), name: z.string() }),
     number: z.number(),
     barcodes: z.array(z.string()),
-    serialNumbers: z.array(z.string()),
-    notes: z.string(),
+    udis: z.array(z.string()),
+    note: z.string(),
     action: z.number(),
     status: z.number(),
     user: z.object({ id: z.number(), userName: z.string() }),
@@ -40,6 +40,7 @@ const responseShowData = z.object({
 export const OperationZod = {
     requestFastInbound: z.object({
         udi: z.string(),
+        note: z.string().default(''),
     }),
     requestInbound: z.object({
         inboundList: z.array(inboundListItem).min(1),
@@ -48,6 +49,7 @@ export const OperationZod = {
         useUdi: z.boolean().default(false),
         udi: z.string().default(''),
         barcodeNumber: z.string().default(''),
+        note: z.string().default(''),
     }),
     requestOutbound: z.object({
         outboundList: z.array(outboundListItem).min(1),
@@ -55,6 +57,7 @@ export const OperationZod = {
     requestShow: ApiRequestZod.pageQuery.extend({
         reagentName: z.string().optional(),
         barcodeNumber: z.string().optional(),
+        udi: z.string().optional(),
         startTime: z.coerce.date().optional(),
         endTime: z.coerce.date().optional(),
     }),
@@ -63,6 +66,7 @@ export const OperationZod = {
         pageSize: z.coerce.number().min(1).max(9999999).optional(),
         reagentName: z.string().optional(),
         barcodeNumber: z.string().optional(),
+        udi: z.string().optional(),
         startTime: z.coerce.date().optional(),
         endTime: z.coerce.date().optional(),
     }),

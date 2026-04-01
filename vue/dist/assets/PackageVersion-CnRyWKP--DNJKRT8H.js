@@ -1,0 +1,1 @@
+import{a as e,c as a,t,u as s}from"./index-V3Su1ITt.js";const o="2.17.11",r={"aria-hidden":"true"},u={__name:"PackageVersion",setup(n){return(c,i)=>(e(),a("desc",r,"Composed with Vue Data UI "+t(s(o)),1))}};export{u as default};

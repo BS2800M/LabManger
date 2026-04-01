@@ -202,10 +202,10 @@
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { onMounted, reactive, ref } from 'vue'
+import { GS1Field, GS1Parser } from '@valentynb/gs1-parser'
 import ReagentSelect from '@/components/reagent_select.vue'
 import { api_reagent_show, api_reagent_del, api_reagent_update, api_reagent_add } from '@/api/reagent'
 import { api_lot_show, api_lot_del, api_lot_update, api_lot_add } from '@/api/lot'
-import { eventBus } from '@/utils/eventBus'
 import { format_iso_YYYYMMDDHHmm, format_YYYYMMDDHHmm_iso, formatDateColumn } from '@/utils/format'
 import {
   syncSubmitDisabledByFields,
@@ -278,6 +278,7 @@ const lotFormData = reactive({
 
 const lotRequiredFields = ['name', 'expirationdate', 'status', 'reagentId']
 const lotReagentRefreshTrigger = ref(0)
+const gs1Parser = new GS1Parser()
 
 const lotTableColumns = [
   { key: 'name', dataKey: 'name', title: '批号', width: 180, flexGrow: 1 },
@@ -346,10 +347,19 @@ function syncReagentSubmitDisabled() {
 }
 
 function formatDi() {
-  const cleaned = String(reagentFormData.di ?? '')
-    .replace(/[\u0000-\u001F\u007F]/g, '')
-    .trim()
-  reagentFormData.di = cleaned.slice(2, 16)
+  const udi = String(reagentFormData.di ?? '').trim()
+  if (!udi) {
+    reagentFormData.di = ''
+    return
+  }
+
+  try {
+    const decoded = gs1Parser.decode(udi)
+    const di = decoded.data[GS1Field.GTIN]?.data
+    reagentFormData.di = typeof di === 'string' ? di : ''
+  } catch {
+    reagentFormData.di = ''
+  }
 }
 
 function openReagentDrawer(mode) {
@@ -385,7 +395,6 @@ function getReagentRowClass(rowData, rowIndex) {
 
 function openReagentAddDrawer() {
   openAddDrawerFlow({
-    selectedRowId: reagentState.selectedRowId,
     setSelectedRowId: (value) => { reagentState.selectedRowId = value },
     resetFormData: () => resetReagentFormData({ generateLot: true }),
     onOpen: () => openReagentDrawer('add'),
@@ -395,7 +404,6 @@ function openReagentAddDrawer() {
 function openReagentEditDrawer() {
   tryOpenEditDrawerBySelection({
     selectedRowId: reagentState.selectedRowId,
-    eventBus,
     title: '修改试剂',
     emptyMessage: '请选择要修改的记录',
     onOpen: () => openReagentDrawer('edit'),
@@ -404,7 +412,6 @@ function openReagentEditDrawer() {
 
 function showDeleteReagentConfirm() {
   showDeleteConfirmBySelection({
-    eventBus,
     selectedRowId: reagentState.selectedRowId,
     title: '删除试剂',
     emptyMessage: '请选择要删除的试剂',
@@ -421,7 +428,6 @@ async function reagentShow() {
 
 async function reagentDel() {
   await deleteWithSelection({
-    eventBus,
     selectedRowId: reagentState.selectedRowId,
     title: '删除试剂',
     emptyMessage: '请选择要删除的试剂',
@@ -520,7 +526,6 @@ function getLotRowClass(rowData, rowIndex) {
 
 function openLotAddDrawer() {
   openAddDrawerFlow({
-    selectedRowId: lotState.selectedRowId,
     setSelectedRowId: (value) => { lotState.selectedRowId = value },
     resetFormData: resetLotFormData,
     onOpen: () => openLotDrawer('add'),
@@ -530,7 +535,6 @@ function openLotAddDrawer() {
 function openLotEditDrawer() {
   tryOpenEditDrawerBySelection({
     selectedRowId: lotState.selectedRowId,
-    eventBus,
     title: '修改批号',
     emptyMessage: '请选择要修改的批号',
     onOpen: () => openLotDrawer('edit'),
@@ -539,7 +543,6 @@ function openLotEditDrawer() {
 
 function showDeleteLotConfirm() {
   showDeleteConfirmBySelection({
-    eventBus,
     selectedRowId: lotState.selectedRowId,
     title: '删除批号',
     emptyMessage: '请选择要删除的批号',
@@ -565,7 +568,6 @@ async function lotShow() {
 
 async function lotDel() {
   await deleteWithSelection({
-    eventBus,
     selectedRowId: lotState.selectedRowId,
     title: '删除批号',
     emptyMessage: '请选择要删除的批号',

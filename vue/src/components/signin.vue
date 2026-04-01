@@ -50,8 +50,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router'
 import { api_signin_reviewer } from '@/api/auth';	
 import { api_user_showall } from '@/api/user';
-import { eventBus } from '@/utils/eventBus';
-import { EVENT_TYPES } from '@/utils/eventBus';
+import { openErrorMessageBox } from '@/utils/messagebox';
 const router = useRouter()
 const THEME_KEY = 'labmanger-theme'
 let account=ref("")
@@ -126,7 +125,7 @@ async function login(){
       localStorage.setItem('reviewerSessionId', sessionId)
     }
 	else{
-		eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {type:'error',message:"登录失败",action:null})
+		openErrorMessageBox({ message: '登录失败' })
 		return
 	}
 

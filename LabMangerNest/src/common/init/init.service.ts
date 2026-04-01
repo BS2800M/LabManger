@@ -5,6 +5,7 @@ import * as path from 'path';
 import { UserPrismaService } from '../../prisma/user-prisma.service';
 import { InventoryService } from '../../stock/inventory.service';
 import { SensorRecordService } from '../../sensorMonitor/sensorRecord.service';
+import { MangerPrismaService } from '../../prisma/manger-prisma.service';
 
 const PROJECT_ROOT = path.join(__dirname, '../../../../');
 
@@ -14,6 +15,7 @@ export class InitService implements OnModuleInit {
 
     constructor(
         private readonly userPrisma: UserPrismaService,
+        private readonly mangerPrisma: MangerPrismaService,
         private readonly inventoryService: InventoryService,
         private readonly sensorRecordService: SensorRecordService,
     ) { }
@@ -21,9 +23,13 @@ export class InitService implements OnModuleInit {
     async onModuleInit() {
         await this.migrateInit();
         this.logger.log('检查试剂过期警告');
-        await this.inventoryService.updateExpirationWarning();
+        await this.mangerPrisma.$transaction(async (tx) => {
+            await this.inventoryService.updateExpirationWarning(undefined, tx);
+        });
         this.logger.log('检查传感器上传超时');
-        await this.sensorRecordService.checkUploadTimeout();
+        await this.mangerPrisma.$transaction(async (tx) => {
+            await this.sensorRecordService.checkUploadTimeout(tx);
+        });
         this.logger.log('检查完成');
     }
 

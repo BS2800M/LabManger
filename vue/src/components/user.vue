@@ -102,7 +102,6 @@
 <script setup>
 import { onMounted, reactive } from 'vue'
 import { api_user_show,api_user_del,api_user_add,api_user_update} from '@/api/user.js'
-import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import role_select from '@/components/role_select.vue'
 import team_select from '@/components/team_select.vue'
 import { formatRole } from '@/utils/format'
@@ -222,7 +221,6 @@ function handleRowClick({ rowData }) {
 
 async function add_drawer(){
   openAddDrawerFlow({
-    selectedRowId: state.selectedRowId,
     setSelectedRowId: (value) => { state.selectedRowId = value },
     resetFormData,
     onOpen: () => openDrawer('add'),
@@ -232,7 +230,6 @@ async function add_drawer(){
 async function edit_drawer(){
   tryOpenEditDrawerBySelection({
     selectedRowId: state.selectedRowId,
-    eventBus,
     title: '修改用户',
     emptyMessage: '请选择要修改的记录',
     onOpen: () => openDrawer('edit'),
@@ -241,7 +238,6 @@ async function edit_drawer(){
 
 function showDeleteUserConfirm() {
   showDeleteConfirmBySelection({
-    eventBus,
     selectedRowId: state.selectedRowId,
     title: '删除用户',
     emptyMessage: '请选择要删除的记录',
@@ -264,7 +260,6 @@ async function user_show() {
 
 async function user_del(){
   await deleteWithSelection({
-    eventBus,
     selectedRowId: state.selectedRowId,
     title: '删除用户',
     emptyMessage: '请选择要删除的记录',

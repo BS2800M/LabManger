@@ -3,16 +3,20 @@ import { LocationService } from './location.service';
 import { LocationDto, LocationZod } from './location.dto';
 import { ZodQuery, ZodBody } from '../common/decorators/zod.decorator';
 import { SessionUser, SessionUser as ISessionUser } from '../common/decorators/session-user.decorator';
+import { MangerPrismaService } from '../prisma/manger-prisma.service';
 
 @Controller('sensorMonitor/locations')
 export class LocationController {
-    constructor(private readonly locationService: LocationService) { }
+    constructor(
+        private readonly locationService: LocationService,
+        private readonly prisma: MangerPrismaService,
+    ) { }
     @Post('add')
     async add(
         @ZodBody(LocationZod.requestAdd) body: LocationDto['requestAdd'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.locationService.add(body, session);
+        return this.prisma.$transaction((tx) => this.locationService.add(body, session, tx));
     }
     @Get('show')
     async show(
@@ -26,14 +30,14 @@ export class LocationController {
         @ZodBody(LocationZod.requestUpdate) body: LocationDto['requestUpdate'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.locationService.update(body, session);
+        return this.prisma.$transaction((tx) => this.locationService.update(body, session, tx));
     }
     @Put('del')
     async del(
         @ZodBody(LocationZod.requestDel) body: LocationDto['requestDel'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.locationService.del(body, session);
+        return this.prisma.$transaction((tx) => this.locationService.del(body, session, tx));
     }
     @Get('showAll')
     async showAll(

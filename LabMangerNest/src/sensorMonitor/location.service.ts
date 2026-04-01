@@ -5,6 +5,7 @@ import { SessionUser } from '../common/decorators/session-user.decorator';
 import { Status } from '../common/enums/enums';
 import { SensorRecordService } from './sensorRecord.service';
 import { UserPrismaService } from '../prisma/user-prisma.service';
+import type { Prisma } from '../../generated/prisma-manger/client';
 @Injectable()
 export class LocationService {
     constructor(
@@ -32,14 +33,18 @@ export class LocationService {
         };
     }
 
-    async add(dto: LocationDto['requestAdd'], session: SessionUser): Promise<LocationDto['responseAdd']> {
+    async add(
+        dto: LocationDto['requestAdd'],
+        session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<LocationDto['responseAdd']> {
         if (dto.minTemperature > dto.maxTemperature) {
             throw new HttpException('最低温度不能大于最高温度', HttpStatus.BAD_REQUEST);
         }
         if (dto.minHumidity > dto.maxHumidity) {
             throw new HttpException('最低湿度不能大于最高湿度', HttpStatus.BAD_REQUEST);
         }
-        const location = await this.prisma.location.create({
+        const location = await tx.location.create({
             data: {
                 name: dto.name,
                 note: dto.note,
@@ -83,8 +88,12 @@ export class LocationService {
             meta: { total, page, pageSize, totalPage },
         };
     }
-    async update(dto: LocationDto['requestUpdate'], session: SessionUser): Promise<LocationDto['responseUpdate']> {
-        const location = await this.prisma.location.update({
+    async update(
+        dto: LocationDto['requestUpdate'],
+        session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<LocationDto['responseUpdate']> {
+        const location = await tx.location.update({
             where: { id: dto.id },
             data: {
                 name: dto.name,
@@ -98,15 +107,19 @@ export class LocationService {
                 status: dto.status,
             },
         });
-        await this.sensorRecordService.checkLocationWarning_TempHum(dto.id);
+        await this.sensorRecordService.checkLocationWarning_TempHum(dto.id, tx);
         const teamMap = await this.loadTeamMap([location.teamId]);
         return {
             success: true,
             data: this.mapLocationWithTeam(location, teamMap),
         };
     }
-    async del(dto: LocationDto['requestDel'], session: SessionUser): Promise<LocationDto['responseDel']> {
-        const location = await this.prisma.location.update({
+    async del(
+        dto: LocationDto['requestDel'],
+        session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<LocationDto['responseDel']> {
+        const location = await tx.location.update({
             where: { id: dto.id },
             data: {
                 status: Status.Delete,
@@ -129,5 +142,4 @@ export class LocationService {
         };
     }
 }   
-
 

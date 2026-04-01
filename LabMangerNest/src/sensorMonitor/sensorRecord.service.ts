@@ -4,6 +4,7 @@ import { SensorRecordDto } from './sensorRecord.dto';
 import { SessionUser } from '../common/decorators/session-user.decorator';
 import { Status } from '../common/enums/enums';
 import { UserPrismaService } from '../prisma/user-prisma.service';
+import type { Prisma } from '../../generated/prisma-manger/client';
 @Injectable()
 export class SensorRecordService {
     constructor(
@@ -13,12 +14,15 @@ export class SensorRecordService {
 
 
 
-    async checkLocationWarning_TempHum(locationId: number): Promise<void> {
-        const location = await this.prisma.location.findFirst({
+    async checkLocationWarning_TempHum(locationId: number, tx: Prisma.TransactionClient): Promise<void> {
+        const location = await tx.location.findFirst({
             where: { id: locationId },
         });
+        if (!location) {
+            throw new HttpException('不存在的位置id', HttpStatus.FORBIDDEN);
+        }
         if (location.lastUploadTemperature > location.maxTemperature || location.lastUploadTemperature < location.minTemperature) {
-            await this.prisma.location.update({
+            await tx.location.update({
                 where: { id: locationId },
                 data: {
                     warningTemperature: true,
@@ -26,7 +30,7 @@ export class SensorRecordService {
             });
         }
         else {
-            await this.prisma.location.update({
+            await tx.location.update({
                 where: { id: locationId },
                 data: {
                     warningTemperature: false,
@@ -34,7 +38,7 @@ export class SensorRecordService {
             });
         }
         if (location.lastUploadHumidity < location.minHumidity || location.lastUploadHumidity > location.maxHumidity) {
-            await this.prisma.location.update({
+            await tx.location.update({
                 where: { id: locationId },
                 data: {
                     warningHumidity: true,
@@ -42,7 +46,7 @@ export class SensorRecordService {
             });
         }
         else {
-            await this.prisma.location.update({
+            await tx.location.update({
                 where: { id: locationId },
                 data: {
                     warningHumidity: false,
@@ -51,9 +55,13 @@ export class SensorRecordService {
         }
     }
 
-    async add(dto: SensorRecordDto['requestAdd'], session: SessionUser): Promise<SensorRecordDto['responseAdd']> {
+    async add(
+        dto: SensorRecordDto['requestAdd'],
+        _session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<SensorRecordDto['responseAdd']> {
         const locationIds = [...new Set(dto.data.map(item => item.locationId))];
-        const validLocations = await this.prisma.location.findMany({
+        const validLocations = await tx.location.findMany({
             where: { id: { in: locationIds } },
             select: {
                 id: true,
@@ -78,7 +86,7 @@ export class SensorRecordService {
         });
         const teamNameMap = new Map(teamRows.map((team) => [team.id, team.name]));
 
-        await this.prisma.sensorRecord.createMany({
+        await tx.sensorRecord.createMany({
             data: dto.data.map(item => {
                 const loc = locationMap.get(item.locationId)!;
                 return {
@@ -94,9 +102,9 @@ export class SensorRecordService {
                 };
             }),
         });
-        let promises = [];
+        let promises: Promise<unknown>[] = [];
         for (const record of dto.data) {
-            promises.push(this.prisma.location.update({
+            promises.push(tx.location.update({
                 where: { id: record.locationId },
                 data: {
                     lastUploadTime: new Date(),
@@ -110,7 +118,7 @@ export class SensorRecordService {
         await Promise.all(promises);
         promises = [];
         for (const record of dto.data) {
-            promises.push(this.checkLocationWarning_TempHum(record.locationId));
+            promises.push(this.checkLocationWarning_TempHum(record.locationId, tx));
         }
         await Promise.all(promises);
 
@@ -165,21 +173,25 @@ export class SensorRecordService {
         };
     }
 
-    async update(dto: SensorRecordDto['requestUpdate'], session: SessionUser): Promise<SensorRecordDto['responseUpdate']> {
-        const exists = await this.prisma.sensorRecord.findFirst({
+    async update(
+        dto: SensorRecordDto['requestUpdate'],
+        _session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<SensorRecordDto['responseUpdate']> {
+        const exists = await tx.sensorRecord.findFirst({
             where: { id: dto.id },
         });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
         }
-        const validLocation = await this.prisma.location.findFirst({
+        const validLocation = await tx.location.findFirst({
             where: { id: dto.locationId },
             select: { id: true },
         });
         if (!validLocation) {
             throw new HttpException('不存在的位置id', HttpStatus.FORBIDDEN);
         }
-        const record = await this.prisma.sensorRecord.update({
+        const record = await tx.sensorRecord.update({
             where: { id: dto.id },
             data: {
                 temperature: dto.temperature,
@@ -201,15 +213,19 @@ export class SensorRecordService {
         return { success: true, data: recordx };
     }
 
-    async del(dto: SensorRecordDto['requestDel'], session: SessionUser): Promise<SensorRecordDto['responseDel']> {
-        const exists = await this.prisma.sensorRecord.findFirst({
+    async del(
+        dto: SensorRecordDto['requestDel'],
+        _session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<SensorRecordDto['responseDel']> {
+        const exists = await tx.sensorRecord.findFirst({
             where: { id: dto.id },
         });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
         }
 
-        const record = await this.prisma.sensorRecord.delete({
+        const record = await tx.sensorRecord.delete({
             where: { id: dto.id },
             include: {
                 location: {
@@ -248,8 +264,8 @@ export class SensorRecordService {
         return { success: true, data: recordsx };
     }
 
-    async checkUploadTimeout(): Promise<{ overdueCount: number; normalCount: number }> {
-        const locations = await this.prisma.location.findMany({
+    async checkUploadTimeout(tx: Prisma.TransactionClient): Promise<{ overdueCount: number; normalCount: number }> {
+        const locations = await tx.location.findMany({
             where: { uploadIntervalMinutes: { gt: 0 },status:Status.Enable },
             select: { id: true, lastUploadTime: true, uploadIntervalMinutes: true },
         });
@@ -269,11 +285,11 @@ export class SensorRecordService {
         }
 
         await Promise.all([
-            overdueIds.length > 0 && this.prisma.location.updateMany({
+            overdueIds.length > 0 && tx.location.updateMany({
                 where: { id: { in: overdueIds } },
                 data: { warningUploadTime: true },
             }),
-            normalIds.length > 0 && this.prisma.location.updateMany({
+            normalIds.length > 0 && tx.location.updateMany({
                 where: { id: { in: normalIds } },
                 data: { warningUploadTime: false },
             }),

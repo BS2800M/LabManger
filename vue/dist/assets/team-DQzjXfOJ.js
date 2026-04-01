@@ -1,1 +1,0 @@
-import{c as t}from"./request-CGr6qImx.js";let n=e=>t.get("/identity/team/show",{name:e.name,page:e.page,pageSize:e.pageSize}),i=e=>t.put("/identity/team/del",{id:e}),p=e=>t.put("/identity/team/update",{id:e.id,name:e.name,phone:e.phone,note:e.note,status:e.status}),m=e=>t.post("/identity/team/add",{name:e.name,phone:e.phone,note:e.note});export{n as a,p as b,m as c,i as d};

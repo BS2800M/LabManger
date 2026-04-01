@@ -6,7 +6,11 @@
     </div>
     <div class="quick-outbound-row">
       <span class="quick-outbound-label">{{ quickOutbound.useUdi ? '医疗器械唯一标识' : '条码号' }}</span>
+      <div class="quick-outbound-hint-slot">
+        <UdiScanHint v-if="quickOutbound.useUdi" />
+      </div>
       <el-switch
+        class="quick-outbound-switch"
         v-model="quickOutbound.useUdi"
         size="large"
         :width="60"
@@ -24,29 +28,16 @@
         clearable
         @keydown.enter.prevent="operation_outbound"
       />
+      <el-input
+        class="quick-outbound-note"
+        v-model="quickOutbound.note"
+        placeholder="注释（可选）"
+        clearable
+        @keydown.enter.prevent="operation_outbound"
+      />
       <button class="stock-action-btn stock-action-btn--inline" @click="operation_outbound">
         <span>出库</span>
       </button>
-      <el-button
-        class="serial-toggle-btn"
-        :loading="serialState.connecting"
-        :type="serialState.running ? 'danger' : 'primary'"
-        :disabled="!quickOutbound.useUdi"
-        @click="handleSerialToggle"
-      >
-        {{ serialState.running ? '断开串口' : '连接串口' }}
-      </el-button>
-      <el-switch
-        v-model="serialState.autoSubmit"
-        class="serial-mode-switch"
-        inline-prompt
-        active-text="自动出库"
-        inactive-text="仅填充"
-        :disabled="!serialState.running || !quickOutbound.useUdi"
-      />
-      <span class="serial-status" :class="{ 'serial-status--online': serialState.running }">
-        {{ serialStatusText }}
-      </span>
     </div>
   </section>
 
@@ -138,50 +129,28 @@ import { ElMessage } from 'element-plus'
 import { h } from 'vue'
 import { ElButton } from 'element-plus'
 import 'element-plus/dist/index.css'
-import { reactive, ref, computed, onBeforeUnmount, onMounted } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { api_operation_fast_outbound, api_operation_outbound } from '../api/operation';
 import ReagentSelect from '@/components/reagent_select.vue'
 import LotSelect from '@/components/lot_select.vue'
+import UdiScanHint from '@/components/udi_scan_hint.vue'
 import { syncSubmitDisabledByFields } from '@/utils/crud'
 import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
-import {
-  isSerialSupported,
-  requestSerialPort,
-  startSerialScanner,
-  saveSerialPortPreference,
-  clearSerialPortPreference,
-  getPreferredSerialPort,
-} from '@/utils/serialScanner'
 
 const reagentOptions = ref([])
 const lotOptions = ref([])
 const quickOutbound = reactive({
     useUdi: false,
     rawInput: '',
+    note: '',
 })
 const quickOutboundSubmitting = ref(false)
-const serialScannerController = ref(null)
-const serialState = reactive({
-    supported: isSerialSupported(),
-    connecting: false,
-    running: false,
-    autoSubmit: true,
-})
 
 const quickOutboundInputDisplay = computed({
     get: () => (quickOutbound.useUdi ? gs1RawToVisible(quickOutbound.rawInput) : quickOutbound.rawInput),
     set: (value) => {
         quickOutbound.rawInput = quickOutbound.useUdi ? gs1VisibleToRaw(value) : String(value ?? '')
     },
-})
-const serialStatusText = computed(() => {
-    if (!serialState.supported) return '当前浏览器不支持串口模式'
-    if (!quickOutbound.useUdi) return '切换到 UDI 模式后可用串口扫码'
-    if (serialState.connecting) return '正在连接串口设备...'
-    if (serialState.running) {
-        return serialState.autoSubmit ? '串口已连接，扫码后自动出库' : '串口已连接，扫码后仅填充输入框'
-    }
-    return '可连接串口扫码枪'
 })
 
 
@@ -238,9 +207,11 @@ async function operation_outbound(){
         useUdi: quickOutbound.useUdi,
         udi: quickOutbound.useUdi ? normalizedValue : '',
         barcodeNumber: quickOutbound.useUdi ? '' : normalizedValue,
+        note: String(quickOutbound.note ?? '').trim(),
       }
         )
         quickOutbound.rawInput = ""
+        quickOutbound.note = ""
         const msg = data.data?.message ?? ''
         const warningKeyWord = ["库存不足", "该条码已经出库", "该条码未进行入库", "该UDI已经出库", "该UDI未进行入库"]
         ElMessage({
@@ -261,91 +232,8 @@ async function operation_outbound(){
     }
 }
 
-async function handleQuickModeChange() {
-    if (!quickOutbound.useUdi) {
-        await stopSerialMode(true, false)
-    }
+function handleQuickModeChange() {
     quickOutbound.rawInput = ''
-}
-
-function getErrorMessage(error, fallback) {
-    return error?.message || error?.toString?.() || fallback
-}
-
-async function stopSerialMode(silent = false, clearSavedPreference = false) {
-    const controller = serialScannerController.value
-    serialScannerController.value = null
-    const wasRunning = serialState.running
-
-    if (controller) {
-        await controller.stop()
-    }
-
-    serialState.running = false
-    serialState.connecting = false
-
-    if (clearSavedPreference) {
-        clearSerialPortPreference()
-    }
-
-    if (!silent && wasRunning) {
-        ElMessage.info('串口已断开')
-    }
-}
-
-async function startSerialMode(initialPort = null, silentOnSuccess = false) {
-    if (!serialState.supported) {
-        ElMessage.warning('当前浏览器不支持串口模式，请使用 Chromium 内核浏览器')
-        return
-    }
-    if (!quickOutbound.useUdi) {
-        ElMessage.warning('仅 UDI 模式支持串口扫码')
-        return
-    }
-
-    serialState.connecting = true
-    try {
-        const port = initialPort ?? await requestSerialPort()
-        const controller = await startSerialScanner({
-            port,
-            baudRate: 9600,
-            closePortOnStop: true,
-            onScan: (scanText) => {
-                quickOutbound.rawInput = scanText
-                if (serialState.autoSubmit) {
-                    void operation_outbound()
-                }
-            },
-            onError: (error) => {
-                ElMessage.error(getErrorMessage(error, '串口读取失败'))
-                void stopSerialMode(true)
-            },
-        })
-
-        serialScannerController.value = controller
-        serialState.running = true
-        saveSerialPortPreference(port)
-        if (!silentOnSuccess) {
-            ElMessage.success('串口已连接，等待扫码')
-        }
-    } catch (error) {
-        if (error?.name === 'NotFoundError') {
-            ElMessage.info('已取消选择串口设备')
-        } else {
-            ElMessage.error(getErrorMessage(error, '串口连接失败'))
-        }
-    } finally {
-        serialState.connecting = false
-    }
-}
-
-async function handleSerialToggle() {
-    if (serialState.connecting) return
-    if (serialState.running) {
-        await stopSerialMode(false, true)
-        return
-    }
-    await startSerialMode()
 }
 
 
@@ -421,20 +309,6 @@ function handleLotOptionsLoaded(options) {
   lotOptions.value = options
 }
 
-onBeforeUnmount(() => {
-  void stopSerialMode(true, false)
-})
-
-onMounted(async () => {
-  try {
-    const preferredPort = await getPreferredSerialPort()
-    if (!preferredPort) return
-    quickOutbound.useUdi = true
-    await startSerialMode(preferredPort, true)
-  } catch {
-    // 自动恢复失败时静默，避免影响页面主流程。
-  }
-})
 </script>
 
 
@@ -492,6 +366,16 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
+.quick-outbound-hint-slot {
+  width: 96px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.quick-outbound-switch {
+  flex-shrink: 0;
+}
+
 .quick-outbound-label {
   min-width: 168px;
   color: var(--el-text-color-primary);
@@ -504,23 +388,12 @@ onMounted(async () => {
   max-width: 56vw;
 }
 
-.serial-toggle-btn {
-  height: 40px;
+.quick-outbound-note {
+  width: 260px;
 }
 
-.serial-mode-switch {
-  min-height: 40px;
-}
-
-.serial-status {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.serial-status--online {
-  color: var(--el-color-success);
-  font-weight: 600;
+.stock-action-btn--inline {
+  flex-shrink: 0;
 }
 
 :deep(.quick-outbound-input .el-input__wrapper) {

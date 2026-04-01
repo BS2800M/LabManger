@@ -3,17 +3,21 @@ import { OperationService } from './operation.service';
 import { OperationDto, OperationZod } from './operation.dto';
 import { ZodQuery, ZodBody } from '../common/decorators/zod.decorator';
 import { SessionUser, SessionUser as ISessionUser } from '../common/decorators/session-user.decorator';
+import { MangerPrismaService } from '../prisma/manger-prisma.service';
 
 @Controller('stock/operations')
 export class OperationController {
-    constructor(private readonly operationService: OperationService) { }
+    constructor(
+        private readonly operationService: OperationService,
+        private readonly prisma: MangerPrismaService,
+    ) { }
 
     @Post('fastInbound')
     async fastInbound(
         @ZodBody(OperationZod.requestFastInbound) body: OperationDto['requestFastInbound'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.operationService.fastInbound(body, session);
+        return this.prisma.$transaction((tx) => this.operationService.fastInbound(body, session, tx));
     }
 
     @Post('inbound')
@@ -21,7 +25,7 @@ export class OperationController {
         @ZodBody(OperationZod.requestInbound) body: OperationDto['requestInbound'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.operationService.inbound(body, session);
+        return this.prisma.$transaction((tx) => this.operationService.inbound(body, session, tx));
     }
 
     @Post('fastOutbound')
@@ -29,7 +33,7 @@ export class OperationController {
         @ZodBody(OperationZod.requestFastOutbound) body: OperationDto['requestFastOutbound'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.operationService.fastOutbound(body, session);
+        return this.prisma.$transaction((tx) => this.operationService.fastOutbound(body, session, tx));
     }
 
     @Post('Outbound')
@@ -37,7 +41,7 @@ export class OperationController {
         @ZodBody(OperationZod.requestOutbound) body: OperationDto['requestOutbound'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.operationService.outbound(body, session);
+        return this.prisma.$transaction((tx) => this.operationService.outbound(body, session, tx));
     }
 
     @Get('show')
@@ -60,6 +64,6 @@ export class OperationController {
         @ZodBody(OperationZod.requestDisable) body: OperationDto['requestDisable'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.operationService.disable(body, session);
+        return this.prisma.$transaction((tx) => this.operationService.disable(body, session, tx));
     }
 }

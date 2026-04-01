@@ -3,17 +3,21 @@ import { SensorRecordService } from './sensorRecord.service';
 import { SensorRecordDto, SensorRecordZod } from './sensorRecord.dto';
 import { ZodQuery, ZodBody } from '../common/decorators/zod.decorator';
 import { SessionUser, SessionUser as ISessionUser } from '../common/decorators/session-user.decorator';
+import { MangerPrismaService } from '../prisma/manger-prisma.service';
 
 @Controller('sensorMonitor/sensorRecord')
 export class SensorRecordController {
-    constructor(private readonly sensorRecordService: SensorRecordService) { }
+    constructor(
+        private readonly sensorRecordService: SensorRecordService,
+        private readonly prisma: MangerPrismaService,
+    ) { }
 
     @Post('add')
     async add(
         @ZodBody(SensorRecordZod.requestAdd) body: SensorRecordDto['requestAdd'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.sensorRecordService.add(body, session);
+        return this.prisma.$transaction((tx) => this.sensorRecordService.add(body, session, tx));
     }
 
     @Get('show')
@@ -29,7 +33,7 @@ export class SensorRecordController {
         @ZodBody(SensorRecordZod.requestUpdate) body: SensorRecordDto['requestUpdate'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.sensorRecordService.update(body, session);
+        return this.prisma.$transaction((tx) => this.sensorRecordService.update(body, session, tx));
     }
 
     @Put('del')
@@ -37,7 +41,7 @@ export class SensorRecordController {
         @ZodBody(SensorRecordZod.requestDel) body: SensorRecordDto['requestDel'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.sensorRecordService.del(body, session);
+        return this.prisma.$transaction((tx) => this.sensorRecordService.del(body, session, tx));
     }
 
     @Get('showAll')

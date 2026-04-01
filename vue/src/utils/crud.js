@@ -1,4 +1,4 @@
-import { EVENT_TYPES } from '@/utils/eventBus'
+import { closeMessageBox, openConfirmMessageBox, openInfoMessageBox } from '@/utils/messagebox'
 
 /**
  * 判断表单必填字段是否全部已填写。
@@ -61,7 +61,6 @@ export function toggleRowSelection({
 /**
  * 删除前统一弹确认框；未选中时提示信息框。
  * @param {Object} params 参数对象。
- * @param {any} params.eventBus 事件总线实例。
  * @param {any} params.selectedRowId 当前选中行 ID。
  * @param {string} params.title 弹框标题。
  * @param {string} params.emptyMessage 未选中时提示文案。
@@ -70,7 +69,6 @@ export function toggleRowSelection({
  * @returns {boolean} true 表示已弹确认框，false 表示未选中。
  */
 export function showDeleteConfirmBySelection({
-  eventBus,
   selectedRowId,
   title,
   emptyMessage,
@@ -78,17 +76,16 @@ export function showDeleteConfirmBySelection({
   onConfirm,
 }) {
   if (selectedRowId == null) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title, message: emptyMessage })
+    openInfoMessageBox({ title, message: emptyMessage })
     return false
   }
-  eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'confirm', title, message: confirmMessage, action: onConfirm })
+  openConfirmMessageBox({ title, message: confirmMessage, action: onConfirm })
   return true
 }
 
 /**
  * 统一执行删除流程：选中校验 -> 删除 -> 后置刷新 -> 关闭弹框。
  * @param {Object} params 参数对象。
- * @param {any} params.eventBus 事件总线实例。
  * @param {any} params.selectedRowId 当前选中行 ID。
  * @param {string} params.title 弹框标题。
  * @param {string} params.emptyMessage 未选中时提示文案。
@@ -97,7 +94,6 @@ export function showDeleteConfirmBySelection({
  * @returns {Promise<boolean>} true 表示执行了删除，false 表示未选中未删除。
  */
 export async function deleteWithSelection({
-  eventBus,
   selectedRowId,
   title,
   emptyMessage,
@@ -105,13 +101,13 @@ export async function deleteWithSelection({
   onAfterDelete,
 }) {
   if (selectedRowId == null) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title, message: emptyMessage })
+    openInfoMessageBox({ title, message: emptyMessage })
     return false
   }
 
   await deleteAction(selectedRowId)
   if (typeof onAfterDelete === 'function') await onAfterDelete()
-  eventBus.emit(EVENT_TYPES.CLOSE_MESSAGEBOX)
+  closeMessageBox()
   return true
 }
 
@@ -166,20 +162,18 @@ export function openDrawerByMode({ state, mode, beforeOpen, afterOpen }) {
   state.drawerMode = mode
   state.selectedRowId = null
   state.drawer = true
-  console.log(state.selectedRowId)
   if (typeof afterOpen === 'function') afterOpen()
 }
 
 /**
  * 统一“新增”按钮流程（清空选中 + 重置表单 + 打开抽屉）。
  * @param {Object} params 参数对象。
- * @param {any} [params.selectedRowId=null] 当前选中行 ID（与编辑流程参数保持一致）。
  * @param {(value: any) => void} params.setSelectedRowId 设置选中行 ID 的函数。
  * @param {() => void} [params.resetFormData] 重置表单回调。
  * @param {() => void} params.onOpen 真正打开抽屉的回调。
  */
-export function openAddDrawerFlow({ selectedRowId = null, setSelectedRowId, resetFormData, onOpen }) {
-  setSelectedRowId(selectedRowId)
+export function openAddDrawerFlow({ setSelectedRowId, resetFormData, onOpen }) {
+  setSelectedRowId(null)
   if (typeof resetFormData === 'function') resetFormData()
   onOpen()
 }
@@ -188,7 +182,6 @@ export function openAddDrawerFlow({ selectedRowId = null, setSelectedRowId, rese
  * 统一“编辑”按钮流程（选中校验 + 打开抽屉或提示）。
  * @param {Object} params 参数对象。
  * @param {any} params.selectedRowId 当前选中行 ID。
- * @param {any} params.eventBus 事件总线实例。
  * @param {string} params.title 提示框标题。
  * @param {string} params.emptyMessage 未选中时提示文案。
  * @param {() => void} params.onOpen 选中有效时打开抽屉回调。
@@ -196,7 +189,6 @@ export function openAddDrawerFlow({ selectedRowId = null, setSelectedRowId, rese
  */
 export function tryOpenEditDrawerBySelection({
   selectedRowId,
-  eventBus,
   title,
   emptyMessage,
   onOpen,
@@ -205,7 +197,7 @@ export function tryOpenEditDrawerBySelection({
     onOpen()
     return true
   }
-  eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'info', title, message: emptyMessage })
+  openInfoMessageBox({ title, message: emptyMessage })
   return false
 }
 

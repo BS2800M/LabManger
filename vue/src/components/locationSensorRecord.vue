@@ -193,7 +193,6 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { onMounted, reactive, ref } from 'vue'
 import { api_location_show, api_location_del, api_location_update, api_location_add, api_location_showAll } from '@/api/location'
 import { api_sensorRecord_show, api_sensorRecord_add, api_sensorRecord_update, api_sensorRecord_del } from '@/api/sensorRecord'
-import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { sensorRecord_exporttoexcel_list } from '@/utils/exportexcel.js'
 import { formatDateColumn, getnowtime_previousmonth, getnowtime, format_YYYYMMDDHHmm_iso } from '@/utils/format'
 import {
@@ -390,7 +389,6 @@ function getLocationStatusClass({ row }) {
 
 function openLocationAddDrawer() {
   openAddDrawerFlow({
-    selectedRowId: locationState.selectedRowId,
     setSelectedRowId: (value) => { locationState.selectedRowId = value },
     resetFormData: resetLocationFormData,
     onOpen: () => openLocationDrawer('add'),
@@ -400,7 +398,6 @@ function openLocationAddDrawer() {
 function openLocationEditDrawer() {
   tryOpenEditDrawerBySelection({
     selectedRowId: locationState.selectedRowId,
-    eventBus,
     title: '修改位置',
     emptyMessage: '请选择要修改的位置',
     onOpen: () => openLocationDrawer('edit'),
@@ -409,7 +406,6 @@ function openLocationEditDrawer() {
 
 function showDeleteLocationConfirm() {
   showDeleteConfirmBySelection({
-    eventBus,
     selectedRowId: locationState.selectedRowId,
     title: '删除位置',
     emptyMessage: '请选择要删除的位置',
@@ -426,7 +422,6 @@ async function locationShow() {
 
 async function locationDel() {
   await deleteWithSelection({
-    eventBus,
     selectedRowId: locationState.selectedRowId,
     title: '删除位置',
     emptyMessage: '请选择要删除的位置',
@@ -528,7 +523,6 @@ function getSensorRowClass(rowData, rowIndex) {
 
 function openSensorAddDrawer() {
   openAddDrawerFlow({
-    selectedRowId: sensorState.selectedRowId,
     setSelectedRowId: (value) => { sensorState.selectedRowId = value },
     resetFormData: resetSensorFormData,
     onOpen: () => openSensorDrawer('add'),
@@ -538,7 +532,6 @@ function openSensorAddDrawer() {
 function openSensorEditDrawer() {
   tryOpenEditDrawerBySelection({
     selectedRowId: sensorState.selectedRowId,
-    eventBus,
     title: '修改记录',
     emptyMessage: '请选择要修改的记录',
     onOpen: () => openSensorDrawer('edit'),
@@ -547,7 +540,6 @@ function openSensorEditDrawer() {
 
 function showDeleteSensorConfirm() {
   showDeleteConfirmBySelection({
-    eventBus,
     selectedRowId: sensorState.selectedRowId,
     title: '删除记录',
     emptyMessage: '请选择要删除的记录',
@@ -575,7 +567,6 @@ async function sensorRecordShow() {
 
 async function sensorRecordDel() {
   await deleteWithSelection({
-    eventBus,
     selectedRowId: sensorState.selectedRowId,
     title: '删除记录',
     emptyMessage: '请选择要删除的记录',

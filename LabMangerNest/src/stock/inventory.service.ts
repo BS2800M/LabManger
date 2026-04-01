@@ -4,6 +4,7 @@ import { InventoryDto } from './inventory.dto';
 import { OperationAction } from '../common/enums/enums';
 import { SessionUser } from '../common/decorators/session-user.decorator';
 import { Status } from '../common/enums/enums';
+import type { Prisma } from '../../generated/prisma-manger/client';
 @Injectable()
 export class InventoryService {
     constructor(private readonly prisma: MangerPrismaService) { }
@@ -14,11 +15,20 @@ export class InventoryService {
         lotId: number;
         teamId: number;
         number?: number;
-    }): Promise<void> {
+    }, tx: Prisma.TransactionClient): Promise<void> {
+        await this.addWithDb(params, tx);
+    }
+
+    private async addWithDb(params: {
+        reagentId: number;
+        lotId: number;
+        teamId: number;
+        number?: number;
+    }, db: Prisma.TransactionClient): Promise<void> {
         const { reagentId, lotId, teamId, number = 0 } = params;
         let targetInventoryId: number | null = null;
 
-        const lot = await this.prisma.lot.findFirst({
+        const lot = await db.lot.findFirst({
             where: { id: lotId },
             select: { id: true, reagentId: true },
         });
@@ -29,7 +39,7 @@ export class InventoryService {
             throw new HttpException('批号不属于该试剂', HttpStatus.FORBIDDEN);
         }
 
-        const exists = await this.prisma.inventory.findFirst({
+        const exists = await db.inventory.findFirst({
             where: { reagentId, lotId },
             select: { id: true, status: true },
         });
@@ -37,7 +47,7 @@ export class InventoryService {
             throw new HttpException('库存记录已存在', HttpStatus.FORBIDDEN);
         }
         if (exists && exists.status === Status.Delete) {
-            await this.prisma.inventory.update({
+            await db.inventory.update({
                 where: { id: exists.id },
                 data: {
                     teamId,
@@ -49,7 +59,7 @@ export class InventoryService {
             });
             targetInventoryId = exists.id;
         } else {
-            const created = await this.prisma.inventory.create({
+            const created = await db.inventory.create({
                 data: {
                     reagentId,
                     lotId,
@@ -63,13 +73,13 @@ export class InventoryService {
         
         // 按 inventory id 重算库存数量（number）
         if (targetInventoryId != null) {
-            await this.recalculateInventoryNumbersByInventoryIds([targetInventoryId]);
+            await this.recalculateInventoryNumbersByInventoryIds([targetInventoryId], db);
         }
 
         // 新增库存后，立即刷新数量预警与有效期预警
         await Promise.all([
-            this.updateInventory(reagentId, 0, lotId),
-            this.updateExpirationWarning(lotId),
+            this.updateInventory(reagentId, 0, lotId, db),
+            this.updateExpirationWarning(lotId, db),
         ]);
 
     }
@@ -82,10 +92,20 @@ export class InventoryService {
         lotId: number;
         teamId: number;
         number?: number;
-    }): Promise<void> {
+    }, tx: Prisma.TransactionClient): Promise<void> {
+        await this.updateWithDb(params, tx);
+    }
+
+    private async updateWithDb(params: {
+        id: number;
+        reagentId: number;
+        lotId: number;
+        teamId: number;
+        number?: number;
+    }, db: Prisma.TransactionClient): Promise<void> {
         const { id, reagentId, lotId, teamId, number = 0 } = params;
 
-        const exists = await this.prisma.inventory.findFirst({
+        const exists = await db.inventory.findFirst({
             where: { id, status: { not: Status.Delete } },
             select: { id: true, reagentId: true, lotId: true },
         });
@@ -93,7 +113,7 @@ export class InventoryService {
             throw new HttpException('不存在的库存记录', HttpStatus.FORBIDDEN);
         }
 
-        const lot = await this.prisma.lot.findFirst({
+        const lot = await db.lot.findFirst({
             where: { id: lotId },
             select: { id: true, reagentId: true },
         });
@@ -104,7 +124,7 @@ export class InventoryService {
             throw new HttpException('批号不属于该试剂', HttpStatus.FORBIDDEN);
         }
 
-        const duplicate = await this.prisma.inventory.findFirst({
+        const duplicate = await db.inventory.findFirst({
             where: {
                 id: { not: id },
                 reagentId,
@@ -117,7 +137,7 @@ export class InventoryService {
             throw new HttpException('库存记录已存在', HttpStatus.FORBIDDEN);
         }
 
-        await this.prisma.inventory.update({
+        await db.inventory.update({
             where: { id },
             data: {
                 reagentId,
@@ -131,11 +151,11 @@ export class InventoryService {
         const affectedLotIds = [...new Set([exists.lotId, lotId])];
 
         // 按 inventory id 重算库存数量（number）
-        await this.recalculateInventoryNumbersByInventoryIds([id]);
+        await this.recalculateInventoryNumbersByInventoryIds([id], db);
         // 更新后刷新数量预警与有效期预警
         await Promise.all([
-            ...affectedReagentIds.map((rid) => this.updateInventory(rid, 0)),
-            ...affectedLotIds.map((lid) => this.updateExpirationWarning(lid)),
+            ...affectedReagentIds.map((rid) => this.updateInventory(rid, 0, undefined, db)),
+            ...affectedLotIds.map((lid) => this.updateExpirationWarning(lid, db)),
         ]);
 
 
@@ -170,35 +190,36 @@ export class InventoryService {
     public async updateInventory(
         reagentId: number,
         delta: number,
-        lotId?: number,
+        lotId: number | undefined,
+        tx: Prisma.TransactionClient,
     ): Promise<{ isSuccess: boolean; message: string }> {
-        const reagent = await this.prisma.reagent.findFirst({
+        const reagent = await tx.reagent.findFirst({
             where: { id: reagentId },
             select: { name: true, warnNumber: true },
         });
         if (!reagent) return { isSuccess: false, message: '试剂不存在' }; 
 
         if (lotId !== undefined && delta !== 0) {
-            const inv = await this.prisma.inventory.findFirst({ where: { reagentId, lotId, status: { not: Status.Delete } } });
+            const inv = await tx.inventory.findFirst({ where: { reagentId, lotId, status: { not: Status.Delete } } });
             if (!inv) return { isSuccess: false, message: '库存记录不存在' }; 
 
             if (delta < 0 && inv.number + delta < 0) {
                 return { isSuccess: false, message: `${reagent.name}库存不足` };
             }
 
-            await this.prisma.inventory.updateMany({
+            await tx.inventory.updateMany({
                 where: { reagentId, lotId, status: { not: Status.Delete } },
                 data: { number: { increment: delta } },
             });
         }
 
-        const total = (await this.prisma.inventory.aggregate({
+        const total = (await tx.inventory.aggregate({
             where: { reagentId, status: { not: Status.Delete } },
             _sum: { number: true },
         }))._sum.number ?? 0;
 
         const isWarning = total <= reagent.warnNumber;
-        await this.prisma.inventory.updateMany({
+        await tx.inventory.updateMany({
             where: { reagentId, status: { not: Status.Delete } },
             data: { warningNum: isWarning },
         });
@@ -209,8 +230,8 @@ export class InventoryService {
 
     // 检查有效期预警：expirationDate <= 今天 + warnDays 时置 warningExpirationDate=true
     // 不传 lotId 则检查全部库存，传 lotId 则仅检查该批号
-    public async updateExpirationWarning(lotId?: number): Promise<void> {
-        const inventories = await this.prisma.inventory.findMany({
+    public async updateExpirationWarning(lotId: number | undefined, tx: Prisma.TransactionClient): Promise<void> {
+        const inventories = await tx.inventory.findMany({
             where: lotId !== undefined
                 ? { lotId, status: { not: Status.Delete } }
                 : { status: { not: Status.Delete } },
@@ -234,11 +255,11 @@ export class InventoryService {
         }
 
         await Promise.all([
-            trueIds.length > 0 && this.prisma.inventory.updateMany({
+            trueIds.length > 0 && tx.inventory.updateMany({
                 where: { id: { in: trueIds } },
                 data: { warningExpirationDate: true },
             }),
-            falseIds.length > 0 && this.prisma.inventory.updateMany({
+            falseIds.length > 0 && tx.inventory.updateMany({
                 where: { id: { in: falseIds } },
                 data: { warningExpirationDate: false },
             }),
@@ -246,11 +267,14 @@ export class InventoryService {
     }
 
     // 按 inventory id 重算库存数量（number），基于操作历史记录计算
-    public async recalculateInventoryNumbersByInventoryIds(inventoryIds: number[]): Promise<void> {
+    public async recalculateInventoryNumbersByInventoryIds(
+        inventoryIds: number[],
+        tx: Prisma.TransactionClient,
+    ): Promise<void> {
         const uniqueIds = [...new Set(inventoryIds.filter((id) => Number.isInteger(id) && id > 0))];
         if (uniqueIds.length === 0) return;
 
-        const inventories = await this.prisma.inventory.findMany({
+        const inventories = await tx.inventory.findMany({
             where: { id: { in: uniqueIds }, status: { not: Status.Delete } },
             select: { id: true, reagentId: true, lotId: true },
         });
@@ -258,7 +282,7 @@ export class InventoryService {
         await Promise.all(
             inventories.map(async (inv) => {
                 const [inbound, outbound] = await Promise.all([
-                    this.prisma.operation.count({
+                    tx.operation.count({
                         where: {
                             reagentId: inv.reagentId,
                             lotId: inv.lotId,
@@ -266,7 +290,7 @@ export class InventoryService {
                             status: Status.Enable,
                         },
                     }),
-                    this.prisma.operation.count({
+                    tx.operation.count({
                         where: {
                             reagentId: inv.reagentId,
                             lotId: inv.lotId,
@@ -276,7 +300,7 @@ export class InventoryService {
                     }),
                 ]);
 
-                await this.prisma.inventory.update({
+                await tx.inventory.update({
                     where: { id: inv.id },
                     data: { number: inbound - outbound },
                 });
@@ -334,22 +358,22 @@ export class InventoryService {
         };
     }
 
-    async auditAll(session: SessionUser): Promise<InventoryDto['responseAuditAll']> {
-        const inventories = await this.prisma.inventory.findMany({
+    async auditAll(session: SessionUser, tx: Prisma.TransactionClient): Promise<InventoryDto['responseAuditAll']> {
+        const inventories = await tx.inventory.findMany({
             where: { status: { not: Status.Delete } },
         });
 
         await Promise.all(
             inventories.map(async inv => {
                 const [inbound, outbound] = await Promise.all([
-                    this.prisma.operation.count({
+                    tx.operation.count({
                         where: { reagentId: inv.reagentId, lotId: inv.lotId, action: OperationAction.Inbound ,status: Status.Enable},
                     }),
-                    this.prisma.operation.count({
+                    tx.operation.count({
                         where: { reagentId: inv.reagentId, lotId: inv.lotId, action: OperationAction.Outbound ,status: Status.Enable},
                     }),
                 ]);
-                await this.prisma.inventory.update({
+                await tx.inventory.update({
                     where: { id: inv.id },
                     data: { number: inbound - outbound },
                 });
@@ -416,9 +440,3 @@ export class InventoryService {
         };
     }
 }
-
-
-
-
-
-

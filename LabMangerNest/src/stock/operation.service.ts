@@ -10,7 +10,7 @@ import type { Prisma } from '../../generated/prisma-manger/client';
 import { LotService } from './lot.service';
 import { GS1Field, GS1Parser } from '@valentynb/gs1-parser';
 
-type OperationQueryFilters = Pick<OperationDto['requestShow'], 'reagentName' | 'barcodeNumber' | 'startTime' | 'endTime'>;
+type OperationQueryFilters = Pick<OperationDto['requestShow'], 'reagentName' | 'barcodeNumber' | 'udi' | 'startTime' | 'endTime'>;
 
 const operationListInclude = {
     reagent: { select: { id: true, name: true } },
@@ -71,8 +71,8 @@ export class OperationService {
     /**
      * 预留一段连续条码号区间，返回本次区间起始值。
      */
-    private async reserveBarcodeRange(count: number): Promise<bigint> {
-        const row = await this.prisma.barcodeCounter.upsert({
+    private async reserveBarcodeRange(count: number, tx: Prisma.TransactionClient): Promise<bigint> {
+        const row = await tx.barcodeCounter.upsert({
             where: { id: 1 },
             create: { id: 1, value: count },
             update: { value: { increment: count } },
@@ -90,7 +90,7 @@ export class OperationService {
     /**
      * 使用 GS1 解析库解析 UDI，并抽取业务必需字段。
      */
-    private parseUdi(udi: string): { di: string; lotName: string; ProductionDate: Date; expirationDate: Date; serialNumber: string } | null {
+    private parseUdi(udi: string): { di: string; lotName: string; ProductionDate: Date; expirationDate: Date } | null {
         const normalized = String(udi ?? '').trim();
         if (!normalized) return null;
 
@@ -101,20 +101,19 @@ export class OperationService {
             const lotName = decoded.data[GS1Field.BATCH]?.data;
             const productionDate = decoded.data[GS1Field.PROD_DATE]?.data;
             const expirationDate = decoded.data[GS1Field.EXP_DATE]?.data;
-            const serialNumber = decoded.data[GS1Field.SERIAL]?.data;
+            const parsedSerial = decoded.data[GS1Field.SERIAL]?.data;
 
             if (typeof di !== 'string' || !/^\d{14}$/.test(di)) return null;
             if (typeof lotName !== 'string' || lotName.trim() === '') return null;
             if (!(productionDate instanceof Date) || Number.isNaN(productionDate.getTime())) return null;
             if (!(expirationDate instanceof Date) || Number.isNaN(expirationDate.getTime())) return null;
-            if (typeof serialNumber !== 'string' || serialNumber.trim() === '') return null;
+            if (typeof parsedSerial !== 'string' || parsedSerial.trim() === '') return null;
 
             return {
                 di,
                 lotName: lotName.trim(),
                 ProductionDate: productionDate,
                 expirationDate,
-                serialNumber: serialNumber.trim(),
             };
         } catch {
             return null;
@@ -127,13 +126,19 @@ export class OperationService {
      * 2. 按 UDI 中首个 "01" 提取 14 位 DI，失败返回“无效的UDI”；
      * 3. 用 DI 匹配试剂，未维护返回“该UDI 试剂信息没有维护”。
      */
-    async fastInbound(dto: OperationDto['requestFastInbound'], session: SessionUser): Promise<OperationDto['responseFastInbound']> {
-        let addlot=null;
-        const normalizedUdi = this.parseUdi(dto.udi);
+    async fastInbound(
+        dto: OperationDto['requestFastInbound'],
+        session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<OperationDto['responseFastInbound']> {
+        const normalizedUdiInput = String(dto.udi ?? '').trim();
+        const normalizedNote = String(dto.note ?? '').trim();
+        const normalizedUdi = this.parseUdi(normalizedUdiInput);
         if (!normalizedUdi) {
             return { success: true, data: { status: 1, message: '无效的UDI' } };
         }
-        const existReagent = await this.prisma.reagent.findFirst({
+        const userName = await this.loadUserName(session.userId);
+        const existReagent = await tx.reagent.findFirst({
             where: {
                 di: normalizedUdi.di,
                 status: { not: Status.Delete },
@@ -143,52 +148,59 @@ export class OperationService {
             return { success: true, data: { status: 1, message: '该UDI 试剂信息没有维护' } };
         }
 
-
-        
-        let existLot = await this.prisma.lot.findFirst({
+        let existLot = await tx.lot.findFirst({
             where: {
                 name: normalizedUdi.lotName,
                 reagentId: existReagent.id,
                 status: { not: Status.Delete },
             },
+            select: { id: true, name: true },
         });
         if (!existLot) {
-            addlot= await this.lotService.add({reagentId: existReagent.id, name: normalizedUdi.lotName, expirationDate: normalizedUdi.expirationDate}, session);
-            existLot=addlot.data;
+            const addedLot = await this.lotService.add(
+                {
+                    reagentId: existReagent.id,
+                    name: normalizedUdi.lotName,
+                    expirationDate: normalizedUdi.expirationDate,
+                },
+                session,
+                tx,
+            );
+            existLot = addedLot.data;
         }
-        const existoperation = await this.prisma.operation.findFirst({
+
+        const existOperation = await tx.operation.findFirst({
             where: {
-                reagentId: existReagent.id,
-                lotId: existLot.id,
-                serialNumber: normalizedUdi.serialNumber,
+                udi: normalizedUdiInput,
                 action: OperationAction.Inbound,
                 status: Status.Enable,
             },
         });
-        if (existoperation) {
+        if (existOperation) {
             return { success: true, data: { status: 1, message: '该UDI已经入库' } };
         }
-        const startId = await this.reserveBarcodeRange(1);
+
+        const startId = await this.reserveBarcodeRange(1, tx);
         const barcodeNumber = this.encodeBarcode(startId);
-        await this.prisma.operation.create({
+        await tx.operation.create({
             data: {
                 reagentId: existReagent.id,
                 lotId: existLot.id,
                 userId: session.userId,
                 teamId: session.teamId,
                 groupId: randomUUID(),
-                barcodeNumber: barcodeNumber,
-                note: '快速入库',
+                barcodeNumber,
+                note: normalizedNote || '快速入库',
                 action: OperationAction.Inbound,
                 status: Status.Enable,
-                userNameSnapshot: await this.loadUserName(session.userId),
+                userNameSnapshot: userName,
                 reagentNameSnapshot: existReagent.name,
                 lotNameSnapshot: existLot.name,
-                serialNumber: normalizedUdi.serialNumber,
+                udi: normalizedUdiInput,
             },
         });
-        const result = await this.inventoryService.updateInventory(existReagent.id, 1, existLot.id);
-        return { success: true, data: { status: 0, message: result.message } };
+        const result = await this.inventoryService.updateInventory(existReagent.id, 1, existLot.id, tx);
+        return { success: true, data: { status: result.isSuccess ? 0 : 1, message: result.message } };
     }
 
     /**
@@ -197,9 +209,12 @@ export class OperationService {
      * 2. 批量更新库存；
      * 3. 返回每条库存更新结果信息。
      */
-    async inbound(dto: OperationDto['requestInbound'], session: SessionUser): Promise<OperationDto['responseInbound']> {
+    async inbound(
+        dto: OperationDto['requestInbound'],
+        session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<OperationDto['responseInbound']> {
         const totalCount = dto.inboundList.reduce((sum, item) => sum + item.number, 0);
-        const startId = await this.reserveBarcodeRange(totalCount);
         const reagentIds = [...new Set(dto.inboundList.map((item) => item.reagentId))];
         const lotIds = [...new Set(dto.inboundList.map((item) => item.lotId))];
         const [reagentMap, lotMap, userName] = await Promise.all([
@@ -207,7 +222,7 @@ export class OperationService {
             this.loadLotMap(lotIds),
             this.loadUserName(session.userId),
         ]);
-
+        const startId = await this.reserveBarcodeRange(totalCount, tx);
         const operationsData: Prisma.OperationCreateManyInput[] = [];
         let offset = 0;
         for (const item of dto.inboundList) {
@@ -219,7 +234,7 @@ export class OperationService {
                     userId: session.userId,
                     teamId: session.teamId,
                     groupId,
-                    serialNumber: randomUUID(),
+                    udi: randomUUID(),
                     barcodeNumber: this.encodeBarcode(startId + BigInt(offset++)),
                     note: item.note,
                     action: OperationAction.Inbound,
@@ -231,11 +246,16 @@ export class OperationService {
             }
         }
 
-        await this.prisma.operation.createMany({ data: operationsData });
+        await tx.operation.createMany({ data: operationsData });
 
-        const inventoryResults = await Promise.all(
-            dto.inboundList.map((item) => this.inventoryService.updateInventory(item.reagentId, item.number, item.lotId)),
-        );
+        const inventoryResults: { isSuccess: boolean; message: string }[] = [];
+        for (const item of dto.inboundList) {
+            const result = await this.inventoryService.updateInventory(item.reagentId, item.number, item.lotId, tx);
+            if (!result.isSuccess) {
+                throw new HttpException(result.message, HttpStatus.FORBIDDEN);
+            }
+            inventoryResults.push(result);
+        }
 
         return {
             success: true,
@@ -249,20 +269,25 @@ export class OperationService {
      * - 未出库时创建出库记录并扣减库存；
      * - 返回处理状态与消息。
      */
-    async fastOutbound(dto: OperationDto['requestFastOutbound'], session: SessionUser): Promise<OperationDto['responseFastOutbound']> {
+    async fastOutbound(
+        dto: OperationDto['requestFastOutbound'],
+        session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<OperationDto['responseFastOutbound']> {
         const notInboundMessage = dto.useUdi ? '该UDI未进行入库' : '该条码未进行入库';
         const alreadyOutboundMessage = dto.useUdi ? '该UDI已经出库' : '该条码已经出库';
+        const normalizedNote = String(dto.note ?? '').trim();
         let identifierWhere: Prisma.OperationWhereInput;
-        let outboundSerialNumber: string = randomUUID();
+        let outboundUdi: string = randomUUID();
 
         if (dto.useUdi) {
-            const parsedUdi = this.parseUdi(dto.udi);
-            const serialNumber = parsedUdi?.serialNumber?.trim();
-            if (!serialNumber) {
+            const normalizedUdiInput = String(dto.udi ?? '').trim();
+            const parsedUdi = this.parseUdi(normalizedUdiInput);
+            if (!parsedUdi) {
                 return { success: true, data: { status: 1, message: '无效的UDI' } };
             }
-            identifierWhere = { serialNumber };
-            outboundSerialNumber = serialNumber;
+            identifierWhere = { udi: normalizedUdiInput };
+            outboundUdi = normalizedUdiInput;
         } else {
             const barcodeNumber = String(dto.barcodeNumber ?? '').trim();
             if (!barcodeNumber) {
@@ -271,8 +296,9 @@ export class OperationService {
             identifierWhere = { barcodeNumber };
         }
 
+        const userName = await this.loadUserName(session.userId);
         const [origin, outboundOperation] = await Promise.all([
-            this.prisma.operation.findFirst({
+            tx.operation.findFirst({
                 where: {
                     ...identifierWhere,
                     action: OperationAction.Inbound,
@@ -283,7 +309,7 @@ export class OperationService {
                     lot: { select: { name: true } },
                 },
             }),
-            this.prisma.operation.findFirst({
+            tx.operation.findFirst({
                 where: {
                     ...identifierWhere,
                     action: OperationAction.Outbound,
@@ -303,18 +329,21 @@ export class OperationService {
             return { success: true, data: { status: 1, message: notInboundMessage } };
         }
 
-        const userName = await this.loadUserName(session.userId);
+        const result = await this.inventoryService.updateInventory(origin.reagentId, -1, origin.lotId, tx);
+        if (!result.isSuccess) {
+            return { success: true, data: { status: 1, message: result.message } };
+        }
 
-        await this.prisma.operation.create({
+        await tx.operation.create({
             data: {
                 reagentId: origin.reagentId,
                 lotId: origin.lotId,
                 userId: session.userId,
                 teamId: origin.teamId,
                 groupId: randomUUID(),
-                serialNumber: origin.serialNumber || outboundSerialNumber,
+                udi: origin.udi || outboundUdi,
                 barcodeNumber: origin.barcodeNumber,
-                note: origin.note,
+                note: normalizedNote || '快速出库',
                 action: OperationAction.Outbound,
                 status: Status.Enable,
                 userNameSnapshot: userName,
@@ -322,9 +351,7 @@ export class OperationService {
                 lotNameSnapshot: origin.lotNameSnapshot || origin.lot.name,
             },
         });
-
-        const result = await this.inventoryService.updateInventory(origin.reagentId, -1, origin.lotId);
-        return { success: true, data: { status: result.isSuccess ? 0 : 1, message: result.message } };
+        return { success: true, data: { status: 0, message: result.message } };
 
     }
 
@@ -332,7 +359,11 @@ export class OperationService {
      * 出库（无原始入库条码或批量场景）：
      * 先逐条尝试扣减库存，仅为成功项生成出库操作记录并分配新条码。
      */
-    async outbound(dto: OperationDto['requestOutbound'], session: SessionUser): Promise<OperationDto['responseOutbound']> {
+    async outbound(
+        dto: OperationDto['requestOutbound'],
+        session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<OperationDto['responseOutbound']> {
         const reagentIds = [...new Set(dto.outboundList.map((item) => item.reagentId))];
         const lotIds = [...new Set(dto.outboundList.map((item) => item.lotId))];
         const [reagentMap, lotMap, userName] = await Promise.all([
@@ -340,16 +371,16 @@ export class OperationService {
             this.loadLotMap(lotIds),
             this.loadUserName(session.userId),
         ]);
-
-        const inventoryResults = await Promise.all(
-            dto.outboundList.map((item) => this.inventoryService.updateInventory(item.reagentId, -item.number, item.lotId)),
-        );
+        const inventoryResults: { isSuccess: boolean; message: string }[] = [];
+        for (const item of dto.outboundList) {
+            const result = await this.inventoryService.updateInventory(item.reagentId, -item.number, item.lotId, tx);
+            inventoryResults.push(result);
+        }
 
         const validCount = dto.outboundList.reduce((sum, item, i) => sum + (inventoryResults[i].isSuccess ? item.number : 0), 0);
-
-        const validOperations: Prisma.OperationCreateManyInput[] = [];
         if (validCount > 0) {
-            const startId = await this.reserveBarcodeRange(validCount);
+            const validOperations: Prisma.OperationCreateManyInput[] = [];
+            const startId = await this.reserveBarcodeRange(validCount, tx);
             let offset = 0;
             for (let i = 0; i < dto.outboundList.length; i++) {
                 if (!inventoryResults[i].isSuccess) continue;
@@ -369,11 +400,11 @@ export class OperationService {
                         userNameSnapshot: userName,
                         reagentNameSnapshot: reagentMap.get(item.reagentId) ?? '',
                         lotNameSnapshot: lotMap.get(item.lotId) ?? '',
-                        serialNumber: randomUUID(),
+                        udi: randomUUID(),
                     });
                 }
             }
-            await this.prisma.operation.createMany({ data: validOperations });
+            await tx.operation.createMany({ data: validOperations });
         }
 
         return {
@@ -389,6 +420,7 @@ export class OperationService {
         const where: Prisma.OperationWhereInput = { status: { not: Status.Delete } };
         if (dto.reagentName) { where.reagent = { name: { contains: dto.reagentName } }; }
         if (dto.barcodeNumber) { where.barcodeNumber = { contains: dto.barcodeNumber }; }
+        if (dto.udi) { where.udi = { contains: dto.udi }; }
         if (dto.startTime || dto.endTime) {
             where.createTime = {};
             if (dto.startTime) where.createTime.gte = dto.startTime;
@@ -463,8 +495,8 @@ export class OperationService {
                 lot: { id: op.lot.id, name: op.lot.name },
                 number: 0,
                 barcodes: [],
-                serialNumbers:[],
-                notes: op.note,
+                udis:[],
+                note: op.note,
                 action: op.action,
                 status: op.status,
                 user: {
@@ -482,7 +514,7 @@ export class OperationService {
         const row = grouped.get(groupKey)!;
         row.number += 1;
         row.barcodes.push(op.barcodeNumber);
-        row.serialNumbers.push(op.serialNumber);
+        row.udis.push(op.udi);
     }
 
     if (orderedGroupIds && orderedGroupIds.length > 0) {
@@ -521,8 +553,12 @@ export class OperationService {
         const totalPage = Math.ceil(total / pageSize);
         return { success: true, data: rows, meta: { total, page, pageSize, totalPage } };
     }
-    async disable(dto: OperationDto['requestDisable'], session: SessionUser): Promise<OperationDto['responseDisable']> {
-        const firstEnabledOperation = await this.prisma.operation.findFirst({
+    async disable(
+        dto: OperationDto['requestDisable'],
+        session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<OperationDto['responseDisable']> {
+        const firstEnabledOperation = await tx.operation.findFirst({
             where: {
                 groupId: dto.groupId,
             },
@@ -533,41 +569,43 @@ export class OperationService {
             },
         });
 
-        if (firstEnabledOperation) {
-            const enabledCount = await this.prisma.operation.count({
-                where: {
-                    groupId: dto.groupId,
-                    status: Status.Enable,
-                },
-            });
-
-            await this.prisma.operation.updateMany({
-                where: {
-                    groupId: dto.groupId,
-                    status: Status.Enable,
-                },
-                data: { status: Status.Disable },
-            });
-
-
-            if (
-                (firstEnabledOperation.action === OperationAction.Inbound ||
-                    firstEnabledOperation.action === OperationAction.Outbound) &&
-                enabledCount > 0
-            ) {
-                const deltaPerItem = firstEnabledOperation.action === OperationAction.Inbound ? -1 : 1;
-                const totalDelta = deltaPerItem * enabledCount;
-                await this.inventoryService.updateInventory(
-                    firstEnabledOperation.reagentId,
-                    totalDelta,
-                    firstEnabledOperation.lotId,
-                );
-            }
-        }
-        else {
+        if (!firstEnabledOperation) {
             throw new HttpException('操作记录不存在', HttpStatus.NOT_FOUND);
         }
-        
+
+        const enabledCount = await tx.operation.count({
+            where: {
+                groupId: dto.groupId,
+                status: Status.Enable,
+            },
+        });
+
+        await tx.operation.updateMany({
+            where: {
+                groupId: dto.groupId,
+                status: Status.Enable,
+            },
+            data: { status: Status.Disable },
+        });
+
+        if (
+            (firstEnabledOperation.action === OperationAction.Inbound ||
+                firstEnabledOperation.action === OperationAction.Outbound) &&
+            enabledCount > 0
+        ) {
+            const deltaPerItem = firstEnabledOperation.action === OperationAction.Inbound ? -1 : 1;
+            const totalDelta = deltaPerItem * enabledCount;
+            const result = await this.inventoryService.updateInventory(
+                firstEnabledOperation.reagentId,
+                totalDelta,
+                firstEnabledOperation.lotId,
+                tx,
+            );
+            if (!result.isSuccess) {
+                throw new HttpException(result.message, HttpStatus.FORBIDDEN);
+            }
+        }
+
         return { success: true, data: { groupId: dto.groupId } };
     }
 }

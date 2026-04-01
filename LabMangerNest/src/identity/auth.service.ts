@@ -2,6 +2,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { UserPrismaService } from '../prisma/user-prisma.service';
 import { AuthDto } from './auth.dto';
+import type { Prisma } from '../../generated/prisma-user/client';
 
 const hashPassword = (password: string): string => {
     const hash = crypto.createHash('sha256');
@@ -17,13 +18,14 @@ export class AuthService {
         account: string,
         passWord: string,
         loginType: 'checker' | 'reviewer',
+        tx: Prisma.TransactionClient,
     ) {
         const hashedPwd = hashPassword(passWord);
         const passwordWhere = loginType === 'checker'
             ? { checkerPassWord: hashedPwd }
             : { reviewerPassWord: hashedPwd };
 
-        const user = await this.prisma.user.findFirst({
+        const user = await tx.user.findFirst({
             where: { account, ...passwordWhere },
             include: { team: true },
         });
@@ -35,10 +37,14 @@ export class AuthService {
         return user;
     }
 
-    private async createSessionAndResponse(user: any, loginType: 'checker' | 'reviewer'): Promise<AuthDto['responseSignin']> {
+    private async createSessionAndResponse(
+        user: any,
+        loginType: 'checker' | 'reviewer',
+        tx: Prisma.TransactionClient,
+    ): Promise<AuthDto['responseSignin']> {
         const sessionId = crypto.randomUUID().replace(/-/g, '');
 
-        await this.prisma.session.create({
+        await tx.session.create({
             data: {
                 sessionId,
                 userId: user.id,
@@ -60,13 +66,19 @@ export class AuthService {
         };
     }
 
-    async signinReviewer(dto: AuthDto['requestSigninReviewer']): Promise<AuthDto['responseSignin']> {
-        const user = await this.loadUserForSignin(dto.account, dto.passWord, 'reviewer');
-        return this.createSessionAndResponse(user, 'reviewer');
+    async signinReviewer(
+        dto: AuthDto['requestSigninReviewer'],
+        tx: Prisma.TransactionClient,
+    ): Promise<AuthDto['responseSignin']> {
+        const user = await this.loadUserForSignin(dto.account, dto.passWord, 'reviewer', tx);
+        return this.createSessionAndResponse(user, 'reviewer', tx);
     }
 
-    async signinChecker(dto: AuthDto['requestSigninChecker']): Promise<AuthDto['responseSignin']> {
-        const reviewerSession = await this.prisma.session.findUnique({
+    async signinChecker(
+        dto: AuthDto['requestSigninChecker'],
+        tx: Prisma.TransactionClient,
+    ): Promise<AuthDto['responseSignin']> {
+        const reviewerSession = await tx.session.findUnique({
             where: { sessionId: dto.reviewerSessionId },
         });
 
@@ -74,17 +86,17 @@ export class AuthService {
             throw new HttpException('请先登录审核者', HttpStatus.UNAUTHORIZED);
         }
 
-        const user = await this.loadUserForSignin(dto.account, dto.passWord, 'checker');
+        const user = await this.loadUserForSignin(dto.account, dto.passWord, 'checker', tx);
         if (user.id === reviewerSession.userId) {
             throw new HttpException('检验者与审核者不能为同一人', HttpStatus.CONFLICT);
         }
 
-        return this.createSessionAndResponse(user, 'checker');
+        return this.createSessionAndResponse(user, 'checker', tx);
     }
 
-    async signout(dto: AuthDto['requestSignout']): Promise<AuthDto['responseSignout']> {
+    async signout(dto: AuthDto['requestSignout'], tx: Prisma.TransactionClient): Promise<AuthDto['responseSignout']> {
         if (dto.sessionId) {
-            await this.prisma.session.deleteMany({
+            await tx.session.deleteMany({
                 where: { sessionId: dto.sessionId },
             });
         }

@@ -132,7 +132,6 @@
 
 
 import { onMounted, reactive } from 'vue'
-import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import { api_inventory_show,api_inventory_auditall,api_inventory_statistics } from '@/api/inventory'
 import {inventory_exporttoexcel_list} from '@/utils/exportexcel'
 import { formatDateColumn } from '@/utils/format'
@@ -141,6 +140,7 @@ import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { getnowtime_previousmonth,getnowtime,format_xAxisLabels } from '@/utils/format'
 import { syncSubmitDisabledByFields, toggleRowSelection, resolveSelectableRowClass } from '@/utils/crud'
+import { openInfoMessageBox } from '@/utils/messagebox'
 
 
 const formData = reactive({
@@ -233,7 +233,7 @@ function handleRowClick({ rowData }) { // 表格行点击事件
 function statistics(){ // 库存统计
   state.selectedRowId = null
   if (formData.reagentId === null || formData.lotId === null){
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX,{type:'info',title:'库存统计',message:'请选择要统计的记录'})
+    openInfoMessageBox({ title: '库存统计', message: '请选择要统计的记录' })
   }else{
     state.statisticsData={
       dataset: [

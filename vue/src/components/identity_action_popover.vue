@@ -55,7 +55,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { api_signin_checker, api_signout } from '@/api/auth.js'
 import { api_user_showall } from '@/api/user.js'
-import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
+import { openErrorMessageBox } from '@/utils/messagebox'
 
 const props = defineProps({
   label: {
@@ -148,12 +148,12 @@ const handleLogin = async () => {
   const account = loginAccount.value.trim()
   const passWord = loginPassword.value
   if (!account || !passWord) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'error', message: '请输入账号和密码', action: null })
+    openErrorMessageBox({ message: '请输入账号和密码' })
     return
   }
   const reviewerSessionId = localStorage.getItem('reviewerSessionId')
   if (!reviewerSessionId) {
-    eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'error', message: '请先登录审核者', action: null })
+    openErrorMessageBox({ message: '请先登录审核者' })
     router.push('/signin')
     return
   }
@@ -162,7 +162,7 @@ const handleLogin = async () => {
     const response = await api_signin_checker(account, passWord, reviewerSessionId)
     const sessionId = response.data?.sessionId
     if (!sessionId) {
-      eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, { type: 'error', message: '登录失败', action: null })
+      openErrorMessageBox({ message: '登录失败' })
       return
     }
     const checkerName = response.data.userName

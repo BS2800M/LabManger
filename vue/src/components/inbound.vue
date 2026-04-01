@@ -6,6 +6,7 @@
         </div>
         <div class="quick-inbound-row">
             <span class="quick-inbound-label">医疗器械唯一标识</span>
+            <UdiScanHint />
             <el-input
                 v-model="quickInboundDisplay"
                 class="quick-inbound-input"
@@ -13,28 +14,16 @@
                 clearable
                 @keydown.enter.prevent="handleQuickInbound"
             />
+            <el-input
+                v-model="quickInbound.note"
+                class="quick-inbound-note"
+                placeholder="注释（可选）"
+                clearable
+                @keydown.enter.prevent="handleQuickInbound"
+            />
             <button class="stock-action-btn stock-action-btn--inline" @click="handleQuickInbound">
               <span>入库</span>
             </button>
-            <el-button
-                class="serial-toggle-btn"
-                :loading="serialState.connecting"
-                :type="serialState.running ? 'danger' : 'primary'"
-                @click="handleSerialToggle"
-            >
-              {{ serialState.running ? '断开串口' : '连接串口' }}
-            </el-button>
-            <el-switch
-                v-model="serialState.autoSubmit"
-                class="serial-mode-switch"
-                inline-prompt
-                active-text="自动入库"
-                inactive-text="仅填充"
-                :disabled="!serialState.running"
-            />
-            <span class="serial-status" :class="{ 'serial-status--online': serialState.running }">
-              {{ serialStatusText }}
-            </span>
         </div>
       </section>
 
@@ -118,21 +107,14 @@
 </template>
 
 <script setup>
-import { reactive, ref, h, computed, onBeforeUnmount, onMounted } from 'vue'
+import { reactive, ref, h, computed } from 'vue'
 import { ElButton, ElMessage } from 'element-plus'
 import { api_operation_fast_inbound, api_operation_inbound } from '@/api/operation'
 import ReagentSelect from '@/components/reagent_select.vue'
 import LotSelect from '@/components/lot_select.vue'
+import UdiScanHint from '@/components/udi_scan_hint.vue'
 import { syncSubmitDisabledByFields } from '@/utils/crud'
 import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
-import {
-  isSerialSupported,
-  requestSerialPort,
-  startSerialScanner,
-  saveSerialPortPreference,
-  clearSerialPortPreference,
-  getPreferredSerialPort,
-} from '@/utils/serialScanner'
 import 'element-plus/dist/index.css'
 // 组件引用
 // 使用reactive统一管理状态
@@ -150,28 +132,14 @@ const reagentOptions = ref([])
 const lotOptions = ref([])
 const quickInbound = reactive({
   rawUdi: '',
+  note: '',
 })
 const quickInboundSubmitting = ref(false)
-const serialScannerController = ref(null)
-const serialState = reactive({
-  supported: isSerialSupported(),
-  connecting: false,
-  running: false,
-  autoSubmit: true,
-})
 const quickInboundDisplay = computed({
   get: () => gs1RawToVisible(quickInbound.rawUdi),
   set: (value) => {
     quickInbound.rawUdi = gs1VisibleToRaw(value)
   },
-})
-const serialStatusText = computed(() => {
-  if (!serialState.supported) return '当前浏览器不支持串口模式'
-  if (serialState.connecting) return '正在连接串口设备...'
-  if (serialState.running) {
-    return serialState.autoSubmit ? '串口已连接，扫码后自动入库' : '串口已连接，扫码后仅填充输入框'
-  }
-  return '可连接串口扫码枪'
 })
 const tableColumns = [
   { key: 'reagentname', dataKey: 'reagentname', title: '试剂名字', width: 180, flexGrow: 1 },
@@ -273,7 +241,11 @@ async function handleQuickInbound() {
   quickInboundSubmitting.value = true
 
   try {
-    const data = await api_operation_fast_inbound({ udi: normalizedUdi })
+    const data = await api_operation_fast_inbound({
+      udi: normalizedUdi,
+      note: String(quickInbound.note ?? '').trim(),
+    })
+    quickInbound.note = ''
     const status = data.data?.status
     const message = data.data?.message ?? '快速入库处理完成'
 
@@ -303,94 +275,6 @@ async function handleQuickInbound() {
   }
 }
 
-function getErrorMessage(error, fallback) {
-  return error?.message || error?.toString?.() || fallback
-}
-
-async function stopSerialMode(silent = false, clearSavedPreference = false) {
-  const controller = serialScannerController.value
-  serialScannerController.value = null
-  const wasRunning = serialState.running
-
-  if (controller) {
-    await controller.stop()
-  }
-
-  serialState.running = false
-  serialState.connecting = false
-
-  if (clearSavedPreference) {
-    clearSerialPortPreference()
-  }
-
-  if (!silent && wasRunning) {
-    ElMessage.info('串口已断开')
-  }
-}
-
-async function startSerialMode(initialPort = null, silentOnSuccess = false) {
-  if (!serialState.supported) {
-    ElMessage.warning('当前浏览器不支持串口模式，请使用 Chromium 内核浏览器')
-    return
-  }
-  serialState.connecting = true
-  try {
-    const port = initialPort ?? await requestSerialPort()
-    const controller = await startSerialScanner({
-      port,
-      baudRate: 9600,
-      closePortOnStop: true,
-      onScan: (scanText) => {
-        quickInbound.rawUdi = scanText
-        if (serialState.autoSubmit) {
-          void handleQuickInbound()
-        }
-      },
-      onError: (error) => {
-        ElMessage.error(getErrorMessage(error, '串口读取失败'))
-        void stopSerialMode(true)
-      },
-    })
-
-    serialScannerController.value = controller
-    serialState.running = true
-    saveSerialPortPreference(port)
-    if (!silentOnSuccess) {
-      ElMessage.success('串口已连接，等待扫码')
-    }
-  } catch (error) {
-    if (error?.name === 'NotFoundError') {
-      ElMessage.info('已取消选择串口设备')
-    } else {
-      ElMessage.error(getErrorMessage(error, '串口连接失败'))
-    }
-  } finally {
-    serialState.connecting = false
-  }
-}
-
-async function handleSerialToggle() {
-  if (serialState.connecting) return
-  if (serialState.running) {
-    await stopSerialMode(false, true)
-    return
-  }
-  await startSerialMode()
-}
-
-onBeforeUnmount(() => {
-  void stopSerialMode(true, false)
-})
-
-onMounted(async () => {
-  try {
-    const preferredPort = await getPreferredSerialPort()
-    if (!preferredPort) return
-    await startSerialMode(preferredPort, true)
-  } catch {
-    // 自动恢复失败时静默，避免影响页面主流程。
-  }
-})
 </script>
 
 <style scoped>
@@ -491,23 +375,8 @@ onMounted(async () => {
   max-width: 56vw;
 }
 
-.serial-toggle-btn {
-  height: 40px;
-}
-
-.serial-mode-switch {
-  min-height: 40px;
-}
-
-.serial-status {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.serial-status--online {
-  color: var(--el-color-success);
-  font-weight: 600;
+.quick-inbound-note {
+  width: 260px;
 }
 
 :deep(.quick-inbound-input .el-input__wrapper) {

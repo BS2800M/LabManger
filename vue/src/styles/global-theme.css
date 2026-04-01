@@ -6,7 +6,7 @@
 
 .el-table .unactive-row > td,
 .el-table .unactive-row > td .cell {
-  color: #61656c !important;
+  color: var(--table-unactive-row-text) !important;
 }
 
 /* Custom light theme (gray tone) */
@@ -14,7 +14,7 @@ html:not(.dark) {
   --el-color-primary: #3e8ff9;
   --el-color-primary-light-3: #9ca3af;
   --el-color-primary-light-5: #d1d5db;
-  --el-color-primary-dark-2: #4b5563;
+  --el-color-primary-dark-2: #005ad9;
   --el-bg-color: #ffffff;
   --el-bg-color-page: #ffffff;
   --el-bg-color-overlay: #ffffff;
@@ -22,7 +22,7 @@ html:not(.dark) {
   --el-border-color: #d1d5db;
   --el-border-color-light: #e5e7eb;
   --el-text-color-primary: #374151;
-  --el-text-color-regular: #4b5563;
+  --el-text-color-regular: #634b4b;
   --table-current-row-bg: #dbeafe;
   --table-current-row-text: #1e3a8a;
   --table-hover-row-bg: #eef2ff;
@@ -33,6 +33,7 @@ html:not(.dark) {
   --table-header-bg: linear-gradient(180deg, #eef4ff 0%, #e6eefc 100%);
   --table-header-text: #2c3e55;
   --table-header-border: #c9d8ee;
+  --table-unactive-row-text: #cacaca;
   --signin-button-bg: linear-gradient(90deg, #06b6d4 0%, #0ea5e9 100%);
   --pagination-radius: 999px;
   --menu-hover-bg: rgba(62, 143, 249, 0.12);
@@ -83,6 +84,7 @@ html.dark {
   --table-header-bg: linear-gradient(180deg, #2d2210 0%, #241a0d 100%);
   --table-header-text: #ffe5b4;
   --table-header-border: #7c5a24;
+  --table-unactive-row-text: #434242;
   --signin-button-bg: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
   --pagination-radius: 999px;
   --menu-hover-bg: rgba(249, 115, 22, 0.2);
@@ -125,7 +127,7 @@ html.dark body {
 }
 
 .el-table-v2__row.unactive-row .el-table-v2__row-cell {
-  color: #61656c !important;
+  color: var(--table-unactive-row-text) !important;
 }
 
 .el-table-v2__row.current-row .el-table-v2__row-cell {
@@ -169,5 +171,4 @@ html.dark body {
   border-color: var(--el-color-primary);
 
 }
-
 

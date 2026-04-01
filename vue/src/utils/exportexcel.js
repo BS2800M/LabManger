@@ -56,6 +56,7 @@ async function operation_exporttoexcel_list(filter = {}) {
     startTime: filter.startTime,
     endTime: filter.endTime,
     barcodeNumber: filter.barcodeNumber,
+    udi: filter.udi,
     page: 1,
     pageSize: 9999999,
   })

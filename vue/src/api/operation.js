@@ -13,12 +13,18 @@ export let api_operation_inbound=(inboundList)=>{
 
 export let api_operation_fast_inbound=(body)=>{
     return myrequest.post('/stock/operations/fastInbound',{
-        "udi": body.udi
+        "udi": body.udi,
+        "note": body.note ?? ''
     })
 }
 
 export let api_operation_fast_outbound=(body)=>{
-    return myrequest.post('/stock/operations/fastOutbound', {useUdi: body.useUdi, udi: body.udi, barcodeNumber: body.barcodeNumber})
+    return myrequest.post('/stock/operations/fastOutbound', {
+        useUdi: body.useUdi,
+        udi: body.udi,
+        barcodeNumber: body.barcodeNumber,
+        note: body.note ?? ''
+    })
 }
 
 export let api_operation_outbound=(outboundList)=>{
@@ -38,6 +44,7 @@ export let api_operation_show=(body)=>{
         startTime:body.startTime,
         endTime:body.endTime,
         barcodeNumber:body.barcodeNumber,
+        udi:body.udi,
         page:body.page,
         pageSize:body.pageSize
     })
@@ -49,6 +56,7 @@ export let api_operation_showall=(body={})=>{
         startTime:body.startTime,
         endTime:body.endTime,
         barcodeNumber:body.barcodeNumber,
+        udi:body.udi,
         page:body.page,
         pageSize:body.pageSize
     })

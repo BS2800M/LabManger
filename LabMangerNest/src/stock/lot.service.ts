@@ -4,6 +4,7 @@ import { InventoryService } from './inventory.service';
 import { LotDto } from './lot.dto';
 import { Status } from '../common/enums/enums';
 import { SessionUser } from '../common/decorators/session-user.decorator';
+import type { Prisma } from '../../generated/prisma-manger/client';
 
 @Injectable()
 export class LotService {
@@ -19,13 +20,17 @@ export class LotService {
         return Status.Enable;
     }
 
-    async add(dto: LotDto['requestAdd'], session: SessionUser): Promise<LotDto['responseAdd']> {
-        const reagent = await this.prisma.reagent.findFirst({ where: { id: dto.reagentId } });
+    async add(
+        dto: LotDto['requestAdd'],
+        _session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<LotDto['responseAdd']> {
+        const reagent = await tx.reagent.findFirst({ where: { id: dto.reagentId } });
         if (!reagent) {
             throw new HttpException('不存在的试剂id', HttpStatus.FORBIDDEN);
         }
 
-        const lot = await this.prisma.lot.create({
+        const lot = await tx.lot.create({
             data: {
                 name: dto.name,
                 reagentId: dto.reagentId,
@@ -35,17 +40,16 @@ export class LotService {
             include: { reagent: { select: { id: true, name: true } } },
         });
 
-        await this.inventoryService.add({
-            reagentId: lot.reagentId,
-            lotId: lot.id,
-            teamId: lot.teamId,
-            number: 0,
-        });
-
-        return {
-            success: true,
-            data: lot,
-        };
+        await this.inventoryService.add(
+            {
+                reagentId: lot.reagentId,
+                lotId: lot.id,
+                teamId: lot.teamId,
+                number: 0,
+            },
+            tx,
+        );
+        return { success: true, data: lot };
     }
 
     async show(dto: LotDto['requestShow'], session: SessionUser): Promise<LotDto['responseShow']> {
@@ -82,12 +86,16 @@ export class LotService {
         };
     }
 
-    async update(dto: LotDto['requestUpdate'], session: SessionUser): Promise<LotDto['responseUpdate']> {
-        const exists = await this.prisma.lot.findFirst({ where: { id: dto.id } });
+    async update(
+        dto: LotDto['requestUpdate'],
+        _session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<LotDto['responseUpdate']> {
+        const exists = await tx.lot.findFirst({ where: { id: dto.id } });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
         }
-        const reagent = await this.prisma.reagent.findFirst({ where: { id: dto.reagentId } });
+        const reagent = await tx.reagent.findFirst({ where: { id: dto.reagentId } });
         if (!reagent) {
             throw new HttpException('不存在的试剂id', HttpStatus.FORBIDDEN);
         }
@@ -95,54 +103,53 @@ export class LotService {
         const newReagentId = dto.reagentId;
         const reagentChanged = oldReagentId !== newReagentId;
         const inventoryRow = reagentChanged
-            ? await this.prisma.inventory.findFirst({
+            ? await tx.inventory.findFirst({
                 where: { lotId: dto.id, reagentId: oldReagentId, status: { not: Status.Delete } },
                 select: { id: true, number: true },
             })
             : null;
 
-        const lot = await this.prisma.$transaction(async (tx) => {
-            const updatedLot = await tx.lot.update({
-                where: { id: dto.id },
-                data: {
-                    name: dto.name,
-                    reagentId: newReagentId,
-                    expirationDate: dto.expirationDate,
-                    status: dto.status,
-                    teamId: reagent.teamId,
-                },
-                include: { reagent: { select: { id: true, name: true } } },
-            });
-
-            return updatedLot;
+        const lot = await tx.lot.update({
+            where: { id: dto.id },
+            data: {
+                name: dto.name,
+                reagentId: newReagentId,
+                expirationDate: dto.expirationDate,
+                status: dto.status,
+                teamId: reagent.teamId,
+            },
+            include: { reagent: { select: { id: true, name: true } } },
         });
 
         if (reagentChanged) {
             if (!inventoryRow) {
                 throw new HttpException('不存在的库存记录', HttpStatus.FORBIDDEN);
             }
-            // 批号改归属时，直接使用 inventoryService.update 迁移库存归属并刷新预警/库存
-            await this.inventoryService.update({
-                id: inventoryRow.id,
-                reagentId: newReagentId,
-                lotId: dto.id,
-                teamId: reagent.teamId,
-                number: inventoryRow.number,
-            });
-        } 
-        return {
-            success: true,
-            data: lot,
-        };
+            await this.inventoryService.update(
+                {
+                    id: inventoryRow.id,
+                    reagentId: newReagentId,
+                    lotId: dto.id,
+                    teamId: reagent.teamId,
+                    number: inventoryRow.number,
+                },
+                tx,
+            );
+        }
+        return { success: true, data: lot };
     }
 
-    async del(dto: LotDto['requestDel'], session: SessionUser): Promise<LotDto['responseDel']> {
-        const exists = await this.prisma.lot.findFirst({ where: { id: dto.id } });
+    async del(
+        dto: LotDto['requestDel'],
+        _session: SessionUser,
+        tx: Prisma.TransactionClient,
+    ): Promise<LotDto['responseDel']> {
+        const exists = await tx.lot.findFirst({ where: { id: dto.id } });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
         }
 
-        const lot = await this.prisma.lot.update({
+        const lot = await tx.lot.update({
             where: { id: dto.id },
             data: { status: Status.Delete },
             include: { reagent: { select: { id: true, name: true } } },

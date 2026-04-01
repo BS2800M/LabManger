@@ -90,7 +90,6 @@
 <script setup>
 import { onMounted, reactive } from 'vue'
 import { api_team_show,api_team_del,api_team_update,api_team_add} from '@/api/team.js'
-import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
 import {
   syncSubmitDisabledByFields,
   toggleRowSelection,
@@ -189,7 +188,6 @@ function handleRowClick({ rowData }) {
 
 async function add_drawer(){
   openAddDrawerFlow({
-    selectedRowId: state.selectedRowId,
     setSelectedRowId: (value) => { state.selectedRowId = value },
     resetFormData,
     onOpen: () => openDrawer('add'),
@@ -199,7 +197,6 @@ async function add_drawer(){
 async function edit_drawer(){
   tryOpenEditDrawerBySelection({
     selectedRowId: state.selectedRowId,
-    eventBus,
     title: '修改小组',
     emptyMessage: '请选择要修改的记录',
     onOpen: () => openDrawer('edit'),
@@ -208,7 +205,6 @@ async function edit_drawer(){
 
 function showDeleteTeamConfirm() {
   showDeleteConfirmBySelection({
-    eventBus,
     selectedRowId: state.selectedRowId,
     title: '删除小组',
     emptyMessage: '请选择要删除的记录',
@@ -230,7 +226,6 @@ async function team_show() {
 
 async function team_del(){
   await deleteWithSelection({
-    eventBus,
     selectedRowId: state.selectedRowId,
     title: '删除小组',
     emptyMessage: '请选择要删除的记录',

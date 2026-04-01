@@ -1,0 +1,1 @@
+import{c as t}from"./request-DIrxOr3C.js";let r=(e,i)=>t.post("/identity/auth/signin-reviewer",{account:e,passWord:i}),a=(e,i,s)=>t.post("/identity/auth/signin-checker",{account:e,passWord:i,reviewerSessionId:s}),o=e=>t.get("/identity/auth/signout",{sessionId:e});export{r as a,a as b,o as c};

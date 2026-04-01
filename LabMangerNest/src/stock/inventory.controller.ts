@@ -3,10 +3,14 @@ import { InventoryService } from './inventory.service';
 import { InventoryDto, InventoryZod } from './inventory.dto';
 import { ZodQuery, ZodBody } from '../common/decorators/zod.decorator';
 import { SessionUser, SessionUser as ISessionUser } from '../common/decorators/session-user.decorator';
+import { MangerPrismaService } from '../prisma/manger-prisma.service';
 
 @Controller('stock/inventory')
 export class InventoryController {
-    constructor(private readonly inventoryService: InventoryService) { }
+    constructor(
+        private readonly inventoryService: InventoryService,
+        private readonly prisma: MangerPrismaService,
+    ) { }
 
     @Get('show')
     show(
@@ -29,7 +33,7 @@ export class InventoryController {
         @ZodBody(InventoryZod.requestAuditAll) _dto: any,
         @SessionUser() session: any,
     ) {
-        return this.inventoryService.auditAll(session);
+        return this.prisma.$transaction((tx) => this.inventoryService.auditAll(session, tx));
     }
 
     @Get('statistics')

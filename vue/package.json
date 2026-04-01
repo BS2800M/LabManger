@@ -9,6 +9,7 @@
     "start": "vite preview"
   },
   "dependencies": {
+    "@valentynb/gs1-parser": "^1.5.0",
     "axios": "^1.10.0",
     "dayjs": "^1.11.13",
     "element-plus": "^2.4.4",

@@ -1,6 +1,6 @@
 import axios from 'axios'
 import router from '@/router/index.js'
-import { eventBus, EVENT_TYPES } from '@/utils/eventBus'
+import { openErrorMessageBox } from '@/utils/messagebox'
 
 const myservice = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/cross',
@@ -31,11 +31,10 @@ myservice.interceptors.response.use(
   (res) => res.data,
   (err) => {
     if (err.response !== undefined) {
-      eventBus.emit(EVENT_TYPES.SHOW_MESSAGEBOX, {
-        type: 'error',
+      openErrorMessageBox({
         title: '网络连接错误',
         message: err.response.data.message || "无法连接服务器或服务器内部错误",
-        action: null
+        action: null,
       })
       if (err.response.data) {
         if (err.response.data.error === 'Unauthorized') {

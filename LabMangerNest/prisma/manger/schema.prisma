@@ -51,7 +51,7 @@ model Operation {
   userId        Int      @map("UserId")
   teamId        Int      @map("TeamId")
   createTime    DateTime @default(now()) @map("CreateTime")
-  serialNumber  String   @default("") @map("SerialNumber")
+  udi           String   @default("") @map("Udi")
   barcodeNumber String   @map("BarcodeNumber")
   action        Int      @map("Action")
   note          String   @map("Note")
