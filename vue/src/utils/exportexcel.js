@@ -63,21 +63,21 @@ async function operation_exporttoexcel_list(filter = {}) {
 
   const exportData = (result.data || []).map((item) => ({
     '时间': formatDateColumn(null, null, item.createTime),
-    'GroupId': item.groupId ?? '',
-    '试剂名称': item.snapshots?.reagentName ?? item.reagent?.name ?? '',
-    '批号': item.snapshots?.lotName ?? item.lot?.name ?? '',
+    'BatchId': item.batchId ?? '',
+    '试剂名称': item.reagentNameSnapshot ?? item.reagent?.name ?? '',
+    '批号': item.lotNameSnapshot ?? item.lot?.name ?? '',
     '数量': item.number ?? 0,
     '动作': format_operation_action(null, null, item.action),
     '用户': item.user?.userName ?? '',
-    '条码列表': Array.isArray(item.barcodes) ? item.barcodes.join(', ') : '',
-    '注释': item.notes ?? '',
+    '条码列表': Array.isArray(item.detailData) ? item.detailData.map((d) => d.barcodeNumber).join(', ') : '',
+    '注释': item.note ?? '',
   }))
 
   const workbook = new Workbook()
   const worksheet = workbook.addWorksheet('操作记录')
   worksheet.columns = [
     { header: '时间', key: '时间', width: 24 },
-    { header: 'GroupId', key: 'GroupId', width: 38 },
+    { header: 'BatchId', key: 'BatchId', width: 16 },
     { header: '试剂名称', key: '试剂名称', width: 24 },
     { header: '批号', key: '批号', width: 20 },
     { header: '数量', key: '数量', width: 10 },
@@ -94,15 +94,44 @@ async function operation_exporttoexcel_list(filter = {}) {
 async function inventory_exporttoexcel_list() {
   const result = await api_inventory_showall()
 
-  const exportData = (result.data || []).map((item) => ({
-    '试剂名称': item.reagent?.name ?? item.reagentName,
-    '批号': item.lot?.name ?? item.lotName,
-    '规格': item.reagent?.specifications ?? item.specifications,
-    '库存数': item.number,
-    '实际库存': null,
-    '有效期': formatDateColumn(null, null, item.lot?.expirationDate ?? item.lotExpirationDate),
-    '警告数量': item.reagent?.warnNumber ?? item.warnNumber,
-  }))
+  const warnLabels = {
+    0: '正常',
+    1: '数量预警',
+    2: '效期预警',
+  }
+
+  const exportData = []
+  for (const parent of result.data || []) {
+    const children = Array.isArray(parent.children) ? parent.children : []
+    if (children.length === 0) {
+      exportData.push({
+        '试剂名称': parent.reagentName ?? '',
+        '批号': '',
+        '规格': parent.specifications ?? '',
+        '库存数': parent.number ?? 0,
+        '试剂总库存': parent.number ?? 0,
+        '有效期': '',
+        '警告数量': parent.warnNumber ?? 0,
+        '预警类型': warnLabels[parent.warn] ?? '正常',
+      })
+      continue
+    }
+
+    for (const child of children) {
+      exportData.push({
+        '试剂名称': child.reagentName ?? parent.reagentName ?? '',
+        '批号': child.lotName ?? '',
+        '规格': child.specifications ?? parent.specifications ?? '',
+        '库存数': child.number ?? 0,
+        '试剂总库存': parent.number ?? 0,
+        '有效期': child.lotExpirationDate
+          ? formatDateColumn(null, null, child.lotExpirationDate)
+          : '',
+        '警告数量': child.warnNumber ?? parent.warnNumber ?? 0,
+        '预警类型': warnLabels[child.warn] ?? '正常',
+      })
+    }
+  }
 
   const workbook = new Workbook()
   const worksheet = workbook.addWorksheet('库存表')
@@ -111,9 +140,10 @@ async function inventory_exporttoexcel_list() {
     { header: '批号', key: '批号', width: 20 },
     { header: '规格', key: '规格', width: 10 },
     { header: '库存数', key: '库存数', width: 10 },
-    { header: '实际库存', key: '实际库存', width: 10 },
+    { header: '试剂总库存', key: '试剂总库存', width: 12 },
     { header: '有效期', key: '有效期', width: 20 },
     { header: '警告数量', key: '警告数量', width: 10 },
+    { header: '预警类型', key: '预警类型', width: 12 },
   ]
   exportData.forEach((row) => worksheet.addRow(row))
 

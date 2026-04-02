@@ -103,7 +103,7 @@ export class LotService {
         const newReagentId = dto.reagentId;
         const reagentChanged = oldReagentId !== newReagentId;
         const inventoryRow = reagentChanged
-            ? await tx.inventory.findFirst({
+            ? await tx.inventoryLot.findFirst({
                 where: { lotId: dto.id, reagentId: oldReagentId, status: { not: Status.Delete } },
                 select: { id: true, number: true },
             })
@@ -136,6 +136,9 @@ export class LotService {
                 tx,
             );
         }
+
+        // 批号有效期变更后，立即刷新该 lot 在库存子表中的 warn/status。
+        await this.inventoryService.updateExpirationWarning(dto.id, tx);
         return { success: true, data: lot };
     }
 

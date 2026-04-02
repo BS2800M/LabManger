@@ -41,10 +41,10 @@ export let api_operation_outbound=(outboundList)=>{
 export let api_operation_show=(body)=>{
     return myrequest.get('/stock/operations/show',{
         reagentName:body.reagentName,
-        startTime:body.startTime,
-        endTime:body.endTime,
         barcodeNumber:body.barcodeNumber,
         udi:body.udi,
+        startTime:body.startTime,
+        endTime:body.endTime,
         page:body.page,
         pageSize:body.pageSize
     })
@@ -53,10 +53,10 @@ export let api_operation_show=(body)=>{
 export let api_operation_showall=(body={})=>{
     return myrequest.get('/stock/operations/showAll',{
         reagentName:body.reagentName,
-        startTime:body.startTime,
-        endTime:body.endTime,
         barcodeNumber:body.barcodeNumber,
         udi:body.udi,
+        startTime:body.startTime,
+        endTime:body.endTime,
         page:body.page,
         pageSize:body.pageSize
     })
@@ -64,6 +64,6 @@ export let api_operation_showall=(body={})=>{
 
 export let api_operation_disable=(body)=>{
     return myrequest.put('/stock/operations/disable',{
-        groupId:body.groupId
+        batchId:body.batchId
     })
 }

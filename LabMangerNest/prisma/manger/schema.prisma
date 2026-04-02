@@ -22,9 +22,10 @@ model Reagent {
   teamId           Int      @map("TeamId")
   status           Int      @default(0) @map("Status")
 
-  lots        Lot[]
-  operations  Operation[]
-  inventories Inventory[]
+  lots              Lot[]
+  operationBatches  OperationBatch[]
+  inventoryReagents InventoryReagent[]
+  inventoryLots     InventoryLot[]
 
   @@map("Reagent")
 }
@@ -37,53 +38,86 @@ model Lot {
   status         Int      @default(0) @map("Status")
   teamId         Int      @map("TeamId")
 
-  reagent     Reagent     @relation(fields: [reagentId], references: [id])
-  operations  Operation[]
-  inventories Inventory[]
+  reagent          Reagent          @relation(fields: [reagentId], references: [id])
+  operationBatches OperationBatch[]
+  inventoryLots    InventoryLot[]
 
   @@map("Lot")
 }
 
-model Operation {
-  id            Int      @id @default(autoincrement())
-  reagentId     Int      @map("ReagentId")
-  lotId         Int      @map("LotId")
-  userId        Int      @map("UserId")
-  teamId        Int      @map("TeamId")
-  createTime    DateTime @default(now()) @map("CreateTime")
-  udi           String   @default("") @map("Udi")
-  barcodeNumber String   @map("BarcodeNumber")
-  action        Int      @map("Action")
-  note          String   @map("Note")
-  groupId       String   @map("GroupId")
-  status        Int      @default(0) @map("Status")
-  userNameSnapshot    String   @default("") @map("UserNameSnapshot")
+model OperationBatch {
+  id                  Int      @id @default(autoincrement())
+  teamId              Int      @map("TeamId")
+  reagentId           Int      @map("ReagentId")
+  lotId               Int      @map("LotId")
+  userId              Int      @map("UserId")
+  action              Int      @map("Action")
+  note                String   @default("") @map("Note")
+  createTime          DateTime @default(now()) @map("CreateTime")
+  status              Int      @default(0) @map("Status")
   reagentNameSnapshot String   @default("") @map("ReagentNameSnapshot")
   lotNameSnapshot     String   @default("") @map("LotNameSnapshot")
-  reagent Reagent @relation(fields: [reagentId], references: [id])
-  lot     Lot     @relation(fields: [lotId], references: [id])
 
-  @@index([barcodeNumber])
-  @@index([createTime])
-  @@index([teamId])
-  @@index([groupId])
-  @@map("Operation")
+  reagent Reagent         @relation(fields: [reagentId], references: [id])
+  lot     Lot             @relation(fields: [lotId], references: [id])
+  items   OperationItem[]
+
+  @@index([teamId, createTime])
+  @@index([action, createTime])
+  @@index([teamId, reagentId, lotId])
+  @@map("OperationBatch")
 }
 
-model Inventory {
-  id                    Int     @id @default(autoincrement())
-  reagentId             Int     @map("ReagentId")
-  lotId                 Int     @map("LotId")
-  teamId                Int     @map("TeamId")
-  number                Int     @default(0) @map("Number")
-  status                Int     @default(0) @map("Status")
-  warningNum            Boolean @default(false) @map("WarningNum")
-  warningExpirationDate Boolean @default(false) @map("WarningExpirationDate")
+model OperationItem {
+  id            Int    @id @default(autoincrement())
+  batchId       Int    @map("BatchId")
+  barcodeNumber String @map("BarcodeNumber")
+  udi           String @default("") @map("Udi")
+  status        Int    @default(0) @map("Status")
+
+  batch OperationBatch @relation(fields: [batchId], references: [id])
+
+  @@unique([barcodeNumber])
+  @@index([batchId])
+  @@map("OperationItem")
+}
+
+model InventoryReagent {
+  id        Int      @id @default(autoincrement())
+  teamId    Int      @map("TeamId")
+  reagentId Int      @map("ReagentId")
+  number    Int      @default(0) @map("Number")
+  status    Int      @default(0) @map("Status")
+  warn      Int      @default(0) @map("Warn")
+  updatedAt DateTime @updatedAt @map("UpdatedAt")
+
+  reagent Reagent @relation(fields: [reagentId], references: [id])
+
+  @@unique([teamId, reagentId])
+  @@index([teamId, status])
+  @@index([warn])
+  @@map("InventoryReagent")
+}
+
+model InventoryLot {
+  id        Int      @id @default(autoincrement())
+  teamId    Int      @map("TeamId")
+  reagentId Int      @map("ReagentId")
+  lotId     Int      @map("LotId")
+  number    Int      @default(0) @map("Number")
+  status    Int      @default(0) @map("Status")
+  warn      Int      @default(0) @map("Warn")
+  updatedAt DateTime @updatedAt @map("UpdatedAt")
 
   reagent Reagent @relation(fields: [reagentId], references: [id])
   lot     Lot     @relation(fields: [lotId], references: [id])
 
-  @@map("Inventory")
+  @@unique([teamId, reagentId, lotId])
+  @@index([teamId, reagentId])
+  @@index([lotId])
+  @@index([status])
+  @@index([warn])
+  @@map("InventoryLot")
 }
 
 model Location {

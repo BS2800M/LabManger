@@ -90,6 +90,7 @@
     <template #footer>
       <div style="flex: auto">
         <el-button size="large" type="primary" @click="barcodeprint">补打条码</el-button>
+        <el-button size="large" type="primary" @click="copyUdi">复制UDI</el-button>
         <el-button size="large" type="primary" @click="state.drawer = false">关闭</el-button>
       </div>
     </template>
@@ -112,24 +113,6 @@
               disabled
             />
           </el-config-provider>
-          <p>条码号</p>
-          <el-select-v2  v-model="formData.barcodeNumberselected" filterable :options="formData.barcodes" placeholder="选择条码号"  style="width: 300px"  />
-          <p>UDI</p>
-          <div class="udi-copy-row">
-            <el-select-v2
-              v-model="formData.udiSelected"
-              class="udi-select udi-select-wide"
-              filterable
-              :options="formData.udis"
-              placeholder="选择UDI"
-              popper-class="udi-select-popper"
-            >
-              <template #default="{ item }">
-                <span class="udi-option-label">{{ item.label }}</span>
-              </template>
-            </el-select-v2>
-            <el-button type="primary" plain @click="copySelectedUdi">复制</el-button>
-          </div>
           <p>操作人</p>
           <el-input v-model="formData.userName" style="width: 300px" disabled />
         </div>
@@ -143,6 +126,25 @@
           <p>注释</p>
           <el-input v-model="formData.note" style="width: 300px" disabled />
         </div>
+        <div id="content3">
+          <p>操作详情</p>
+            <div class="operationdetail-table">
+              <el-auto-resizer>
+                <template #default="{ width, height }">
+                  <el-table-v2
+                    :columns="tableDetailColumns"
+                    :data="formData.detailData"
+                    :width="width"
+                    :height="height"
+                    :row-height="36"
+                    :header-height="34"
+                    :row-event-handlers="{ onClick: handleDetailRowClick }"
+                    :row-class="({ rowData, rowIndex }) => getDetailRowClass(rowData, rowIndex)"
+                  />
+                </template>
+              </el-auto-resizer>
+            </div>
+        </div>
       </div>
 
     </template>
@@ -154,6 +156,7 @@ import { ref, onMounted, reactive } from 'vue'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { api_operation_show, api_operation_disable } from '@/api/operation'
+import { api_barcode_printer_print } from '@/api/barcodePrinter'
 import { formatDateColumn, getnowtime, getnowtime_previousmonth, format_operation_action } from '@/utils/format'
 import { format_YYYYMMDDHHmm_iso } from '@/utils/format'
 import { operation_exporttoexcel_list } from '@/utils/exportexcel.js'
@@ -166,6 +169,7 @@ const allreagentlist = ref([])
 
 const state = reactive({
   selectedRowId: null,
+  selectedDetailRowId: null,
   loading: false,
   reagentName: '',
   barcodeNumber: '',
@@ -179,25 +183,27 @@ const state = reactive({
   endtime_show: getnowtime(),
   drawer: false,
   tableData: [],
+  detailTableData: [],
 })
 let operationShowReqId = 0
 
 const formData = reactive({
-  groupId: null,
+  batchId: null,
   action: '',
   createTime: '',
   reagentName: '',
   lotName: '',
   note: '',
-  barcodes: [],
-  barcodeNumberselected: '',
-  udis: [],
-  udiSelected: '',
+  detailData: [],
   userName: '',
   actualReagentName: '',
   actualLotName: '',
   actualUserName: '',
-
+})
+const detailFormData = reactive({
+  barcodeNumber: '',
+  udi: '',
+  id: null,
 })
 const tableColumns = [
   {
@@ -214,7 +220,7 @@ const tableColumns = [
     title: '试剂名称',
     width: 150,
     flexGrow: 1,
-    cellRenderer: ({ rowData }) => rowData.snapshots?.reagentName ?? '',
+    cellRenderer: ({ rowData }) => rowData.reagentNameSnapshot ?? '',
   },
   {
     key: 'lotName',
@@ -222,7 +228,7 @@ const tableColumns = [
     title: '批号',
     width: 150,
     flexGrow: 1,
-    cellRenderer: ({ rowData }) => rowData.snapshots?.lotName ?? '',
+    cellRenderer: ({ rowData }) => rowData.lotNameSnapshot ?? '',
   },
   { key: 'number', dataKey: 'number', title: '数量', width: 100, flexGrow: 1 },
   {
@@ -240,51 +246,87 @@ const tableColumns = [
     title: '用户',
     width: 120,
     flexGrow: 1,
-    cellRenderer: ({ rowData }) => rowData.snapshots?.userName ?? '',
+    cellRenderer: ({ rowData }) => rowData.userNameSnapshot ?? '',
   },
 ]
+const tableDetailColumns = [
+  {
+    key: 'id',
+    dataKey: 'id',
+    title: 'ID',
+    width: 100,
+    flexGrow: 1,
+    cellRenderer: ({ rowData }) => rowData.id,
+  },
+  {
+    key: 'barcodeNumber',
+    dataKey: 'barcodeNumber',
+    title: '条码号',
+    width: 300,
+    flexGrow: 1,
 
+    cellRenderer: ({ rowData }) => rowData.barcodeNumber,
+  },
+  {
+    key: 'udi',
+    dataKey: 'udi',
+    title: 'UDI',
+    width: 700,
+    flexGrow: 1,
+    cellRenderer: ({ rowData }) => rowData.udi,
+  },
+]
 function resetFormData() {
   state.selectedRowId = null
   Object.assign(formData, {
-    groupId: null,
+    batchId: null,
     action: '',
     createTime: '',
     reagentName: '',
     lotName: '',
     note: '',
-    barcodes: [],
-    barcodeNumberselected: null,
-    udis: [],
-    udiSelected: null,
+    detailData: [],
     userName: '',
     actualReagentName: '',
     actualLotName: '',
     actualUserName: '',
-
   })
 }
 
 function fillFormDataFromRow(rowData) {
   Object.assign(formData, {
-    groupId: rowData.groupId,
+    batchId: rowData.batchId,
     action: rowData.action === 1 ? '入库' : '出库',
     createTime: rowData.createTime,
-    reagentName: rowData.snapshots.reagentName,
-    lotName: rowData.snapshots.lotName,
+    reagentName: rowData.reagentNameSnapshot,
+    lotName: rowData.lotNameSnapshot,
     note: rowData.note,
-    barcodes: rowData.barcodes.map(item => ({
-      value: item,
-      label: item,
+    detailData: rowData.detailData.map((item, index) => ({
+      barcodeNumber: item.barcodeNumber,
+      udi: item.udi,
+      id: item.id ?? `${rowData.batchId}-${index}`,
     })),
-    udis: rowData.udis.map(item => ({
-      value: item,
-      label: item,
-    })),
-    userName: rowData.snapshots.userName,
+    userName: rowData.userNameSnapshot,
     actualReagentName: rowData.reagent.name,
     actualLotName: rowData.lot.name,
     actualUserName: rowData.user.userName,
+  })
+
+}
+function fillDetailFormDataFromRow(rowData) {
+  Object.assign(detailFormData, {
+    barcodeNumber: rowData.barcodeNumber,
+    udi: rowData.udi,
+    id: rowData.id,
+  })
+}
+
+function resetDetailFormData() {
+  state.selectedDetailRowId = null
+  Object.assign(detailFormData, {
+    barcodeNumber: '',
+    udi: '',
+    id: null,
   })
 }
 
@@ -293,23 +335,41 @@ function getRowClass(rowData, rowIndex) {
     rowData,
     rowIndex,
     selectedRowId: state.selectedRowId,
-    getRowId: (row) => row.groupId,
+    getRowId: (row) => row.batchId,
     getStatusClass: ({ row }) => (row.status === 1 ? 'unactive-row' : 'normal-row'),
   })
 }
 
+function getDetailRowClass(rowData, rowIndex) {
+  return resolveSelectableRowClass({
+    rowData,
+    rowIndex,
+    selectedRowId: state.selectedDetailRowId,
+    getRowId: (row) => row.id,
+    defaultClass: 'normal-row',
+  })
+}
 
 async function handleRowClick({ rowData }) {
-  if (state.selectedRowId === rowData.groupId) {
+  if (state.selectedRowId === rowData.batchId) {
     resetFormData()
   }
   else{
-    state.selectedRowId = rowData.groupId
+    state.selectedRowId = rowData.batchId
     fillFormDataFromRow(rowData)
   }
-
 }
 
+async function handleDetailRowClick({ rowData }) {
+
+  if (state.selectedDetailRowId === rowData.id) {
+    resetDetailFormData()
+  }
+  else{
+    state.selectedDetailRowId = rowData.id
+    fillDetailFormDataFromRow(rowData)
+  }
+}
 async function operation_show() {
   const reqId = ++operationShowReqId
   state.loading = true
@@ -335,51 +395,63 @@ async function operation_show() {
   }
 }
 
-function barcodeprint() {
-  if(!formData.barcodeNumberselected) {
+async function barcodeprint() {
+  if(!detailFormData.barcodeNumber) {
     ElMessage.error('请选择条码号')
     return
   }
-  ElMessage.warning('Web版本不支持自动补打，请使用浏览器打印')
-}
+  const reagentName = String(
+    formData.reagentName || formData.actualReagentName || '',
+  ).trim()
+  const lotName = String(formData.lotName || formData.actualLotName || '').trim()
+  if (!reagentName || !lotName) {
+    ElMessage.error('缺少试剂或批号信息，无法补打')
+    return
+  }
 
-function fallbackCopyText(text) {
-  const textArea = document.createElement('textarea')
-  textArea.value = text
-  textArea.setAttribute('readonly', 'readonly')
-  textArea.style.position = 'fixed'
-  textArea.style.top = '-9999px'
-  document.body.appendChild(textArea)
-  textArea.select()
-  const copied = document.execCommand('copy')
-  document.body.removeChild(textArea)
-  if (!copied) {
-    throw new Error('copy failed')
+  try {
+    const result = await api_barcode_printer_print({
+      data: [
+        {
+          barcodeNumber: detailFormData.barcodeNumber,
+          reagentName,
+          lotName,
+        },
+      ],
+    })
+
+    if (result?.success) {
+      ElMessage.success(result?.data?.message || '补打条码请求成功')
+      return
+    }
+    ElMessage.error(result?.error?.message || '补打条码失败')
+  } catch {
+    ElMessage.error('补打条码失败，请确认本机打印服务已启动')
   }
 }
 
-async function copySelectedUdi() {
-  const udi = String(formData.udiSelected ?? '').trim()
-  if (!udi) {
-    ElMessage.warning('请先选择UDI')
+
+
+async function copyUdi() {
+
+  const udi = String(detailFormData.udi ?? '').trim()
+
+  if(!udi) {
+    ElMessage.warning('请选择UDI')
+    return
+  }
+  if (!navigator.clipboard?.writeText) {
+    ElMessage.error('当前环境不支持剪贴板 API')
     return
   }
   try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(udi)
-    } else {
-      fallbackCopyText(udi)
-    }
-    ElMessage.success('UDI已复制')
+    await navigator.clipboard.writeText(udi)
+    ElMessage.success("UDI已复制")
   } catch {
-    try {
-      fallbackCopyText(udi)
-      ElMessage.success('UDI已复制')
-    } catch {
-      ElMessage.error('复制失败，请手动复制')
-    }
+    ElMessage.error('复制失败，请在 localhost/127.0.0.1 或 https 环境下使用')
   }
 }
+
 
 function view_record() {
   state.selectedRowId = null
@@ -400,7 +472,7 @@ async function disable_record() {
     openInfoMessageBox({ title: '禁用记录', message: '请选择要禁用的记录' })
     return
   }
-  await api_operation_disable({ groupId: state.selectedRowId })
+  await api_operation_disable({ batchId: state.selectedRowId })
   resetFormData()
   state.drawer = false
   await operation_show()
@@ -493,6 +565,25 @@ onMounted(async () => {
   align-items: start;
 }
 
+
+
+#content3 {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.operationdetail-table {
+  margin-top: 8px;
+  height: 260px;
+  min-height: 220px;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 70%;
+}
+
+
+
 @media (max-width: 900px) {
   .drawer-form-grid {
     grid-template-columns: 1fr;
@@ -505,38 +596,6 @@ onMounted(async () => {
   color: var(--el-text-color-primary);
 }
 
-.udi-copy-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width:660px;
-  max-width: 100%;
-}
 
-.udi-select-wide {
-  flex: 1;
-  min-width: 0;
-}
 
-.udi-select-wide :deep(.el-select-v2__wrapper) {
-  min-height: 44px;
-}
-
-.udi-select-wide :deep(.el-select-v2__selected-item) {
-  line-height: 1.3;
-}
-
-.udi-select :deep(.el-select-v2__wrapper),
-.udi-select :deep(.el-select-v2__selected-item) {
-  font-family: Consolas, "Courier New", monospace;
-}
-
-:deep(.udi-select-popper .udi-option-label) {
-  display: block;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: Consolas, "Courier New", monospace;
-}
 </style>

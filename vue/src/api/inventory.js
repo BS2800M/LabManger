@@ -27,8 +27,9 @@ export const api_inventory_dashboard=()=>{
 
 
 export const api_inventory_statistics=(params)=>{
+    const onlyLot = params.onlyLot === true
     return myrequest.get('/stock/inventory/statistics',{
-        onlyLot:params.onlyLot,
+        onlyLot,
         reagentId:params.reagentId,
         lotId:params.lotId,
         startTime:params.startTime,

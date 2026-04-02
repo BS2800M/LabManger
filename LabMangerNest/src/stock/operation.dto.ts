@@ -19,22 +19,19 @@ const outboundListItem = z.object({
 
 
 const responseShowData = z.object({
-    groupId: z.string(),
+    batchId: z.number(),
     createTime: z.coerce.date(),
     reagent: z.object({ id: z.number(), name: z.string() }),
     lot: z.object({ id: z.number(), name: z.string() }),
     number: z.number(),
-    barcodes: z.array(z.string()),
-    udis: z.array(z.string()),
+    detailData: z.array(z.object({ id: z.number(), barcodeNumber: z.string(), udi: z.string() })),
     note: z.string(),
     action: z.number(),
     status: z.number(),
     user: z.object({ id: z.number(), userName: z.string() }),
-    snapshots: z.object({
-        userName: z.string(),
-        reagentName: z.string(),
-        lotName: z.string(),
-    }),
+    userNameSnapshot: z.string(),
+    reagentNameSnapshot: z.string(),
+    lotNameSnapshot: z.string(),
 });
 
 export const OperationZod = {
@@ -71,7 +68,7 @@ export const OperationZod = {
         endTime: z.coerce.date().optional(),
     }),
     requestDisable: z.object({
-        groupId: z.string(),
+        batchId: z.number().min(1),
     }),
     responseFastInbound: ApiResponseZod.extend({ data: z.object({ status: z.number(), message: z.string() }) }),
     responseInbound: ApiResponseZod.extend({ data: z.object({ messages: z.array(z.string()) }) }),
@@ -79,7 +76,7 @@ export const OperationZod = {
     responseOutbound: ApiResponseZod.extend({ data: z.object({ messages: z.array(z.string()) }) }),
     responseShow: ApiResponseZod.extend({ data: z.array(responseShowData) }),
     responseShowAll: ApiResponseZod.extend({ data: z.array(responseShowData) }),
-    responseDisable: ApiResponseZod.extend({ data: z.object({ groupId: z.string() }) }),
+    responseDisable: ApiResponseZod.extend({ data: z.object({ batchId: z.number() }) }),
 } as const;
 
 export type OperationDto = ZodToDto<typeof OperationZod>;

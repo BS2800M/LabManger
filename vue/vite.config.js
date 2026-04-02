@@ -30,6 +30,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/cross/, '')
+      },
+      '/barcode-printer': {
+        target: 'http://127.0.0.1:18080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/barcode-printer/, '')
       }
     }
   }
