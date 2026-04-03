@@ -1,5 +1,9 @@
 <template>
-  <div class="reagent-lot-page">
+  <div
+    class="reagent-lot-page"
+    v-loading="pageLoading"
+    element-loading-text="正在加载试剂与批号数据..."
+  >
     <section class="panel-section">
       <div class="panel-header">
         <h3>试剂管理</h3>
@@ -217,6 +221,7 @@ import {
   tryOpenEditDrawerBySelection,
   resolveSelectableRowClass,
 } from '@/utils/crud'
+import { usePageLoading } from '@/utils/pageLoading'
 
 const reagentState = reactive({
   name: '',
@@ -278,6 +283,7 @@ const lotFormData = reactive({
 
 const lotRequiredFields = ['name', 'expirationdate', 'status', 'reagentId']
 const lotReagentRefreshTrigger = ref(0)
+const { pageLoading, withPageLoading } = usePageLoading()
 const gs1Parser = new GS1Parser()
 
 const lotTableColumns = [
@@ -421,47 +427,55 @@ function showDeleteReagentConfirm() {
 }
 
 async function reagentShow() {
-  const data = await api_reagent_show(reagentState)
-  reagentState.tableData = data.data
-  reagentState.totalpage = data.meta.totalPage
+  return withPageLoading(async () => {
+    const data = await api_reagent_show(reagentState)
+    reagentState.tableData = data.data
+    reagentState.totalpage = data.meta.totalPage
+  })
 }
 
 async function reagentDel() {
-  await deleteWithSelection({
-    selectedRowId: reagentState.selectedRowId,
-    title: '删除试剂',
-    emptyMessage: '请选择要删除的试剂',
-    deleteAction: (id) => api_reagent_del(id),
-    onAfterDelete: async () => {
-      await reagentShow()
-      await lotShow()
-      reagentState.selectedRowId = null
-      resetReagentFormData()
-      lotReagentRefreshTrigger.value += 1
-    },
+  return withPageLoading(async () => {
+    await deleteWithSelection({
+      selectedRowId: reagentState.selectedRowId,
+      title: '删除试剂',
+      emptyMessage: '请选择要删除的试剂',
+      deleteAction: (id) => api_reagent_del(id),
+      onAfterDelete: async () => {
+        await reagentShow()
+        await lotShow()
+        reagentState.selectedRowId = null
+        resetReagentFormData()
+        lotReagentRefreshTrigger.value += 1
+      },
+    })
   })
 }
 
 async function reagentUpdate() {
-  reagentFormData.status = reagentFormData.status === true ? 0 : 1
-  await api_reagent_update(reagentFormData)
-  reagentState.drawer = false
-  await reagentShow()
-  reagentState.selectedRowId = null
-  reagentFormData.id = null
-  await lotShow()
-  lotReagentRefreshTrigger.value += 1
+  return withPageLoading(async () => {
+    reagentFormData.status = reagentFormData.status === true ? 0 : 1
+    await api_reagent_update(reagentFormData)
+    reagentState.drawer = false
+    await reagentShow()
+    reagentState.selectedRowId = null
+    reagentFormData.id = null
+    await lotShow()
+    lotReagentRefreshTrigger.value += 1
+  })
 }
 
 async function reagentAdd() {
-  reagentFormData.status = reagentFormData.status === true ? 0 : 1
-  await api_reagent_add(reagentFormData)
-  reagentState.drawer = false
-  await reagentShow()
-  reagentState.selectedRowId = null
-  reagentFormData.id = null
-  await lotShow()
-  lotReagentRefreshTrigger.value += 1
+  return withPageLoading(async () => {
+    reagentFormData.status = reagentFormData.status === true ? 0 : 1
+    await api_reagent_add(reagentFormData)
+    reagentState.drawer = false
+    await reagentShow()
+    reagentState.selectedRowId = null
+    reagentFormData.id = null
+    await lotShow()
+    lotReagentRefreshTrigger.value += 1
+  })
 }
 
 function resetLotFormData() {
@@ -561,53 +575,61 @@ function handleLotReagentSelected(selectedReagent) {
 }
 
 async function lotShow() {
-  const data = await api_lot_show(lotState)
-  lotState.tableData = data.data
-  lotState.totalpage = data.meta.totalPage
+  return withPageLoading(async () => {
+    const data = await api_lot_show(lotState)
+    lotState.tableData = data.data
+    lotState.totalpage = data.meta.totalPage
+  })
 }
 
 async function lotDel() {
-  await deleteWithSelection({
-    selectedRowId: lotState.selectedRowId,
-    title: '删除批号',
-    emptyMessage: '请选择要删除的批号',
-    deleteAction: (id) => api_lot_del(id),
-    onAfterDelete: async () => {
-      await lotShow()
-      lotState.selectedRowId = null
-      resetLotFormData()
-    },
+  return withPageLoading(async () => {
+    await deleteWithSelection({
+      selectedRowId: lotState.selectedRowId,
+      title: '删除批号',
+      emptyMessage: '请选择要删除的批号',
+      deleteAction: (id) => api_lot_del(id),
+      onAfterDelete: async () => {
+        await lotShow()
+        lotState.selectedRowId = null
+        resetLotFormData()
+      },
+    })
   })
 }
 
 async function lotUpdate() {
-  const expirationDate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
-  lotFormData.status = lotFormData.status === true ? 0 : 1
-  await api_lot_update({
-    id: lotFormData.id,
-    reagentId: lotFormData.reagentId,
-    name: lotFormData.name,
-    expirationDate,
-    status: lotFormData.status,
+  return withPageLoading(async () => {
+    const expirationDate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
+    lotFormData.status = lotFormData.status === true ? 0 : 1
+    await api_lot_update({
+      id: lotFormData.id,
+      reagentId: lotFormData.reagentId,
+      name: lotFormData.name,
+      expirationDate,
+      status: lotFormData.status,
+    })
+    lotState.drawer = false
+    await lotShow()
+    lotState.selectedRowId = null
+    lotFormData.id = null
   })
-  lotState.drawer = false
-  await lotShow()
-  lotState.selectedRowId = null
-  lotFormData.id = null
 }
 
 async function lotAdd() {
-  const expirationDate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
-  lotFormData.status = lotFormData.status === true ? 0 : 1
-  await api_lot_add({
-    name: lotFormData.name,
-    reagentId: lotFormData.reagentId,
-    expirationDate,
+  return withPageLoading(async () => {
+    const expirationDate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
+    lotFormData.status = lotFormData.status === true ? 0 : 1
+    await api_lot_add({
+      name: lotFormData.name,
+      reagentId: lotFormData.reagentId,
+      expirationDate,
+    })
+    lotState.drawer = false
+    await lotShow()
+    lotState.selectedRowId = null
+    lotFormData.id = null
   })
-  lotState.drawer = false
-  await lotShow()
-  lotState.selectedRowId = null
-  lotFormData.id = null
 }
 
 onMounted(async () => {

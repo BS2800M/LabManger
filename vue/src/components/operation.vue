@@ -1,10 +1,11 @@
 <template>
-  <div id="background" class="operation-page">
-    <section
-      class="panel-section"
-      v-loading="state.loading"
-      element-loading-text="正在加载操作记录..."
-    >
+  <div
+    id="background"
+    class="operation-page"
+    v-loading="pageLoading"
+    element-loading-text="正在加载操作记录..."
+  >
+    <section class="panel-section">
       <div class="panel-header">
         <h3>操作查询</h3>
       </div>
@@ -164,13 +165,13 @@ import { api_reagent_showall } from '@/api/reagent'
 import { api_lot_showall } from '@/api/lot'
 import { resolveSelectableRowClass } from '@/utils/crud'
 import { closeMessageBox, openConfirmMessageBox, openInfoMessageBox } from '@/utils/messagebox'
+import { usePageLoading } from '@/utils/pageLoading'
 
 const allreagentlist = ref([])
 
 const state = reactive({
   selectedRowId: null,
   selectedDetailRowId: null,
-  loading: false,
   reagentName: '',
   barcodeNumber: '',
   udi: '',
@@ -185,6 +186,8 @@ const state = reactive({
   tableData: [],
   detailTableData: [],
 })
+const { pageLoading, withPageLoading } = usePageLoading()
+
 let operationShowReqId = 0
 
 const formData = reactive({
@@ -372,10 +375,9 @@ async function handleDetailRowClick({ rowData }) {
 }
 async function operation_show() {
   const reqId = ++operationShowReqId
-  state.loading = true
-  state.starttime = format_YYYYMMDDHHmm_iso(state.starttime_show)
-  state.endtime = format_YYYYMMDDHHmm_iso(state.endtime_show)
-  try {
+  return withPageLoading(async () => {
+    state.starttime = format_YYYYMMDDHHmm_iso(state.starttime_show)
+    state.endtime = format_YYYYMMDDHHmm_iso(state.endtime_show)
     const data = await api_operation_show({
       reagentName: state.reagentName,
       startTime: state.starttime,
@@ -388,11 +390,7 @@ async function operation_show() {
     if (reqId !== operationShowReqId) return
     state.tableData = data.data
     state.totalpage = data.meta?.totalPage ?? 1
-  } finally {
-    if (reqId === operationShowReqId) {
-      state.loading = false
-    }
-  }
+  })
 }
 
 async function barcodeprint() {
@@ -410,21 +408,23 @@ async function barcodeprint() {
   }
 
   try {
-    const result = await api_barcode_printer_print({
-      data: [
-        {
-          barcodeNumber: detailFormData.barcodeNumber,
-          reagentName,
-          lotName,
-        },
-      ],
-    })
+    await withPageLoading(async () => {
+      const result = await api_barcode_printer_print({
+        data: [
+          {
+            barcodeNumber: detailFormData.barcodeNumber,
+            reagentName,
+            lotName,
+          },
+        ],
+      })
 
-    if (result?.success) {
-      ElMessage.success(result?.data?.message || '补打条码请求成功')
-      return
-    }
-    ElMessage.error(result?.error?.message || '补打条码失败')
+      if (result?.success) {
+        ElMessage.success(result?.data?.message || '补打条码请求成功')
+        return
+      }
+      ElMessage.error(result?.error?.message || '补打条码失败')
+    })
   } catch {
     ElMessage.error('补打条码失败，请确认本机打印服务已启动')
   }
@@ -472,11 +472,13 @@ async function disable_record() {
     openInfoMessageBox({ title: '禁用记录', message: '请选择要禁用的记录' })
     return
   }
-  await api_operation_disable({ batchId: state.selectedRowId })
-  resetFormData()
-  state.drawer = false
-  await operation_show()
-  closeMessageBox()
+  await withPageLoading(async () => {
+    await api_operation_disable({ batchId: state.selectedRowId })
+    resetFormData()
+    state.drawer = false
+    await operation_show()
+    closeMessageBox()
+  })
 }
 function handleExport() {
   operation_exporttoexcel_list({
@@ -489,14 +491,16 @@ function handleExport() {
 }
 
 onMounted(async () => {
-  await operation_show()
-  let data = await api_reagent_showall()
-  allreagentlist.value = data.data.map((item) => ({
-    value: item.id,
-    label: item.name,
-    name: item.name,
-  }))
-  data = await api_lot_showall()
+  await withPageLoading(async () => {
+    await operation_show()
+    let data = await api_reagent_showall()
+    allreagentlist.value = data.data.map((item) => ({
+      value: item.id,
+      label: item.name,
+      name: item.name,
+    }))
+    data = await api_lot_showall()
+  })
 })
 </script>
 

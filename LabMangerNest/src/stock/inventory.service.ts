@@ -10,21 +10,29 @@ export class InventoryService {
   // 注入库存业务所需的业务库 Prisma 实例。
   constructor(private readonly prisma: MangerPrismaService) {}
 
-  // 状态聚合：删除优先级最高，其次停用，最后启用。
-  private resolveInventoryStatus(reagentStatus: number, lotStatus: number): number {
-    if (reagentStatus === Status.Delete || lotStatus === Status.Delete) return Status.Delete;
-    if (reagentStatus === Status.Disable || lotStatus === Status.Disable) return Status.Disable;
+  // ===== 01. 基础规则计算 =====
+  // 01-01 试剂行状态计算：仅由试剂状态决定。
+  private resolveInventoryReagentRowStatus(reagentStatus: number): number {
+    if (reagentStatus === Status.Delete) return Status.Delete;
+    if (reagentStatus === Status.Disable) return Status.Disable;
     return Status.Enable;
   }
 
-  // 父节点只允许 0/1（无预警/数量预警）。
+  // 01-02 批号行状态计算：仅由批号状态决定。
+  private resolveInventoryLotRowStatus(lotStatus: number): number {
+    if (lotStatus === Status.Delete) return Status.Delete;
+    if (lotStatus === Status.Disable) return Status.Disable;
+    return Status.Enable;
+  }
+
+  // 01-03 试剂行预警计算：仅区分无预警/数量预警。
   private resolveReagentWarn(number: number, warnNumber: number): number {
     return number <= warnNumber
       ? InventoryWarningType.NumberWarning
       : InventoryWarningType.NoWarning;
   }
 
-  // 子节点只允许 0/2（无预警/效期预警）。
+  // 01-04 批号行预警计算：仅区分无预警/效期预警。
   private resolveLotWarn(expirationDate: Date, warnDays: number): number {
     const threshold = new Date();
     threshold.setHours(0, 0, 0, 0);
@@ -34,77 +42,12 @@ export class InventoryService {
       : InventoryWarningType.NoWarning;
   }
 
-  private async ensureInventoryReagentRow(
-    params: { teamId: number; reagentId: number },
-    tx: Prisma.TransactionClient,
-  ): Promise<void> {
-    // 保证父层汇总行存在，后续更新可直接走 upsert/update。
-    await tx.inventoryReagent.upsert({
-      where: { teamId_reagentId: { teamId: params.teamId, reagentId: params.reagentId } },
-      create: {
-        teamId: params.teamId,
-        reagentId: params.reagentId,
-        number: 0,
-        status: Status.Enable,
-        warn: InventoryWarningType.NoWarning,
-      },
-      update: {},
-    });
-  }
-
-  private async refreshReagentNumberWarnAndStatus(
-    params: { teamId: number; reagentId: number },
-    tx: Prisma.TransactionClient,
-  ): Promise<number> {
-    // 父层 number 由子层 sum 得出，但在写入路径同步落库，查询时不做临时聚合。
-    const reagent = await tx.reagent.findFirst({
-      where: { id: params.reagentId },
-      select: { id: true, warnNumber: true, status: true },
-    });
-    if (!reagent) return InventoryWarningType.NoWarning;
-
-    const total = (
-      await tx.inventoryLot.aggregate({
-        where: {
-          teamId: params.teamId,
-          reagentId: params.reagentId,
-          status: { not: Status.Delete },
-        },
-        _sum: { number: true },
-      })
-    )._sum.number ?? 0;
-
-    const warn = this.resolveReagentWarn(total, reagent.warnNumber);
-    const status =
-      reagent.status === Status.Delete
-        ? Status.Delete
-        : reagent.status === Status.Disable
-          ? Status.Disable
-          : Status.Enable;
-
-    await tx.inventoryReagent.upsert({
-      where: { teamId_reagentId: { teamId: params.teamId, reagentId: params.reagentId } },
-      create: {
-        teamId: params.teamId,
-        reagentId: params.reagentId,
-        number: total,
-        warn,
-        status,
-      },
-      update: {
-        number: total,
-        warn,
-        status,
-      },
-    });
-    return warn;
-  }
-
-  private async refreshLotWarnAndStatusById(
+  // ===== 02. 批号行预警与状态维护（内部工具） =====
+  // 02-01 更新单个批号行的 warn/status。
+  private async updateInventoryLotRowWarningAndStatusById(
     inventoryLotId: number,
     tx: Prisma.TransactionClient,
   ): Promise<void> {
-    // 按单行刷新，适用于增减库存后的精确更新。
     const row = await tx.inventoryLot.findFirst({
       where: { id: inventoryLotId, status: { not: Status.Delete } },
       include: {
@@ -115,18 +58,18 @@ export class InventoryService {
     if (!row) return;
 
     const warn = this.resolveLotWarn(row.lot.expirationDate, row.reagent.warnDays);
-    const status = this.resolveInventoryStatus(row.reagent.status, row.lot.status);
+    const status = this.resolveInventoryLotRowStatus(row.lot.status);
     await tx.inventoryLot.update({
       where: { id: row.id },
       data: { warn, status },
     });
   }
 
-  private async refreshLotWarnAndStatusByReagent(
+  // 02-02 按试剂批量更新批号行的 warn/status。
+  private async updateInventoryLotRowsWarningAndStatusByReagent(
     params: { teamId: number; reagentId: number },
     tx: Prisma.TransactionClient,
   ): Promise<void> {
-    // 按试剂批量刷新，适用于 warnDays 变更等“整试剂”场景。
     const rows = await tx.inventoryLot.findMany({
       where: {
         teamId: params.teamId,
@@ -141,7 +84,7 @@ export class InventoryService {
 
     for (const row of rows) {
       const warn = this.resolveLotWarn(row.lot.expirationDate, row.reagent.warnDays);
-      const status = this.resolveInventoryStatus(row.reagent.status, row.lot.status);
+      const status = this.resolveInventoryLotRowStatus(row.lot.status);
       await tx.inventoryLot.update({
         where: { id: row.id },
         data: { warn, status },
@@ -149,7 +92,42 @@ export class InventoryService {
     }
   }
 
-  public async add(
+  // ===== 03. 核心写入：增加与更新库存行 =====
+  // 03-01 增加库存表中的试剂行：确保父行存在，并立即回写汇总与预警。
+  public async addInventoryReagentRow(
+    params: {
+      reagentId: number;
+      teamId: number;
+    },
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
+    // 新增库存父行（试剂行）并刷新父层汇总与预警状态。
+    const { reagentId, teamId } = params;
+    const reagent = await tx.reagent.findFirst({
+      where: { id: reagentId },
+      select: { id: true, teamId: true },
+    });
+    if (!reagent) throw new HttpException('不存在的试剂id', HttpStatus.FORBIDDEN);
+    if (reagent.teamId !== teamId) {
+      throw new HttpException('试剂不属于当前团队', HttpStatus.FORBIDDEN);
+    }
+
+    await tx.inventoryReagent.upsert({
+      where: { teamId_reagentId: { teamId, reagentId } },
+      create: {
+        teamId,
+        reagentId,
+        number: 0,
+        status: Status.Enable,
+        warn: InventoryWarningType.NoWarning,
+      },
+      update: {},
+    });
+    await this.updateInventoryReagentRow({ teamId, reagentId }, tx);
+  }
+
+  // 03-02 增加库存表中的批号行：创建/恢复子行，并联动更新父行。
+  public async addInventoryLotRow(
     params: {
       reagentId: number;
       lotId: number;
@@ -158,7 +136,7 @@ export class InventoryService {
     },
     tx: Prisma.TransactionClient,
   ): Promise<void> {
-    // 新增库存子行并联动刷新父层汇总与预警状态。
+    // 新增库存子行（批号行）并联动刷新父层汇总与预警状态。
     const { reagentId, lotId, teamId, number = 0 } = params;
     const lot = await tx.lot.findFirst({
       where: { id: lotId },
@@ -178,7 +156,7 @@ export class InventoryService {
       throw new HttpException('库存记录已存在', HttpStatus.FORBIDDEN);
     }
 
-    await this.ensureInventoryReagentRow({ teamId, reagentId }, tx);
+    await this.addInventoryReagentRow({ teamId, reagentId }, tx);
 
     if (exists && exists.status === Status.Delete) {
       // 软删记录复用，避免重复建行。
@@ -192,7 +170,7 @@ export class InventoryService {
           status: Status.Enable,
         },
       });
-      await this.refreshLotWarnAndStatusById(exists.id, tx);
+      await this.updateInventoryLotRowWarningAndStatusById(exists.id, tx);
     } else {
       const created = await tx.inventoryLot.create({
         data: {
@@ -205,13 +183,57 @@ export class InventoryService {
         },
         select: { id: true },
       });
-      await this.refreshLotWarnAndStatusById(created.id, tx);
+      await this.updateInventoryLotRowWarningAndStatusById(created.id, tx);
     }
 
-    await this.refreshReagentNumberWarnAndStatus({ teamId, reagentId }, tx);
+    await this.updateInventoryReagentRow({ teamId, reagentId }, tx);
   }
 
-  public async update(
+  // 03-03 更新库存表中的试剂行：汇总子行数量并回写 warn/status。
+  public async updateInventoryReagentRow(
+    params: { teamId: number; reagentId: number },
+    tx: Prisma.TransactionClient,
+  ): Promise<number> {
+    const reagent = await tx.reagent.findFirst({
+      where: { id: params.reagentId },
+      select: { id: true, warnNumber: true, status: true },
+    });
+    if (!reagent) return InventoryWarningType.NoWarning;
+
+    const total = (
+      await tx.inventoryLot.aggregate({
+        where: {
+          teamId: params.teamId,
+          reagentId: params.reagentId,
+          status: { not: Status.Delete },
+        },
+        _sum: { number: true },
+      })
+    )._sum.number ?? 0;
+
+    const warn = this.resolveReagentWarn(total, reagent.warnNumber);
+    const status = this.resolveInventoryReagentRowStatus(reagent.status);
+
+    await tx.inventoryReagent.upsert({
+      where: { teamId_reagentId: { teamId: params.teamId, reagentId: params.reagentId } },
+      create: {
+        teamId: params.teamId,
+        reagentId: params.reagentId,
+        number: total,
+        warn,
+        status,
+      },
+      update: {
+        number: total,
+        warn,
+        status,
+      },
+    });
+    return warn;
+  }
+
+  // 03-04 更新库存表中的批号行：更新子行并同步刷新新旧父行汇总。
+  public async updateInventoryLotRow(
     params: {
       id: number;
       reagentId: number;
@@ -250,7 +272,7 @@ export class InventoryService {
     });
     if (duplicate) throw new HttpException('库存记录已存在', HttpStatus.FORBIDDEN);
 
-    await this.ensureInventoryReagentRow({ teamId, reagentId }, tx);
+    await this.addInventoryReagentRow({ teamId, reagentId }, tx);
 
     await tx.inventoryLot.update({
       where: { id },
@@ -262,29 +284,29 @@ export class InventoryService {
       },
     });
 
-    await this.refreshLotWarnAndStatusById(id, tx);
+    await this.updateInventoryLotRowWarningAndStatusById(id, tx);
     // 若批号归属试剂变化，需要同时刷新新旧两个父节点。
-    await this.refreshReagentNumberWarnAndStatus({ teamId, reagentId }, tx);
-    await this.refreshReagentNumberWarnAndStatus({
+    await this.updateInventoryReagentRow({ teamId, reagentId }, tx);
+    await this.updateInventoryReagentRow({
       teamId: exists.teamId,
       reagentId: exists.reagentId,
     }, tx);
   }
 
+  // 03-05 按操作增量更新库存：供入库/出库等业务统一调用。
   public async updateInventory(
     reagentId: number,
     delta: number,
     lotId: number | undefined,
     tx: Prisma.TransactionClient,
   ): Promise<{ isSuccess: boolean; message: string }> {
-    // Operation 入/出/禁用补偿统一走这里，保证库存父子行同事务更新。
     const reagent = await tx.reagent.findFirst({
       where: { id: reagentId },
       select: { id: true, name: true, teamId: true, warnNumber: true },
     });
     if (!reagent) return { isSuccess: false, message: '试剂不存在' };
 
-    await this.ensureInventoryReagentRow({ teamId: reagent.teamId, reagentId }, tx);
+    await this.addInventoryReagentRow({ teamId: reagent.teamId, reagentId }, tx);
 
     if (lotId !== undefined) {
       const lot = await tx.lot.findFirst({
@@ -324,18 +346,18 @@ export class InventoryService {
         });
       }
 
-      await this.refreshLotWarnAndStatusById(lotRow.id, tx);
+      await this.updateInventoryLotRowWarningAndStatusById(lotRow.id, tx);
     }
 
     if (lotId === undefined) {
       // delta=0 且 lot 未指定时，用于仅刷新 warn/status。
-      await this.refreshLotWarnAndStatusByReagent(
+      await this.updateInventoryLotRowsWarningAndStatusByReagent(
         { teamId: reagent.teamId, reagentId },
         tx,
       );
     }
 
-    const warn = await this.refreshReagentNumberWarnAndStatus(
+    const warn = await this.updateInventoryReagentRow(
       { teamId: reagent.teamId, reagentId },
       tx,
     );
@@ -345,11 +367,12 @@ export class InventoryService {
     return { isSuccess: true, message: `${reagent.name}库存更新成功` };
   }
 
+  // ===== 04. 维护与修复 =====
+  // 04-01 批量刷新批号行效期预警（可指定单 lot）。
   public async updateExpirationWarning(
     lotId: number | undefined,
     tx: Prisma.TransactionClient,
   ): Promise<void> {
-    // 定时任务入口：批量刷新子层效期预警和状态。
     const rows = await tx.inventoryLot.findMany({
       where:
         lotId !== undefined
@@ -363,7 +386,7 @@ export class InventoryService {
 
     for (const row of rows) {
       const warn = this.resolveLotWarn(row.lot.expirationDate, row.reagent.warnDays);
-      const status = this.resolveInventoryStatus(row.reagent.status, row.lot.status);
+      const status = this.resolveInventoryLotRowStatus(row.lot.status);
       await tx.inventoryLot.update({
         where: { id: row.id },
         data: { warn, status },
@@ -371,11 +394,11 @@ export class InventoryService {
     }
   }
 
+  // 04-02 按库存行 ID 重算批号数量，并回写试剂行汇总。
   public async recalculateInventoryNumbersByInventoryIds(
     inventoryIds: number[],
     tx: Prisma.TransactionClient,
   ): Promise<void> {
-    // 兜底修复工具：基于 operation 明细回放 lot 数量，再回写父层汇总。
     const uniqueIds = [...new Set(inventoryIds.filter((id) => Number.isInteger(id) && id > 0))];
     if (uniqueIds.length === 0) return;
 
@@ -418,21 +441,22 @@ export class InventoryService {
         where: { id: inv.id },
         data: { number: inbound - outbound },
       });
-      await this.refreshLotWarnAndStatusById(inv.id, tx);
+      await this.updateInventoryLotRowWarningAndStatusById(inv.id, tx);
       affectedReagentKeys.add(`${inv.teamId}-${inv.reagentId}`);
     }
 
     for (const key of affectedReagentKeys) {
       const [teamIdStr, reagentIdStr] = key.split('-');
-      await this.refreshReagentNumberWarnAndStatus(
+      await this.updateInventoryReagentRow(
         { teamId: Number(teamIdStr), reagentId: Number(reagentIdStr) },
         tx,
       );
     }
   }
 
+  // ===== 05. 查询与树结构组装 =====
+  // 05-01 构建库存父行查询条件（试剂维度）。
   private buildInventoryReagentWhere(name: string | undefined) {
-    // 展示查询仅过滤软删除和名称条件，不做 team 隔离。
     const where: Prisma.InventoryReagentWhereInput = {
       status: { not: Status.Delete },
       reagent: {
@@ -452,6 +476,7 @@ export class InventoryService {
     return where;
   }
 
+  // 05-02 将父子表数据组装为前端树形结构。
   private mapTreeRows(
     parents: Array<{
       id: number;
@@ -474,11 +499,10 @@ export class InventoryService {
       lot: { id: number; name: string; expirationDate: Date; status: number };
     }>,
   ): InventoryDto['responseShow']['data'] {
-    // 后端直接组装 el-table-v2 树形结构（父试剂 -> 子批号）。
     const lotMap = new Map<number, InventoryDto['responseShow']['data'][number][]>();
 
     for (const lot of lots) {
-      const lotStatus = this.resolveInventoryStatus(lot.reagent.status, lot.lot.status);
+      const lotStatus = this.resolveInventoryLotRowStatus(lot.lot.status);
       const child: InventoryDto['responseShow']['data'][number] = {
         id: `lot-${lot.id}`,
         nodeType: 'lot',
@@ -520,11 +544,11 @@ export class InventoryService {
     }));
   }
 
+  // 05-03 分页查询库存树（分页作用于试剂父行）。
   async show(
     dto: InventoryDto['requestShow'],
     _session: SessionUser,
   ): Promise<InventoryDto['responseShow']> {
-    // 分页作用于父节点（试剂），子节点按父节点一次性拉取。
     const where = this.buildInventoryReagentWhere(dto.name);
     const page = dto.page || 1;
     const pageSize = dto.pageSize || 10;
@@ -568,11 +592,11 @@ export class InventoryService {
     };
   }
 
+  // 05-04 查询库存树（导出场景，不限制 pageSize）。
   async showAll(
     dto: InventoryDto['requestShowAll'],
     _session: SessionUser,
   ): Promise<InventoryDto['responseShowAll']> {
-    // 导出接口复用 show 逻辑，但不限制 pageSize。
     const where = this.buildInventoryReagentWhere(dto.name);
     const page = dto.page || 1;
     const pageSize = dto.pageSize || 9999999;
@@ -616,11 +640,12 @@ export class InventoryService {
     };
   }
 
+  // ===== 06. 审计与统计 =====
+  // 06-01 全量审计库存：按操作明细回放批号库存并重建汇总。
   async auditAll(
     session: SessionUser,
     tx: Prisma.TransactionClient,
   ): Promise<InventoryDto['responseAuditAll']> {
-    // 全量校准：按 batch.action 回放入出库，重建 lot 数量。
     const inventories = await tx.inventoryLot.findMany({
       where: {
         teamId: session.teamId,
@@ -662,12 +687,12 @@ export class InventoryService {
         where: { id: inv.id },
         data: { number: inbound - outbound },
       });
-      await this.refreshLotWarnAndStatusById(inv.id, tx);
+      await this.updateInventoryLotRowWarningAndStatusById(inv.id, tx);
       affectedReagentIds.add(inv.reagentId);
     }
 
     for (const reagentId of affectedReagentIds) {
-      await this.refreshReagentNumberWarnAndStatus(
+      await this.updateInventoryReagentRow(
         { teamId: session.teamId, reagentId },
         tx,
       );
@@ -676,11 +701,11 @@ export class InventoryService {
     return { success: true, data: { message: '库存修正完成' } };
   }
 
+  // 06-02 按时间窗口统计库存/入库/出库趋势。
   async statistics(
     dto: InventoryDto['requestStatistics'],
     session: SessionUser,
   ): Promise<InventoryDto['responseStatistics']> {
-    // 统计口径基于 operation 明细 + batch 时间窗，保证与业务操作一致。
     const onlyLot = dto.onlyLot === true;
     const reagent = await this.prisma.reagent.findFirst({ where: { id: dto.reagentId } });
     if (!reagent) throw new HttpException('不存在的试剂id', HttpStatus.FORBIDDEN);

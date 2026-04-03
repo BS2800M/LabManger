@@ -40,7 +40,7 @@ export class LotService {
             include: { reagent: { select: { id: true, name: true } } },
         });
 
-        await this.inventoryService.add(
+        await this.inventoryService.addInventoryLotRow(
             {
                 reagentId: lot.reagentId,
                 lotId: lot.id,
@@ -125,7 +125,7 @@ export class LotService {
             if (!inventoryRow) {
                 throw new HttpException('不存在的库存记录', HttpStatus.FORBIDDEN);
             }
-            await this.inventoryService.update(
+            await this.inventoryService.updateInventoryLotRow(
                 {
                     id: inventoryRow.id,
                     reagentId: newReagentId,

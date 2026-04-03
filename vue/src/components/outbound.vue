@@ -1,5 +1,10 @@
 <template>
-<div id="background" class="outbound-page">
+<div
+  id="background"
+  class="outbound-page"
+  v-loading="pageLoading"
+  element-loading-text="正在处理出库请求..."
+>
   <section class="quick-section">
     <div class="panel-header">
       <h3>快速出库</h3>
@@ -136,6 +141,7 @@ import LotSelect from '@/components/lot_select.vue'
 import UdiScanHint from '@/components/udi_scan_hint.vue'
 import { syncSubmitDisabledByFields } from '@/utils/crud'
 import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
+import { usePageLoading } from '@/utils/pageLoading'
 
 const reagentOptions = ref([])
 const lotOptions = ref([])
@@ -145,6 +151,7 @@ const quickOutbound = reactive({
     note: '',
 })
 const quickOutboundSubmitting = ref(false)
+const { pageLoading, withPageLoading } = usePageLoading()
 
 const quickOutboundInputDisplay = computed({
     get: () => (quickOutbound.useUdi ? gs1RawToVisible(quickOutbound.rawInput) : quickOutbound.rawInput),
@@ -202,23 +209,25 @@ async function operation_outbound(){
     }
     quickOutboundSubmitting.value = true
     try {
-        const data = await api_operation_fast_outbound(
-      {
-        useUdi: quickOutbound.useUdi,
-        udi: quickOutbound.useUdi ? normalizedValue : '',
-        barcodeNumber: quickOutbound.useUdi ? '' : normalizedValue,
-        note: String(quickOutbound.note ?? '').trim(),
-      }
-        )
-        quickOutbound.rawInput = ""
-        quickOutbound.note = ""
-        const msg = data.data?.message ?? ''
-        const warningKeyWord = ["库存不足", "该条码已经出库", "该条码未进行入库", "该UDI已经出库", "该UDI未进行入库"]
-        ElMessage({
-            type: warningKeyWord.some(item => msg.includes(item)) ? "warning" : "success",
-            message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-                h('span', null, msg)
-            ]),
+        await withPageLoading(async () => {
+            const data = await api_operation_fast_outbound(
+          {
+            useUdi: quickOutbound.useUdi,
+            udi: quickOutbound.useUdi ? normalizedValue : '',
+            barcodeNumber: quickOutbound.useUdi ? '' : normalizedValue,
+            note: String(quickOutbound.note ?? '').trim(),
+          }
+            )
+            quickOutbound.rawInput = ""
+            quickOutbound.note = ""
+            const msg = data.data?.message ?? ''
+            const warningKeyWord = ["库存不足", "该条码已经出库", "该条码未进行入库", "该UDI已经出库", "该UDI未进行入库"]
+            ElMessage({
+                type: warningKeyWord.some(item => msg.includes(item)) ? "warning" : "success",
+                message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+                    h('span', null, msg)
+                ]),
+            })
         })
     } catch (err) {
         ElMessage({
@@ -257,25 +266,27 @@ function ready_operation_special_outbound(){
 }
 
 async function operation_special_outbound(){
-    const data = await api_operation_outbound(formData.tableData)
-    formData.tableData = []
-    const messages = data.data?.messages ?? []
-    let message_type = "error"
-    for (let i in messages) {
-        if (messages[i].includes("库存不足")) {
-            message_type = "error"
-        } else if (messages[i].includes("库存达到警告线")) {
-            message_type = "warning"
-        } else if (messages[i].includes("库存更新成功")) {
-            message_type = "success"
+    return withPageLoading(async () => {
+        const data = await api_operation_outbound(formData.tableData)
+        formData.tableData = []
+        const messages = data.data?.messages ?? []
+        let message_type = "error"
+        for (let i in messages) {
+            if (messages[i].includes("库存不足")) {
+                message_type = "error"
+            } else if (messages[i].includes("库存达到警告线")) {
+                message_type = "warning"
+            } else if (messages[i].includes("库存更新成功")) {
+                message_type = "success"
+            }
+            ElMessage({
+                type: message_type,
+                message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+                    h('span', null, messages[i])
+                ]),
+            })
         }
-        ElMessage({
-            type: message_type,
-            message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-                h('span', null, messages[i])
-            ]),
-        })
-    }
+    })
 }
 
 function delete_outbound(rowsid) {

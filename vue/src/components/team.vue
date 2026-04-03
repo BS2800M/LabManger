@@ -1,5 +1,10 @@
 <template>
-    <div id="background" class="team-page">
+    <div
+      id="background"
+      class="team-page"
+      v-loading="pageLoading"
+      element-loading-text="正在加载小组数据..."
+    >
       <section class="panel-section">
       <div class="panel-header">
         <h3>小组管理</h3>
@@ -100,6 +105,7 @@ import {
   tryOpenEditDrawerBySelection,
   resolveSelectableRowClass,
 } from '@/utils/crud'
+import { usePageLoading } from '@/utils/pageLoading'
 
 // 状态管理
 const state = reactive({
@@ -124,6 +130,8 @@ const formData = reactive({
 })
 
 const REQUIRED_FIELDS = ['name']
+const { pageLoading, withPageLoading } = usePageLoading()
+
 const tableColumns = [
   { key: 'name', dataKey: 'name', title: '名字', width: 160, flexGrow: 1 },
   { key: 'phone', dataKey: 'phone', title: '电话', width: 160, flexGrow: 1 },
@@ -213,45 +221,53 @@ function showDeleteTeamConfirm() {
   })
 }
 async function team_show() {
-    const data = await api_team_show({
-      name: state.name,
-      page: state.page,
-      pageSize: state.pagesize,
+    return withPageLoading(async () => {
+      const data = await api_team_show({
+        name: state.name,
+        page: state.page,
+        pageSize: state.pagesize,
+      })
+      state.tableData = data.data
+      state.total = data.meta.total
+      state.pagesize = data.meta.pageSize
+      state.totalpage = data.meta.totalPage
     })
-    state.tableData = data.data
-    state.total = data.meta.total
-    state.pagesize = data.meta.pageSize
-    state.totalpage = data.meta.totalPage
 }
 
 async function team_del(){
-  await deleteWithSelection({
-    selectedRowId: state.selectedRowId,
-    title: '删除小组',
-    emptyMessage: '请选择要删除的记录',
-    deleteAction: (id) => api_team_del(id),
-    onAfterDelete: async () => {
-      await team_show()
-      state.selectedRowId = null
-      resetFormData()
-    },
+  return withPageLoading(async () => {
+    await deleteWithSelection({
+      selectedRowId: state.selectedRowId,
+      title: '删除小组',
+      emptyMessage: '请选择要删除的记录',
+      deleteAction: (id) => api_team_del(id),
+      onAfterDelete: async () => {
+        await team_show()
+        state.selectedRowId = null
+        resetFormData()
+      },
+    })
   })
 }
 
 async function team_update() {
-    await api_team_update(formData)
-    state.drawer = false
-    await team_show()
-    state.selectedRowId = null
-    formData.id=null
+    return withPageLoading(async () => {
+      await api_team_update(formData)
+      state.drawer = false
+      await team_show()
+      state.selectedRowId = null
+      formData.id = null
+    })
 }
 
 async function team_add() {
-    await api_team_add(formData)
-    state.drawer = false
-    await team_show()
-    state.selectedRowId = null
-    formData.id = null
+    return withPageLoading(async () => {
+      await api_team_add(formData)
+      state.drawer = false
+      await team_show()
+      state.selectedRowId = null
+      formData.id = null
+    })
 }
 
 // 生命周期钩子

@@ -1,5 +1,10 @@
 <template>
-  <div id="background" class="inventory-page">
+  <div
+    id="background"
+    class="inventory-page"
+    v-loading="pageLoading"
+    element-loading-text="正在加载库存数据..."
+  >
     <section class="panel-section">
       <div class="panel-header">
         <h3>库存查询</h3>
@@ -133,6 +138,7 @@ import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { syncSubmitDisabledByFields, toggleRowSelection, resolveSelectableRowClass } from '@/utils/crud'
 import { openInfoMessageBox } from '@/utils/messagebox'
+import { usePageLoading } from '@/utils/pageLoading'
 
 const formData = reactive({
   id: null,
@@ -158,6 +164,7 @@ const state = reactive({
   statisticsbuttondisabled: true,
   statisticsData: {},
 })
+const { pageLoading, withPageLoading } = usePageLoading()
 
 const WARN_LABELS = {
   0: '正常',
@@ -292,54 +299,60 @@ function syncSubmitDisabled() {
 }
 
 async function list_reagentnumber() {
-  const data = await api_inventory_show({
-    name: state.reagentname,
-    page: state.page,
-    pageSize: state.pagesize,
+  return withPageLoading(async () => {
+    const data = await api_inventory_show({
+      name: state.reagentname,
+      page: state.page,
+      pageSize: state.pagesize,
+    })
+    state.tableData = data.data ?? []
+    state.expandedRowKeys = state.tableData.map((row) => row.id)
+    state.totalpage = data.meta.totalPage
   })
-  state.tableData = data.data ?? []
-  state.expandedRowKeys = state.tableData.map((row) => row.id)
-  state.totalpage = data.meta.totalPage
 }
 
 async function statistics_data() {
-  if (formData.onlylot && !formData.lotId) {
-    openInfoMessageBox({ title: '库存统计', message: '当前选中的是试剂行，请选择具体批号或关闭“只统计本批号”' })
-    return
-  }
-  const data = await api_inventory_statistics({
-    onlyLot: formData.onlylot,
-    reagentId: formData.reagentId,
-    lotId: formData.onlylot ? formData.lotId : undefined,
-    startTime: formData.starttime,
-    endTime: formData.endtime,
-    intervalDay: formData.intervalday,
-  })
-  state.statisticsData.title = formData.onlylot && formData.lotId
-    ? `${formData.reagentname}  ${formData.lotname}`
-    : formData.reagentname
-  state.statisticsData.xAxisLabels = format_xAxisLabels(data.data.xAxisLabels)
-  state.statisticsData.dataset = []
-  for (const i in data.data.dataSet) {
-    state.statisticsData.dataset.push({
-      name: data.data.dataSet[i].name,
-      series: data.data.dataSet[i].number,
-      useProgression: false,
-      dataLabels: true,
-      smooth: false,
-      dashed: false,
-      useTag: 'none',
-      color: lineStyles[i % lineStyles.length].color,
-      shape: 'circle',
-      type: lineStyles[i % lineStyles.length].type,
-      useArea: true,
+  return withPageLoading(async () => {
+    if (formData.onlylot && !formData.lotId) {
+      openInfoMessageBox({ title: '库存统计', message: '当前选中的是试剂行，请选择具体批号或关闭“只统计本批号”' })
+      return
+    }
+    const data = await api_inventory_statistics({
+      onlyLot: formData.onlylot,
+      reagentId: formData.reagentId,
+      lotId: formData.onlylot ? formData.lotId : undefined,
+      startTime: formData.starttime,
+      endTime: formData.endtime,
+      intervalDay: formData.intervalday,
     })
-  }
+    state.statisticsData.title = formData.onlylot && formData.lotId
+      ? `${formData.reagentname}  ${formData.lotname}`
+      : formData.reagentname
+    state.statisticsData.xAxisLabels = format_xAxisLabels(data.data.xAxisLabels)
+    state.statisticsData.dataset = []
+    for (const i in data.data.dataSet) {
+      state.statisticsData.dataset.push({
+        name: data.data.dataSet[i].name,
+        series: data.data.dataSet[i].number,
+        useProgression: false,
+        dataLabels: true,
+        smooth: false,
+        dashed: false,
+        useTag: 'none',
+        color: lineStyles[i % lineStyles.length].color,
+        shape: 'circle',
+        type: lineStyles[i % lineStyles.length].type,
+        useArea: true,
+      })
+    }
+  })
 }
 
 async function inventory_audit() {
-  await api_inventory_auditall(state)
-  await list_reagentnumber()
+  return withPageLoading(async () => {
+    await api_inventory_auditall(state)
+    await list_reagentnumber()
+  })
 }
 
 const lineStyles = [

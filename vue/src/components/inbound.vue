@@ -1,5 +1,10 @@
 <template>
-    <div id="background" class="inbound-page">
+    <div
+      id="background"
+      class="inbound-page"
+      v-loading="pageLoading"
+      element-loading-text="正在处理入库请求..."
+    >
       <section class="quick-section">
         <div class="panel-header">
           <h3>快速入库</h3>
@@ -115,6 +120,7 @@ import LotSelect from '@/components/lot_select.vue'
 import UdiScanHint from '@/components/udi_scan_hint.vue'
 import { syncSubmitDisabledByFields } from '@/utils/crud'
 import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
+import { usePageLoading } from '@/utils/pageLoading'
 import 'element-plus/dist/index.css'
 // 组件引用
 // 使用reactive统一管理状态
@@ -135,6 +141,8 @@ const quickInbound = reactive({
   note: '',
 })
 const quickInboundSubmitting = ref(false)
+const { pageLoading, withPageLoading } = usePageLoading()
+
 const quickInboundDisplay = computed({
   get: () => gs1RawToVisible(quickInbound.rawUdi),
   set: (value) => {
@@ -177,25 +185,27 @@ async function ready_inbound() {
     })
 }
 async function inbound() {
-    const data = await api_operation_inbound(formData.tableData)
-    formData.tableData = []
-    const messages = data.data?.messages ?? []
-    let message_type = "error"
-    for (let i in messages) {
-        if (messages[i].includes("库存不足")) {
-            message_type = "error"
-        } else if (messages[i].includes("库存达到警告线")) {
-            message_type = "warning"
-        } else if (messages[i].includes("库存更新成功")) {
-            message_type = "success"
-        }
-        ElMessage({
-            type: message_type,
-            message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-                h('span', null, messages[i])
-            ]),
-        })
-    }
+    return withPageLoading(async () => {
+      const data = await api_operation_inbound(formData.tableData)
+      formData.tableData = []
+      const messages = data.data?.messages ?? []
+      let message_type = "error"
+      for (let i in messages) {
+          if (messages[i].includes("库存不足")) {
+              message_type = "error"
+          } else if (messages[i].includes("库存达到警告线")) {
+              message_type = "warning"
+          } else if (messages[i].includes("库存更新成功")) {
+              message_type = "success"
+          }
+          ElMessage({
+              type: message_type,
+              message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+                  h('span', null, messages[i])
+              ]),
+          })
+      }
+    })
 }
 function delete_inbound(rowsid) {
     formData.tableData = formData.tableData.filter(item => item.rowsid !== rowsid)
@@ -241,27 +251,29 @@ async function handleQuickInbound() {
   quickInboundSubmitting.value = true
 
   try {
-    const data = await api_operation_fast_inbound({
-      udi: normalizedUdi,
-      note: String(quickInbound.note ?? '').trim(),
-    })
-    quickInbound.note = ''
-    const status = data.data?.status
-    const message = data.data?.message ?? '快速入库处理完成'
+    await withPageLoading(async () => {
+      const data = await api_operation_fast_inbound({
+        udi: normalizedUdi,
+        note: String(quickInbound.note ?? '').trim(),
+      })
+      quickInbound.note = ''
+      const status = data.data?.status
+      const message = data.data?.message ?? '快速入库处理完成'
 
-    let messageType = 'info'
-    if (status === 0) {
-      messageType = 'success'
-      quickInbound.rawUdi = ''
-    } else if (status === 1) {
-      messageType = 'warning'
-    }
+      let messageType = 'info'
+      if (status === 0) {
+        messageType = 'success'
+        quickInbound.rawUdi = ''
+      } else if (status === 1) {
+        messageType = 'warning'
+      }
 
-    ElMessage({
-      type: messageType,
-      message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-        h('span', null, message),
-      ]),
+      ElMessage({
+        type: messageType,
+        message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+          h('span', null, message),
+        ]),
+      })
     })
   } catch (err) {
     ElMessage({

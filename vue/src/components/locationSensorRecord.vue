@@ -1,5 +1,9 @@
 <template>
-  <div class="location-sensor-page">
+  <div
+    class="location-sensor-page"
+    v-loading="pageLoading"
+    element-loading-text="正在加载位置与监测数据..."
+  >
     <section class="panel-section">
       <div class="panel-header">
         <h3>位置管理</h3>
@@ -205,6 +209,7 @@ import {
   tryOpenEditDrawerBySelection,
   resolveSelectableRowClass,
 } from '@/utils/crud'
+import { usePageLoading } from '@/utils/pageLoading'
 
 const locationState = reactive({
   name: '',
@@ -282,6 +287,8 @@ const sensorFormData = reactive({
 
 const locationOptions = ref([])
 const sensorRequiredFields = ['locationId', 'temperature', 'humidity', 'createTime']
+const { pageLoading, withPageLoading } = usePageLoading()
+
 const sensorTableColumns = [
   {
     key: 'locationName',
@@ -415,41 +422,49 @@ function showDeleteLocationConfirm() {
 }
 
 async function locationShow() {
-  const data = await api_location_show(locationState)
-  locationState.tableData = data.data
-  locationState.totalpage = data.meta.totalPage
+  return withPageLoading(async () => {
+    const data = await api_location_show(locationState)
+    locationState.tableData = data.data
+    locationState.totalpage = data.meta.totalPage
+  })
 }
 
 async function locationDel() {
-  await deleteWithSelection({
-    selectedRowId: locationState.selectedRowId,
-    title: '删除位置',
-    emptyMessage: '请选择要删除的位置',
-    deleteAction: (id) => api_location_del(id),
-    onAfterDelete: async () => {
-      await Promise.all([locationShow(), listAllLocationsForSensor()])
-      locationState.selectedRowId = null
-      resetLocationFormData()
-    },
+  return withPageLoading(async () => {
+    await deleteWithSelection({
+      selectedRowId: locationState.selectedRowId,
+      title: '删除位置',
+      emptyMessage: '请选择要删除的位置',
+      deleteAction: (id) => api_location_del(id),
+      onAfterDelete: async () => {
+        await Promise.all([locationShow(), listAllLocationsForSensor()])
+        locationState.selectedRowId = null
+        resetLocationFormData()
+      },
+    })
   })
 }
 
 async function locationUpdate() {
-  locationFormData.status = locationFormData.status ? 0 : 1
-  await api_location_update(locationFormData)
-  locationState.drawer = false
-  await Promise.all([locationShow(), listAllLocationsForSensor()])
-  locationState.selectedRowId = null
-  locationFormData.id = null
+  return withPageLoading(async () => {
+    locationFormData.status = locationFormData.status ? 0 : 1
+    await api_location_update(locationFormData)
+    locationState.drawer = false
+    await Promise.all([locationShow(), listAllLocationsForSensor()])
+    locationState.selectedRowId = null
+    locationFormData.id = null
+  })
 }
 
 async function locationAdd() {
-  locationFormData.status = locationFormData.status ? 0 : 1
-  await api_location_add(locationFormData)
-  locationState.drawer = false
-  await Promise.all([locationShow(), listAllLocationsForSensor()])
-  locationState.selectedRowId = null
-  locationFormData.id = null
+  return withPageLoading(async () => {
+    locationFormData.status = locationFormData.status ? 0 : 1
+    await api_location_add(locationFormData)
+    locationState.drawer = false
+    await Promise.all([locationShow(), listAllLocationsForSensor()])
+    locationState.selectedRowId = null
+    locationFormData.id = null
+  })
 }
 
 function resetSensorFormData() {
@@ -560,39 +575,47 @@ function sensorCheckInput() {
 }
 
 async function sensorRecordShow() {
-  const data = await api_sensorRecord_show(sensorState)
-  sensorState.tableData = data.data
-  sensorState.totalpage = data.meta.totalPage
+  return withPageLoading(async () => {
+    const data = await api_sensorRecord_show(sensorState)
+    sensorState.tableData = data.data
+    sensorState.totalpage = data.meta.totalPage
+  })
 }
 
 async function sensorRecordDel() {
-  await deleteWithSelection({
-    selectedRowId: sensorState.selectedRowId,
-    title: '删除记录',
-    emptyMessage: '请选择要删除的记录',
-    deleteAction: (id) => api_sensorRecord_del(id),
-    onAfterDelete: async () => {
-      await sensorRecordShow()
-      sensorState.selectedRowId = null
-      resetSensorFormData()
-    },
+  return withPageLoading(async () => {
+    await deleteWithSelection({
+      selectedRowId: sensorState.selectedRowId,
+      title: '删除记录',
+      emptyMessage: '请选择要删除的记录',
+      deleteAction: (id) => api_sensorRecord_del(id),
+      onAfterDelete: async () => {
+        await sensorRecordShow()
+        sensorState.selectedRowId = null
+        resetSensorFormData()
+      },
+    })
   })
 }
 
 async function sensorRecordUpdate() {
-  await api_sensorRecord_update(sensorFormData)
-  sensorState.drawer = false
-  await sensorRecordShow()
-  sensorState.selectedRowId = null
-  sensorFormData.id = null
+  return withPageLoading(async () => {
+    await api_sensorRecord_update(sensorFormData)
+    sensorState.drawer = false
+    await sensorRecordShow()
+    sensorState.selectedRowId = null
+    sensorFormData.id = null
+  })
 }
 
 async function sensorRecordAdd() {
-  await api_sensorRecord_add(sensorFormData)
-  sensorState.drawer = false
-  await sensorRecordShow()
-  sensorState.selectedRowId = null
-  sensorFormData.id = null
+  return withPageLoading(async () => {
+    await api_sensorRecord_add(sensorFormData)
+    sensorState.drawer = false
+    await sensorRecordShow()
+    sensorState.selectedRowId = null
+    sensorFormData.id = null
+  })
 }
 
 function handleSensorExport() {
@@ -604,11 +627,13 @@ function handleSensorExport() {
 }
 
 async function listAllLocationsForSensor() {
-  const data = (await api_location_showAll()).data
-  locationOptions.value = data.map((item) => ({
-    label: item.name,
-    value: item.id,
-  }))
+  return withPageLoading(async () => {
+    const data = (await api_location_showAll()).data
+    locationOptions.value = data.map((item) => ({
+      label: item.name,
+      value: item.id,
+    }))
+  })
 }
 
 onMounted(async () => {

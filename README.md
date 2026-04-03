@@ -1,45 +1,58 @@
-# LabManger（当前版本）
+# LabManger-dev
 
-本仓库当前是一个多项目工作区，包含：
+LabManger-dev 是一个面向实验室场景的库存管理项目，包含前端管理界面、后端业务 API，以及独立的条码静默打印服务。
 
-1. `LabMangerNest`：NestJS + Prisma + SQLite 后端
-2. `vue`：Vue 3 + Vite 前端
-3. `barcode_printer`：Rust 桌面打印服务（GUI + HTTP）
+## 项目功能
 
-旧版 README 中的 Electron 架构说明已不再适用。
+- 试剂与批号管理（新增、编辑、停用、删除）
+- 入库/出库（普通模式 + UDI 快速模式）
+- 操作记录查询与批次禁用（回滚库存影响）
+- 库存树形查询、库存审计、库存趋势统计
+- 传感器位置与温湿度记录管理
+- 小组与用户管理（角色体系）
+- 条码补打（Code128）
 
-## 当前目录结构
+## 仓库结构
 
 ```txt
 LabManger-dev/
-├─ LabMangerNest/        # 后端（端口 8000）
-├─ vue/                  # 前端（开发端口 5173）
-├─ barcode_printer/      # Rust 条码打印服务（默认 127.0.0.1:18080）
+├─ LabMangerNest/      # NestJS + Prisma + SQLite 后端
+├─ vue/                # Vue 3 + Vite 前端
+├─ barcode_printer/    # Rust GUI + HTTP 条码打印服务
 └─ README.md
 ```
 
 ## 技术栈
 
-- 后端：NestJS 11、Fastify、Prisma 7、SQLite、Zod
-- 前端：Vue 3、Vite 7、Element Plus、Axios
-- 打印：Rust（eframe GUI + tiny_http）
+- 前端：Vue 3、Vite、Element Plus、Axios
+- 后端：NestJS 11（Fastify）、Prisma、SQLite、Zod
+- 打印服务：Rust（eframe GUI + tiny_http）
 
-## 端口与通信关系
+## 系统架构与端口
 
 - 前端开发服务：`http://127.0.0.1:5173`
-- 后端服务：`http://127.0.0.1:8000`
-- Rust 打印服务：`http://127.0.0.1:18080`
+- 后端 API：`http://127.0.0.1:8000`
+- 打印服务：`http://127.0.0.1:18080`
 
 前端 `vite.config.js` 已配置代理：
 
 - `/cross` -> `http://127.0.0.1:8000`
 - `/barcode-printer` -> `http://127.0.0.1:18080`
 
-因此开发时前端通常无需关心跨域。
+因此本地开发默认无需额外处理跨域。
 
-## 一次性初始化
+## 环境要求
 
-### 1) 后端初始化
+- Node.js 20+
+- npm 10+
+- Rust stable（建议通过 rustup 安装）
+- Windows/Linux/macOS
+
+> Windows 下条码打印体验最佳（项目内已实现 Windows 打印机枚举与静默打印流程）。
+
+## 快速开始
+
+### 1) 初始化后端
 
 ```bash
 cd LabMangerNest
@@ -47,26 +60,28 @@ npm install
 npm run prisma:build
 ```
 
-`prisma:build` 会：
+`prisma:build` 会执行：
 
-- 生成 Prisma Client（user/manger/PatientTest）
-- 通过 `prisma db push` 同步 SQLite 结构
+- Prisma Client 生成（user/manger/PatientTest）
+- SQLite 结构同步（`prisma db push`）
 
-### 2) 前端初始化
+### 2) 初始化前端
 
 ```bash
 cd vue
 npm install
 ```
 
-### 3) Rust 打印服务初始化
+### 3) 初始化打印服务
 
 ```bash
 cd barcode_printer
 cargo build
 ```
 
-## 开发启动顺序（推荐）
+## 开发启动（推荐顺序）
+
+建议开 3 个终端分别运行：
 
 ### 1) 启动后端
 
@@ -75,16 +90,12 @@ cd LabMangerNest
 npm run dev
 ```
 
-后端监听 `0.0.0.0:8000`。
-
-### 2) 启动 Rust 打印服务
+### 2) 启动打印服务
 
 ```bash
 cd barcode_printer
 cargo run
 ```
-
-默认监听 `127.0.0.1:18080`，可在 GUI 中修改端口和默认打印机。
 
 ### 3) 启动前端
 
@@ -93,68 +104,107 @@ cd vue
 npm run dev
 ```
 
-访问 Vite 输出的地址（默认 `http://127.0.0.1:5173`）。
+浏览器访问：`http://127.0.0.1:5173`
 
-## 前端环境变量（可选）
+## 首次登录与身份说明
 
-前端支持以下可选变量：
+系统首次启动时，后端会自动初始化默认数据：
 
-- `VITE_API_BASE_URL`（默认 `/cross`）
-- `VITE_BARCODE_PRINTER_BASE_URL`（默认 `/barcode-printer`）
+- 默认小组：`默认小组`
+- 默认管理员账号：`00010`
+- 默认密码：`123456`（审核者密码与检验者密码均为该值）
 
-不配置时走 Vite 代理即可。
+登录流程：
 
-## 条码补打（Rust HTTP 接口）
+1. 在登录页先登录“审核者”
+2. 进入系统后，可在右上角弹窗登录“检验者”
 
-接口：`POST /print`
+说明：当前前端请求鉴权头使用 `reviewerSessionId` 写入 `sessionid`，因此业务接口主要依赖审核者会话。
 
-示例：
+## 主要业务模块
+
+- 试剂与批号：维护基础档案、预警参数、有效期
+- 入库：
+  - 普通入库：按试剂/批号/数量批量入库
+  - 快速入库：解析 GS1 UDI 自动匹配（或创建）批号
+- 出库：
+  - 普通出库：按试剂/批号/数量出库
+  - 快速出库：按 UDI 或条码快速出库
+- 操作查询：按时间、试剂、UDI、条码检索历史批次
+- 库存管理：树形库存、全量审计、统计图表
+- 环境监测：位置配置、传感器记录、超时与阈值预警
+- 系统管理：小组管理、用户管理
+
+## 后端 API 概览
+
+所有接口返回结构为统一 `success/data/meta` 风格（异常时返回错误信息）。
+
+- 身份认证：
+  - `POST /identity/auth/signin-reviewer`
+  - `POST /identity/auth/signin-checker`
+  - `GET /identity/auth/signout`
+- 小组与用户：
+  - `/identity/team/*`
+  - `/identity/user/*`
+- 库存业务：
+  - `/stock/reagents/*`
+  - `/stock/lots/*`
+  - `/stock/operations/*`
+  - `/stock/inventory/*`
+- 环境监测：
+  - `/sensorMonitor/locations/*`
+  - `/sensorMonitor/sensorRecord/*`
+- 其他：
+  - `GET /others/time`
+
+额外调试接口：
+
+- `GET /schemas`：导出各模块 Zod 请求模型对应的 JSON Schema
+
+## 条码补打服务（Rust）
+
+启动 `barcode_printer` 后会出现 GUI，可选择默认打印机并管理监听端口。
+
+HTTP 接口：`POST /print`
+
+请求示例：
 
 ```bash
 curl -X POST http://127.0.0.1:18080/print \
   -H "Content-Type: application/json" \
-  -d "{\"data\":[{\"barcodeNumber\":\"1234567890\",\"reagentName\":\"试剂A\",\"lotName\":\"批号A\"}]}"
+  -d "{\"data\":[{\"barcodeNumber\":\"1234567890\",\"reagentName\":\"试剂A\",\"lotName\":\"批号A\"}],\"printer\":\"\"}"
 ```
 
 请求字段：
 
-- `data`：必填数组，每项为：
+- `data`：必填数组，每项包含
   - `barcodeNumber`
   - `reagentName`
   - `lotName`
-- `printer`：可选，不传时使用 GUI 默认打印机
+- `printer`：可选，未传时使用 GUI 里设置的默认打印机（或系统默认）
 
-当前打印内容：
+打印内容：Code128 条码 + 3 行文字（条码号、试剂名称、批号名称）。
 
-- 条码图（Code128）
-- 条码正下方三行居中文字：条码号、试剂名称、批号名称
+## 数据库与定时任务
 
-前端“补打条码”按钮已接此接口（`vue/src/api/barcodePrinter.js`）。
+### SQLite 数据库
 
-## 后端主要 API 前缀（当前）
+默认在 `LabMangerNest/prisma/` 下使用 3 个库：
 
-- 身份：`/identity/auth/*`、`/identity/team/*`、`/identity/user/*`
-- 库存业务：
-  - 试剂：`/stock/reagents/*`
-  - 批号：`/stock/lots/*`
-  - 操作：`/stock/operations/*`
-  - 库存：`/stock/inventory/*`
-- 其他：
-  - 传感器：`/sensorMonitor/sensorRecord/*`
-  - 时间：`/others/time`
+- `user.db`
+- `manger.db`
+- `PatientTest.db`
 
-## 数据库说明（当前策略）
+可通过环境变量覆盖：
 
-- 数据库文件位于 `LabMangerNest/prisma/*.db`
-- 当前以 `prisma db push` 为主，不依赖迁移历史回放
-- 如需清空并重建，可按对应 schema 执行 `--force-reset`（会清数据）
+- `DATABASE_USER_URL`
+- `DATABASE_MANGER_URL`
+- `DATABASE_PATIENT_TEST_URL`
 
-示例（管理库）：
+### 定时任务
 
-```bash
-cd LabMangerNest
-npx prisma db push --schema prisma/manger/schema.prisma --url "file:./prisma/manger.db" --force-reset
-```
+- 每天 `00:01`：检查库存有效期预警
+- 每 `10` 分钟：检查传感器上传超时
 
 ## 常用命令速查
 
@@ -176,7 +226,7 @@ npm run build
 npm run preview
 ```
 
-### Rust 打印服务
+### 打印服务
 
 ```bash
 cd barcode_printer
@@ -186,20 +236,21 @@ cargo check
 
 ## 常见问题
 
-### 1) 前端点“补打条码”失败
+### 1) 前端接口返回 401 / Unauthorized
 
-- 检查 Rust 服务是否运行在 `127.0.0.1:18080`
-- 检查前端代理是否生效（`vite.config.js` 的 `/barcode-printer`）
-- 检查打印机是否可用（Rust GUI 中默认打印机）
+- 确认已完成审核者登录
+- 确认浏览器 `localStorage` 中存在 `reviewerSessionId`
+- 确认后端服务运行在 `127.0.0.1:8000`
 
-### 2) 后端启动后接口 401
+### 2) “补打条码”失败
 
-- 前端请求头使用 `sessionid`
-- 需要先登录并确保 `localStorage.reviewerSessionId` 有效
+- 确认 `barcode_printer` 正在运行，监听端口正确（默认 `18080`）
+- 确认前端代理 `/barcode-printer` 生效
+- 在 GUI 中检查默认打印机是否可用
 
-### 3) 数据结构不一致
+### 3) 数据结构不同步或本地库异常
 
-执行：
+可重新执行：
 
 ```bash
 cd LabMangerNest
@@ -208,4 +259,4 @@ npm run prisma:build
 
 ---
 
-如果你后续继续改了接口或目录，建议同步更新本 README，避免再次出现“文档与代码不一致”。
+如果你后续调整了接口、端口或目录结构，请同步更新本 README，确保 GitHub 首页文档与代码一致。

@@ -1,5 +1,10 @@
 <template>
-    <div id="background" class="user-page">
+    <div
+      id="background"
+      class="user-page"
+      v-loading="pageLoading"
+      element-loading-text="正在加载用户数据..."
+    >
       <section class="panel-section">
       <div class="panel-header">
         <h3>用户管理</h3>
@@ -115,6 +120,7 @@ import {
   tryOpenEditDrawerBySelection,
   resolveSelectableRowClass,
 } from '@/utils/crud'
+import { usePageLoading } from '@/utils/pageLoading'
 
 // 状态管理
 const state = reactive({
@@ -142,6 +148,8 @@ const formData = reactive({
 })
 
 const REQUIRED_FIELDS = ['account', 'username', 'teamid', 'role', 'checkerPassword', 'reviewerPassword']
+const { pageLoading, withPageLoading } = usePageLoading()
+
 const tableColumns = [
   { key: 'account', dataKey: 'account', title: '账号', width: 170, flexGrow: 1 },
   { key: 'userName', dataKey: 'userName', title: '用户名', width: 180, flexGrow: 1 },
@@ -247,62 +255,70 @@ function showDeleteUserConfirm() {
 }
 
 async function user_show() {
-    const data = await api_user_show({
-      name: state.name,
-      page: state.page,
-      pageSize: state.pagesize,
+    return withPageLoading(async () => {
+      const data = await api_user_show({
+        name: state.name,
+        page: state.page,
+        pageSize: state.pagesize,
+      })
+      state.tableData = data.data
+      state.total = data.meta.total
+      state.pagesize = data.meta.pageSize
+      state.totalpage = data.meta.totalPage
     })
-    state.tableData = data.data
-    state.total = data.meta.total
-    state.pagesize = data.meta.pageSize
-    state.totalpage = data.meta.totalPage
 }
 
 async function user_del(){
-  await deleteWithSelection({
-    selectedRowId: state.selectedRowId,
-    title: '删除用户',
-    emptyMessage: '请选择要删除的记录',
-    deleteAction: (id) => api_user_del(id),
-    onAfterDelete: async () => {
-      await user_show()
-      state.selectedRowId = null
-      resetFormData()
-    },
+  return withPageLoading(async () => {
+    await deleteWithSelection({
+      selectedRowId: state.selectedRowId,
+      title: '删除用户',
+      emptyMessage: '请选择要删除的记录',
+      deleteAction: (id) => api_user_del(id),
+      onAfterDelete: async () => {
+        await user_show()
+        state.selectedRowId = null
+        resetFormData()
+      },
+    })
   })
 }
 
 async function user_update() {
-    await api_user_update({
-      id: formData.id,
-      account: formData.account,
-      userName: formData.username,
-      checkerPassWord: formData.checkerPassword,
-      reviewerPassWord: formData.reviewerPassword,
-      role: formData.role,
-      teamId: formData.teamid,
-      status: formData.status,
+    return withPageLoading(async () => {
+      await api_user_update({
+        id: formData.id,
+        account: formData.account,
+        userName: formData.username,
+        checkerPassWord: formData.checkerPassword,
+        reviewerPassWord: formData.reviewerPassword,
+        role: formData.role,
+        teamId: formData.teamid,
+        status: formData.status,
+      })
+      state.drawer = false
+      await user_show()
+      state.selectedRowId = null
+      formData.id = null
     })
-    state.drawer = false
-    await user_show()
-    state.selectedRowId = null
-    formData.id=null
 }
 
 async function user_add() {
-    await api_user_add({
-      account: formData.account,
-      userName: formData.username,
-      checkerPassWord: formData.checkerPassword,
-      reviewerPassWord: formData.reviewerPassword,
-      role: formData.role,
-      teamId: formData.teamid,
-      status: formData.status,
+    return withPageLoading(async () => {
+      await api_user_add({
+        account: formData.account,
+        userName: formData.username,
+        checkerPassWord: formData.checkerPassword,
+        reviewerPassWord: formData.reviewerPassword,
+        role: formData.role,
+        teamId: formData.teamid,
+        status: formData.status,
+      })
+      state.drawer = false
+      await user_show()
+      state.selectedRowId = null
+      formData.id = null
     })
-    state.drawer = false
-    await user_show()
-    state.selectedRowId = null
-    formData.id = null
 }
 
 // 生命周期钩子

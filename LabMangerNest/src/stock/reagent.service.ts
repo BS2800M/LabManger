@@ -78,6 +78,14 @@ export class ReagentService {
             },
         });
 
+        await this.inventoryService.addInventoryReagentRow(
+            {
+                reagentId: reagent.id,
+                teamId: reagent.teamId,
+            },
+            tx,
+        );
+
         if (dto.generateLot) {
             const expirationDate = new Date();
             expirationDate.setFullYear(expirationDate.getFullYear() + 1);
