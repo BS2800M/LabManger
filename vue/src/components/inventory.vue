@@ -1,0 +1,460 @@
+<template>
+  <div
+    id="background"
+    class="inventory-page"
+    v-loading="pageLoading"
+    element-loading-text="正在加载库存数据..."
+  >
+    <section class="panel-section">
+      <div class="panel-header">
+        <h3>库存查询</h3>
+      </div>
+      <div id="background2" class="toolbar">
+        <el-input
+          class="toolbar-search"
+          v-model="state.reagentname"
+          placeholder="搜索试剂名称"
+          @input="list_reagentnumber"
+        />
+        <el-pagination
+          class="toolbar-pagination"
+          background
+          layout="prev, pager, next"
+          v-model:current-page="state.page"
+          :page-count="state.totalpage"
+          @change="list_reagentnumber"
+        />
+        <div class="button-container">
+          <el-button id="export" type="primary" @click="inventory_exporttoexcel_list">
+            导出盘库表
+          </el-button>
+          <el-button id="cal" type="primary" @click="inventory_audit">
+            更新信息
+          </el-button>
+          <el-button id="statistics" type="primary" @click="statistics">
+            库存统计
+          </el-button>
+        </div>
+      </div>
+      <div class="inventory-table">
+        <el-auto-resizer>
+          <template #default="{ width, height }">
+            <el-table-v2
+              v-model:expanded-row-keys="state.expandedRowKeys"
+              :columns="tableColumns"
+              :data="state.tableData"
+              :width="width"
+              :height="height"
+              row-key="id"
+              expand-column-key="name"
+              :indent-size="16"
+              :row-height="36"
+              :header-height="34"
+              :row-class="({ rowData, rowIndex }) => getRowClass(rowData, rowIndex)"
+              :row-event-handlers="{ onClick: handleRowClick }"
+            />
+          </template>
+        </el-auto-resizer>
+      </div>
+    </section>
+  </div>
+
+  <el-drawer v-model="state.drawer" direction="rtl" size="80%" @open="state.selectedRowId = null">
+    <template #header>
+      <span class="drawer-title">库存查询</span>
+    </template>
+    <template #footer>
+      <div style="flex: auto">
+        <el-button type="primary" @click="state.drawer = false">关闭</el-button>
+      </div>
+    </template>
+    <template #default>
+      <div class="drawer-content">
+        <div class="chart-container">
+          <statistics_chart v-model="state.statisticsData" />
+        </div>
+        <div class="drawer-form">
+          <p>开始时间</p>
+          <el-config-provider :locale="zhCn">
+            <el-date-picker
+              v-model="formData.starttime"
+              class="drawer-field"
+              type="datetime"
+              placeholder="选择开始时间"
+              size="default"
+              @change="syncSubmitDisabled"
+              value-format="YYYY-MM-DD HH:mm:ss"
+            />
+          </el-config-provider>
+
+          <p>结束时间</p>
+          <el-config-provider :locale="zhCn">
+            <el-date-picker
+              v-model="formData.endtime"
+              class="drawer-field"
+              type="datetime"
+              placeholder="选择结束时间"
+              size="default"
+              @change="syncSubmitDisabled"
+              value-format="YYYY-MM-DD HH:mm:ss"
+            />
+          </el-config-provider>
+
+          <p>间隔时间(天)</p>
+          <el-input-number
+            v-model="formData.intervalday"
+            class="drawer-field"
+            :min="1"
+            :max="365"
+            placeholder="1"
+            @change="syncSubmitDisabled"
+          />
+
+          <p>只统计本批号</p>
+          <el-switch
+            v-model="formData.onlylot"
+            size="large"
+            active-text="是"
+            inactive-text="否"
+            @change="syncSubmitDisabled"
+          />
+
+          <div class="drawer-form-actions">
+            <el-button type="primary" @click="statistics_data" :disabled="state.statisticsbuttondisabled">查询</el-button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </el-drawer>
+</template>
+
+<script setup>
+import { onMounted, reactive } from 'vue'
+import { api_inventory_show, api_inventory_auditall, api_inventory_statistics } from '@/api/inventory'
+import { inventory_exporttoexcel_list } from '@/utils/exportexcel'
+import { formatDateColumn, getnowtime_previousmonth, getnowtime, format_xAxisLabels } from '@/utils/format'
+import statistics_chart from './statistics_chart.vue'
+import { ElConfigProvider } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import { syncSubmitDisabledByFields, toggleRowSelection, resolveSelectableRowClass } from '@/utils/crud'
+import { openInfoMessageBox } from '@/utils/messagebox'
+import { usePageLoading } from '@/utils/pageLoading'
+
+const formData = reactive({
+  id: null,
+  reagentname: '',
+  reagentId: null,
+  lotId: null,
+  lotname: '',
+  starttime: null,
+  endtime: null,
+  intervalday: 1,
+  onlylot: false,
+})
+
+const state = reactive({
+  tableData: [],
+  page: 1,
+  totalpage: 1,
+  pagesize: 13,
+  reagentname: '',
+  expandedRowKeys: [],
+  selectedRowId: null,
+  drawer: false,
+  statisticsbuttondisabled: true,
+  statisticsData: {},
+})
+const { pageLoading, withPageLoading } = usePageLoading()
+
+const WARN_LABELS = {
+  0: '正常',
+  1: '数量预警',
+  2: '效期预警',
+}
+
+const tableColumns = [
+  { key: 'name', dataKey: 'name', title: '名称', width: 220, flexGrow: 1 },
+  {
+    key: 'nodeType',
+    dataKey: 'nodeType',
+    title: '层级',
+    width: 100,
+    flexGrow: 1,
+    cellRenderer: ({ rowData }) => (rowData.nodeType === 'reagent' ? '试剂' : '批号'),
+  },
+  { key: 'number', dataKey: 'number', title: '库存', width: 120, flexGrow: 1 },
+  { key: 'specifications', dataKey: 'specifications', title: '规格', width: 120, flexGrow: 1 },
+  {
+    key: 'lotExpirationDate',
+    dataKey: 'lotExpirationDate',
+    title: '有效期',
+    width: 180,
+    flexGrow: 1,
+    cellRenderer: ({ rowData }) =>
+      rowData.lotExpirationDate ? formatDateColumn(rowData, null, rowData.lotExpirationDate) : '-',
+  },
+  { key: 'warnNumber', dataKey: 'warnNumber', title: '警告数量', width: 140, flexGrow: 1 },
+  {
+    key: 'warn',
+    dataKey: 'warn',
+    title: '预警类型',
+    width: 130,
+    flexGrow: 1,
+    cellRenderer: ({ rowData }) => WARN_LABELS[rowData.warn] ?? '正常',
+  },
+]
+
+const REQUIRED_FIELDS = ['starttime', 'endtime', 'intervalday', 'reagentId']
+
+function getRowClass(rowData, rowIndex) {
+  return resolveSelectableRowClass({
+    rowData,
+    rowIndex,
+    selectedRowId: state.selectedRowId,
+    getStatusClass: ({ row }) => {
+      if (row.status !== 0) return 'unactive-row'
+      return row.warn > 0 ? 'warning-row' : 'normal-row'
+    },
+  })
+}
+
+function resetSelectedFormData() {
+  Object.assign(formData, {
+    id: null,
+    reagentname: '',
+    reagentId: null,
+    lotId: null,
+    lotname: '',
+  })
+}
+
+function fillFormDataFromRow(rowData) {
+  Object.assign(formData, {
+    id: rowData.id,
+    reagentname: rowData.reagentName,
+    reagentId: rowData.reagentId,
+    lotId: rowData.lotId ?? null,
+    lotname: rowData.lotName,
+  })
+}
+
+function handleRowClick({ rowData }) {
+  toggleRowSelection({
+    rowData,
+    selectedRowId: state.selectedRowId,
+    isSameSelection: state.selectedRowId === rowData.id,
+    getRowId: (row) => row.id,
+    setSelectedRowId: (value) => { state.selectedRowId = value },
+    onSelect: fillFormDataFromRow,
+    onDeselect: resetSelectedFormData,
+  })
+}
+
+function statistics() {
+  state.selectedRowId = null
+  if (formData.reagentId === null) {
+    openInfoMessageBox({ title: '库存统计', message: '请选择要统计的记录' })
+    return
+  }
+
+  state.statisticsData = {
+    dataset: [
+      {
+        name: '示例',
+        series: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        color: '#ffffff',
+        type: 'line',
+        useProgression: false,
+        dataLabels: true,
+        smooth: false,
+        dashed: false,
+        useTag: 'none',
+        shape: 'circle',
+        useArea: true,
+      },
+    ],
+    xAxisLabels: ['2025-01-01', '2027-01-02', '2029-01-03', '2030-01-04', '2035-01-05'],
+    title: '试剂统计示例',
+  }
+  formData.starttime = getnowtime_previousmonth()
+  formData.endtime = getnowtime()
+  formData.intervalday = 1
+  if (!formData.lotId) {
+    formData.onlylot = false
+  }
+  syncSubmitDisabled()
+  state.drawer = true
+}
+
+function syncSubmitDisabled() {
+  syncSubmitDisabledByFields({
+    formData,
+    requiredFields: REQUIRED_FIELDS,
+    target: state,
+    disabledKey: 'statisticsbuttondisabled',
+  })
+  if (formData.onlylot && !formData.lotId) {
+    state.statisticsbuttondisabled = true
+  }
+}
+
+async function list_reagentnumber() {
+  return withPageLoading(async () => {
+    const data = await api_inventory_show({
+      name: state.reagentname,
+      page: state.page,
+      pageSize: state.pagesize,
+    })
+    state.tableData = data.data ?? []
+    state.expandedRowKeys = state.tableData.map((row) => row.id)
+    state.totalpage = data.meta.totalPage
+  })
+}
+
+async function statistics_data() {
+  return withPageLoading(async () => {
+    if (formData.onlylot && !formData.lotId) {
+      openInfoMessageBox({ title: '库存统计', message: '当前选中的是试剂行，请选择具体批号或关闭“只统计本批号”' })
+      return
+    }
+    const data = await api_inventory_statistics({
+      onlyLot: formData.onlylot,
+      reagentId: formData.reagentId,
+      lotId: formData.onlylot ? formData.lotId : undefined,
+      startTime: formData.starttime,
+      endTime: formData.endtime,
+      intervalDay: formData.intervalday,
+    })
+    state.statisticsData.title = formData.onlylot && formData.lotId
+      ? `${formData.reagentname}  ${formData.lotname}`
+      : formData.reagentname
+    state.statisticsData.xAxisLabels = format_xAxisLabels(data.data.xAxisLabels)
+    state.statisticsData.dataset = []
+    for (const i in data.data.dataSet) {
+      state.statisticsData.dataset.push({
+        name: data.data.dataSet[i].name,
+        series: data.data.dataSet[i].number,
+        useProgression: false,
+        dataLabels: true,
+        smooth: false,
+        dashed: false,
+        useTag: 'none',
+        color: lineStyles[i % lineStyles.length].color,
+        shape: 'circle',
+        type: lineStyles[i % lineStyles.length].type,
+        useArea: true,
+      })
+    }
+  })
+}
+
+async function inventory_audit() {
+  return withPageLoading(async () => {
+    await api_inventory_auditall(state)
+    await list_reagentnumber()
+  })
+}
+
+const lineStyles = [
+  { color: '#42d392', type: 'line' },
+  { color: '#ffae00', type: 'line' },
+  { color: '#0084ff', type: 'line' },
+]
+
+onMounted(() => {
+  list_reagentnumber()
+})
+</script>
+
+<style scoped>
+.inventory-page {
+  height: calc(100dvh - 82px);
+  margin: 72px auto 0;
+  padding: 8px 12px;
+  max-width: 1900px;
+  box-sizing: border-box;
+}
+
+.panel-section {
+  height: 100%;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 10px;
+  background: var(--el-bg-color-overlay);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panel-header h3 {
+  margin: 0 0 6px 0;
+  color: var(--el-text-color-primary);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.drawer-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--el-text-color-primary);
+}
+
+.toolbar {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbar-search {
+  width: 250px;
+}
+
+.toolbar-pagination {
+  margin-right: auto;
+}
+
+.button-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inventory-table {
+  margin-top: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.drawer-content {
+  display: grid;
+  grid-template-columns: minmax(560px, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.chart-container {
+  min-width: 0;
+  overflow: auto;
+}
+
+.drawer-form p {
+  margin: 0 0 6px 0;
+}
+
+.drawer-form :deep(.drawer-field) {
+  width: 300px;
+  margin-bottom: 12px;
+}
+
+.drawer-form-actions {
+  margin-top: 10px;
+}
+
+@media (max-width: 1200px) {
+  .drawer-content {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

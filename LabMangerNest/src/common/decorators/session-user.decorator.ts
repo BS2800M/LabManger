@@ -5,6 +5,7 @@ export interface SessionUser {
     userId: number;
     teamId: number;
     role: number;
+    loginType: 'checker' | 'reviewer';
 }
 
 export const SessionUser = createParamDecorator(

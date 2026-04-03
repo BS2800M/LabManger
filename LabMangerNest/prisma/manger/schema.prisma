@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma-manger"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Reagent {
+  id               Int      @id @default(autoincrement())
+  name             String   @map("Name")
+  di               String   @default("") @map("DI")
+  specifications   String   @map("Specifications")
+  price            Int      @default(0) @map("Price")
+  storageCondition String   @map("StorageCondition")
+  manufacturer     String   @map("Manufacturer")
+  note             String   @map("Note")
+  warnNumber       Int      @default(0) @map("WarnNumber")
+  warnDays         Int      @default(0) @map("WarnDays")
+  createTime       DateTime @default(now()) @map("CreateTime")
+  teamId           Int      @map("TeamId")
+  status           Int      @default(0) @map("Status")
+
+  lots              Lot[]
+  operationBatches  OperationBatch[]
+  inventoryReagents InventoryReagent[]
+  inventoryLots     InventoryLot[]
+
+  @@map("Reagent")
+}
+
+model Lot {
+  id             Int      @id @default(autoincrement())
+  name           String   @map("Name")
+  reagentId      Int      @map("ReagentId")
+  expirationDate DateTime @map("ExpirationDate")
+  status         Int      @default(0) @map("Status")
+  teamId         Int      @map("TeamId")
+
+  reagent          Reagent          @relation(fields: [reagentId], references: [id])
+  operationBatches OperationBatch[]
+  inventoryLots    InventoryLot[]
+
+  @@map("Lot")
+}
+
+model OperationBatch {
+  id                  Int      @id @default(autoincrement())
+  teamId              Int      @map("TeamId")
+  reagentId           Int      @map("ReagentId")
+  lotId               Int      @map("LotId")
+  userId              Int      @map("UserId")
+  action              Int      @map("Action")
+  note                String   @default("") @map("Note")
+  createTime          DateTime @default(now()) @map("CreateTime")
+  status              Int      @default(0) @map("Status")
+  reagentNameSnapshot String   @default("") @map("ReagentNameSnapshot")
+  lotNameSnapshot     String   @default("") @map("LotNameSnapshot")
+
+  reagent Reagent         @relation(fields: [reagentId], references: [id])
+  lot     Lot             @relation(fields: [lotId], references: [id])
+  items   OperationItem[]
+
+  @@index([teamId, createTime])
+  @@index([action, createTime])
+  @@index([teamId, reagentId, lotId])
+  @@map("OperationBatch")
+}
+
+model OperationItem {
+  id            Int    @id @default(autoincrement())
+  batchId       Int    @map("BatchId")
+  barcodeNumber String @map("BarcodeNumber")
+  udi           String @default("") @map("Udi")
+  status        Int    @default(0) @map("Status")
+
+  batch OperationBatch @relation(fields: [batchId], references: [id])
+
+  @@unique([barcodeNumber])
+  @@index([batchId])
+  @@map("OperationItem")
+}
+
+model InventoryReagent {
+  id        Int      @id @default(autoincrement())
+  teamId    Int      @map("TeamId")
+  reagentId Int      @map("ReagentId")
+  number    Int      @default(0) @map("Number")
+  status    Int      @default(0) @map("Status")
+  warn      Int      @default(0) @map("Warn")
+  updatedAt DateTime @updatedAt @map("UpdatedAt")
+
+  reagent Reagent @relation(fields: [reagentId], references: [id])
+
+  @@unique([teamId, reagentId])
+  @@index([teamId, status])
+  @@index([warn])
+  @@map("InventoryReagent")
+}
+
+model InventoryLot {
+  id        Int      @id @default(autoincrement())
+  teamId    Int      @map("TeamId")
+  reagentId Int      @map("ReagentId")
+  lotId     Int      @map("LotId")
+  number    Int      @default(0) @map("Number")
+  status    Int      @default(0) @map("Status")
+  warn      Int      @default(0) @map("Warn")
+  updatedAt DateTime @updatedAt @map("UpdatedAt")
+
+  reagent Reagent @relation(fields: [reagentId], references: [id])
+  lot     Lot     @relation(fields: [lotId], references: [id])
+
+  @@unique([teamId, reagentId, lotId])
+  @@index([teamId, reagentId])
+  @@index([lotId])
+  @@index([status])
+  @@index([warn])
+  @@map("InventoryLot")
+}
+
+model Location {
+  id                    Int            @id @default(autoincrement())
+  name                  String         @map("Name")
+  note                  String         @map("Note")
+  status                Int            @default(0) @map("Status")
+  teamId                Int            @map("TeamId")
+  uploadIntervalMinutes Int            @default(0) @map("UploadIntervalMinutes")
+  maxTemperature        Float          @default(-50) @map("MaxTemperature")
+  minTemperature        Float          @default(-50) @map("MinTemperature")
+  maxHumidity           Float          @default(100) @map("MaxHumidity")
+  minHumidity           Float          @default(100) @map("MinHumidity")
+  lastUploadTime        DateTime       @default(now()) @map("LastUploadTime")
+  lastUploadTemperature Float          @default(0) @map("LastUploadTemperature")
+  lastUploadHumidity    Float          @default(0) @map("LastUploadHumidity")
+  warningTemperature    Boolean        @default(false) @map("WarningTemperature")
+  warningHumidity       Boolean        @default(false) @map("WarningHumidity")
+  warningUploadTime     Boolean        @default(false) @map("WarningUploadTime")
+  lastUploadBattery     Int            @default(0) @map("LastUploadBattery")
+  sensorRecords         SensorRecord[]
+
+  @@map("Location")
+}
+
+model SensorRecord {
+  id                 Int      @id @default(autoincrement())
+  locationId         Int      @map("LocationId")
+  teamId             Int      @map("TeamId")
+  teamName           String   @default("") @map("TeamName")
+  createTime         DateTime @default(now()) @map("CreateTime")
+  temperature        Float    @map("Temperature")
+  humidity           Float    @map("Humidity")
+  battery            Int      @default(0) @map("Battery")
+  warningTemperature Boolean  @default(false) @map("WarningTemperature")
+  warningHumidity    Boolean  @default(false) @map("WarningHumidity")
+
+  location Location @relation(fields: [locationId], references: [id])
+
+  @@map("SensorRecord")
+}
+
+model BarcodeCounter {
+  id    Int    @id @default(1)
+  value BigInt @default(0)
+
+  @@map("BarcodeCounter")
+}

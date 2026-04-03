@@ -1,0 +1,13 @@
+export * from './reagent.dto';
+export * from './reagent.service';
+export * from './reagent.controller';
+export * from './lot.dto';
+export * from './lot.service';
+export * from './lot.controller';
+export * from './inventory.dto';
+export * from './inventory.service';
+export * from './inventory.controller';
+export * from './operation.dto';
+export * from './operation.service';
+export * from './operation.controller';
+export { StockModule } from './stock.module';

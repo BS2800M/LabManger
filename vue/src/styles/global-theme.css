@@ -1,0 +1,174 @@
+.el-table .warning-row > td {
+  background-color: #6b2a2a !important;
+}
+
+
+
+.el-table .unactive-row > td,
+.el-table .unactive-row > td .cell {
+  color: var(--table-unactive-row-text) !important;
+}
+
+/* Custom light theme (gray tone) */
+html:not(.dark) {
+  --el-color-primary: #3e8ff9;
+  --el-color-primary-light-3: #9ca3af;
+  --el-color-primary-light-5: #d1d5db;
+  --el-color-primary-dark-2: #005ad9;
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #ffffff;
+  --el-bg-color-overlay: #ffffff;
+  --el-fill-color-blank: #f2f2f2;
+  --el-border-color: #d1d5db;
+  --el-border-color-light: #e5e7eb;
+  --el-text-color-primary: #374151;
+  --el-text-color-regular: #634b4b;
+  --table-current-row-bg: #dbeafe;
+  --table-current-row-text: #1e3a8a;
+  --table-hover-row-bg: #eef2ff;
+  --table-hover-row-text: #1f2937;
+  --table-surface-bg: #f8fafc;
+  --table-border-color: #d4dbe6;
+  --table-border-color-soft: #e6eaf0;
+  --table-header-bg: linear-gradient(180deg, #eef4ff 0%, #e6eefc 100%);
+  --table-header-text: #2c3e55;
+  --table-header-border: #c9d8ee;
+  --table-unactive-row-text: #cacaca;
+  --signin-button-bg: linear-gradient(90deg, #06b6d4 0%, #0ea5e9 100%);
+  --pagination-radius: 999px;
+  --menu-hover-bg: rgba(62, 143, 249, 0.12);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+html:not(.dark) body {
+  background-color: #e0e7ff;
+  background-image:
+    radial-gradient(circle at 18% 15%, rgba(56, 189, 248, 0.26), transparent 40%),
+    radial-gradient(circle at 88% 0%, rgba(74, 222, 128, 0.2), transparent 35%),
+    linear-gradient(135deg, #f8fbff 0%, #e2ecff 42%, #ecfdf5 100%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: #374151;
+  transition: background-color 0.35s ease, background-image 0.35s ease, color 0.35s ease;
+}
+
+
+
+
+
+/* Custom dark theme (gray tone) */
+html.dark {
+  --el-color-primary: #f59e0b;
+  --el-color-primary-light-3: #fbbf24;
+  --el-color-primary-light-5: #3d3e3e;
+  --el-color-primary-dark-2: #d97706;
+  --el-bg-color: #000000;
+  --el-bg-color-page: #000000;
+  --el-bg-color-overlay: #000000;
+  --el-fill-color-blank: #1b1b1b;
+  --el-border-color: #635b4b;
+  --el-border-color-light: #726b5b;
+  --el-text-color-primary: #e5e7eb;
+  --el-text-color-regular: #d1d5db;
+  --table-current-row-bg: #4a3412;
+  --table-current-row-text: #fcd34d;
+  --table-hover-row-bg: #3a3a3a;
+  --table-hover-row-text: #f3f4f6;
+  --table-surface-bg: #151515;
+  --table-border-color: #51483f;
+  --table-border-color-soft: #403c2f;
+  --table-header-bg: linear-gradient(180deg, #2d2210 0%, #241a0d 100%);
+  --table-header-text: #ffe5b4;
+  --table-header-border: #7c5a24;
+  --table-unactive-row-text: #434242;
+  --signin-button-bg: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+  --pagination-radius: 999px;
+  --menu-hover-bg: rgba(249, 115, 22, 0.2);
+  
+}
+
+html.dark body {
+  background-color: #0b0605;
+  background-image:
+    radial-gradient(circle at 16% 14%, rgba(249, 115, 22, 0.32), transparent 42%),
+    radial-gradient(circle at 84% 6%, rgba(239, 68, 68, 0.26), transparent 38%),
+    linear-gradient(135deg, #050505 0%, #1a0f09 42%, #2a130e 70%, #3a1010 100%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: #e5e7eb;
+  transition: background-color 0.35s ease, background-image 0.35s ease, color 0.35s ease;
+}
+
+
+
+.el-table .el-table__body tr.current-row > td {
+  background-color: var(--table-current-row-bg) !important;
+}
+
+.el-table .el-table__body tr.current-row > td .cell {
+  color: var(--table-current-row-text) !important;
+}
+
+.el-table .el-table__body tr:hover > td {
+  background-color: var(--table-hover-row-bg) !important;
+}
+
+.el-table .el-table__body tr:hover > td .cell {
+  color: var(--table-hover-row-text) !important;
+}
+
+/* Table V2 row status */
+.el-table-v2__row.warning-row .el-table-v2__row-cell {
+  background-color: #ff000026 !important;
+}
+
+.el-table-v2__row.unactive-row .el-table-v2__row-cell {
+  color: var(--table-unactive-row-text) !important;
+}
+
+.el-table-v2__row.current-row .el-table-v2__row-cell {
+  background-color: var(--table-current-row-bg) !important;
+  color: var(--table-current-row-text) !important;
+}
+
+.el-table-v2__row:hover .el-table-v2__row-cell {
+  background-color: var(--table-hover-row-bg) !important;
+  color: var(--table-hover-row-text) !important;
+}
+
+.el-pagination.is-background .btn-prev,
+.el-pagination.is-background .btn-next,
+.el-pagination.is-background .el-pager li {
+  min-width: 32px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: var(--pagination-radius) !important;
+}
+
+/* Unified stock action button style (inbound / outbound) */
+.stock-action-btn {
+  color: var(--el-text-color-primary);
+  width: 214px;
+  height: 52px;
+  background-color: var(--el-color-primary);
+  border: var(--el-text-color-primary);
+  border-style: solid;
+  border-width: 3px;
+  border-radius: 20px;
+  font-weight: 1000;
+  font-size: 22px;
+  transition: all 0.3s ease-in-out;
+
+}
+.stock-action-btn:hover {
+  transition: all 0.3s ease-in-out;
+  color: var(--el-color-primary);
+  background-color:var(--el-text-color-primary);
+  border-color: var(--el-color-primary);
+
+}
+

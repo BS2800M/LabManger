@@ -5,4 +5,7 @@
 /LabMangerNest/prisma/data.db
 /LabMangerNest/dist
 /LabMangerNest/generated
+*.db
+/barcode_printer/target
+
 
