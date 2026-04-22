@@ -1,29 +1,30 @@
 <template>
   <div
-    class="location-sensor-page"
+    class="lm-page lm-page--split"
     v-loading="pageLoading"
     element-loading-text="正在加载位置与监测数据..."
   >
-    <section class="panel-section">
-      <div class="panel-header">
+    <section class="lm-section">
+      <div class="lm-section-header">
         <h3>位置管理</h3>
       </div>
-      <div class="toolbar">
+      <div class="lm-toolbar">
         <el-input
-          class="toolbar-search"
+          class="lm-toolbar-search"
+          style="width: 250px"
           v-model="locationState.name"
           placeholder="搜索位置名称"
           @input="locationShow"
         />
         <el-pagination
-          class="toolbar-pagination"
+          class="lm-toolbar-pagination"
           background
           layout="prev, pager, next"
           v-model:current-page="locationState.page"
           :page-count="locationState.totalpage"
           @change="locationShow"
         />
-        <div class="button-container">
+        <div class="lm-toolbar-actions">
           <el-button type="success" @click="openLocationAddDrawer">增加位置</el-button>
           <el-button type="primary" @click="openLocationEditDrawer">修改位置</el-button>
           <el-button
@@ -34,7 +35,7 @@
           </el-button>
         </div>
       </div>
-      <div class="table-wrap">
+      <div class="lm-table-wrap">
         <el-auto-resizer>
           <template #default="{ width, height }">
             <el-table-v2
@@ -51,13 +52,14 @@
       </div>
     </section>
 
-    <section class="panel-section">
-      <div class="panel-header">
+    <section class="location-sensor-section lm-section">
+      <div class="location-sensor-section-header lm-section-header">
         <h3>监测记录</h3>
       </div>
-      <div class="toolbar">
+      <div class="location-sensor-toolbar lm-toolbar">
         <el-input
-          class="toolbar-search"
+          class="location-sensor-toolbar-search lm-toolbar-search"
+          style="width: 250px"
           v-model="sensorState.locationName"
           placeholder="搜索位置名称"
           @input="sensorRecordShow"
@@ -65,7 +67,7 @@
         <el-config-provider :locale="zhCn">
           <el-date-picker
             v-model="sensorState.startTime"
-            class="toolbar-date"
+            class="location-sensor-toolbar-date lm-toolbar-date"
             type="date"
             placeholder="选择开始日期"
             size="default"
@@ -76,7 +78,7 @@
         <el-config-provider :locale="zhCn">
           <el-date-picker
             v-model="sensorState.endTime"
-            class="toolbar-date"
+            class="location-sensor-toolbar-date lm-toolbar-date"
             type="date"
             placeholder="选择结束日期"
             size="default"
@@ -85,14 +87,14 @@
           />
         </el-config-provider>
         <el-pagination
-          class="toolbar-pagination"
+          class="location-sensor-toolbar-pagination lm-toolbar-pagination"
           background
           layout="prev, pager, next"
           v-model:current-page="sensorState.page"
           :page-count="sensorState.totalpage"
           @change="sensorRecordShow"
         />
-        <div class="button-container">
+        <div class="location-sensor-toolbar-actions lm-toolbar-actions">
           <el-button type="success" @click="openSensorAddDrawer">增加记录</el-button>
           <el-button type="primary" @click="openSensorEditDrawer">修改记录</el-button>
           <el-button
@@ -104,7 +106,7 @@
           <el-button type="primary" @click="handleSensorExport">导出记录</el-button>
         </div>
       </div>
-      <div class="table-wrap">
+      <div class="location-sensor-table-wrap lm-table-wrap">
         <el-auto-resizer>
           <template #default="{ width, height }">
             <el-table-v2
@@ -123,7 +125,7 @@
 
     <el-drawer v-model="locationState.drawer" direction="rtl" size="60%" @open="locationState.selectedRowId = null">
       <template #header>
-        <span class="drawer-title">位置管理</span>
+        <span class="location-sensor-drawer-title lm-drawer-title">位置管理</span>
       </template>
       <template #footer>
         <div style="flex: auto">
@@ -133,7 +135,7 @@
         </div>
       </template>
       <template #default>
-        <div class="drawer-grid">
+        <div class="location-sensor-drawer-grid lm-drawer-grid">
           <div>
             <p>位置名称</p>
             <el-input v-model="locationFormData.name" @input="syncLocationSubmitDisabled" style="width: 300px" placeholder="输入位置的名称" />
@@ -160,7 +162,7 @@
 
     <el-drawer v-model="sensorState.drawer" direction="rtl" size="60%" @open="sensorState.selectedRowId = null">
       <template #header>
-        <span class="drawer-title">监测管理</span>
+        <span class="location-sensor-drawer-title lm-drawer-title">监测管理</span>
       </template>
       <template #footer>
         <div style="flex: auto">
@@ -654,80 +656,5 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.location-sensor-page {
-  height: calc(100dvh - 80px);
-  margin: 72px auto 0;
-  padding: 8px 12px;
-  max-width: 1900px;
-  box-sizing: border-box;
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  gap: 8px;
-  overflow: hidden;
-}
-
-.panel-section {
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 10px;
-  background: var(--el-bg-color-overlay);
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.panel-header h3 {
-  margin: 0 0 6px 0;
-  color: var(--el-text-color-primary);
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.drawer-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--el-text-color-primary);
-}
-
-.toolbar {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-}
-
-.toolbar-search {
-  width: 220px;
-  flex-shrink: 0;
-}
-
-.toolbar-date {
-  width: 150px;
-  flex-shrink: 0;
-}
-
-.toolbar-pagination {
-  margin-right: auto;
-  flex-shrink: 0;
-}
-
-.button-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.table-wrap {
-  margin-top: 2px;
-  flex: 1;
-  min-height: 0;
-}
-
-.drawer-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(320px, 1fr));
-  gap: 24px;
-}
 </style>
+

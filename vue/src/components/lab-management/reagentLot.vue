@@ -1,29 +1,30 @@
 <template>
   <div
-    class="reagent-lot-page"
+    class="lm-page lm-page--split"
     v-loading="pageLoading"
     element-loading-text="正在加载试剂与批号数据..."
   >
-    <section class="panel-section">
-      <div class="panel-header">
+    <section class="lm-section">
+      <div class="lm-section-header">
         <h3>试剂管理</h3>
       </div>
-      <div class="toolbar">
+      <div class="lm-toolbar">
         <el-input
-          class="toolbar-search"
+          class="lm-toolbar-search"
+          style="width: 250px"
           v-model="reagentState.name"
           placeholder="搜索试剂名称"
           @input="reagentShow"
         />
         <el-pagination
-          class="toolbar-pagination"
+          class="lm-toolbar-pagination"
           background
           layout="prev, pager, next"
           v-model:current-page="reagentState.page"
           :page-count="reagentState.totalpage"
           @change="reagentShow"
         />
-        <div class="button-container">
+        <div class="lm-toolbar-actions">
           <el-button type="success" @click="openReagentAddDrawer">增加试剂</el-button>
           <el-button type="primary" @click="openReagentEditDrawer">修改试剂</el-button>
           <el-button
@@ -34,7 +35,7 @@
           </el-button>
         </div>
       </div>
-      <div class="table-wrap">
+      <div class="lm-table-wrap">
         <el-auto-resizer>
           <template #default="{ width, height }">
             <el-table-v2
@@ -51,26 +52,27 @@
       </div>
     </section>
 
-    <section class="panel-section">
-      <div class="panel-header">
+    <section class="reagent-lot-section lm-section">
+      <div class="reagent-lot-section-header lm-section-header">
         <h3>批号管理</h3>
       </div>
-      <div class="toolbar">
+      <div class="reagent-lot-toolbar lm-toolbar">
         <el-input
-          class="toolbar-search"
+          class="reagent-lot-toolbar-search lm-toolbar-search"
+          style="width: 250px"
           v-model="lotState.name"
           placeholder="搜索批号"
           @input="lotShow"
         />
         <el-pagination
-          class="toolbar-pagination"
+          class="reagent-lot-toolbar-pagination lm-toolbar-pagination"
           background
           layout="prev, pager, next"
           v-model:current-page="lotState.page"
           :page-count="lotState.totalpage"
           @change="lotShow"
         />
-        <div class="button-container">
+        <div class="reagent-lot-toolbar-actions lm-toolbar-actions">
           <el-button type="success" @click="openLotAddDrawer">增加批号</el-button>
           <el-button type="primary" @click="openLotEditDrawer">修改批号</el-button>
           <el-button
@@ -81,7 +83,7 @@
           </el-button>
         </div>
       </div>
-      <div class="table-wrap">
+      <div class="reagent-lot-table-wrap lm-table-wrap">
         <el-auto-resizer>
           <template #default="{ width, height }">
             <el-table-v2
@@ -100,7 +102,7 @@
 
     <el-drawer v-model="reagentState.drawer" direction="rtl" size="60%" @open="reagentState.selectedRowId = null">
       <template #header>
-        <span class="drawer-title">试剂管理</span>
+        <span class="reagent-lot-drawer-title lm-drawer-title">试剂管理</span>
       </template>
       <template #footer>
         <div style="flex: auto">
@@ -110,7 +112,7 @@
         </div>
       </template>
       <template #default>
-        <div class="drawer-grid">
+        <div class="reagent-lot-drawer-grid lm-drawer-grid">
           <div>
             <p>试剂名称</p>
             <el-input v-model="reagentFormData.name" @input="syncReagentSubmitDisabled" style="width: 300px" placeholder="输入试剂的名称" />
@@ -154,7 +156,7 @@
 
     <el-drawer v-model="lotState.drawer" direction="rtl" size="30%" @open="lotState.selectedRowId = null">
       <template #header>
-        <span class="drawer-title">批号管理</span>
+        <span class="reagent-lot-drawer-title lm-drawer-title">批号管理</span>
       </template>
       <template #footer>
         <div style="flex: auto">
@@ -205,7 +207,7 @@ import { ElCheckbox, ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { h, onMounted, reactive, ref } from 'vue'
 import { GS1Field, GS1Parser } from '@valentynb/gs1-parser'
-import ReagentSelect from '@/components/reagent_select.vue'
+import ReagentSelect from '@/components/lab-management/reagent_select.vue'
 import { api_reagent_show, api_reagent_del, api_reagent_update, api_reagent_add } from '@/api/reagent'
 import { api_lot_show, api_lot_del, api_lot_update, api_lot_add } from '@/api/lot'
 import { format_iso_YYYYMMDDHHmm, format_YYYYMMDDHHmm_iso, formatDateColumn } from '@/utils/format'
@@ -653,78 +655,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.reagent-lot-page {
-  height: calc(100dvh - 80px);
-  margin: 72px auto 0;
-  padding: 8px 12px;
-  max-width: 1900px;
-  box-sizing: border-box;
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  gap: 8px;
-  overflow: hidden;
-}
-
-.panel-section {
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 10px;
-  background: var(--el-bg-color-overlay);
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.panel-header h3 {
-  margin: 0 0 6px 0;
-  color: var(--el-text-color-primary);
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.drawer-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--el-text-color-primary);
-}
-
-.toolbar {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: nowrap;
-}
-
-.toolbar-search {
-  width: 220px;
-  flex-shrink: 0;
-}
-
-.toolbar-pagination {
-  margin-right: auto;
-  flex-shrink: 0;
-}
-
-.button-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.table-wrap {
-  margin-top: 2px;
-  flex: 1;
-  min-height: 0;
-}
-
-.drawer-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(320px, 1fr));
-  gap: 24px;
-}
-
 .di-input-row {
   width: 300px;
   display: flex;
@@ -740,3 +670,5 @@ onMounted(async () => {
   width: 300px;
 }
 </style>
+
+

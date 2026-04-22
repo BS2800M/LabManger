@@ -1,56 +1,55 @@
 <template>
     <div
-      id="background"
       class="inbound-page"
       v-loading="pageLoading"
       element-loading-text="正在处理入库请求..."
     >
-      <section class="quick-section">
-        <div class="panel-header">
+      <section class="inbound-section">
+        <div class="inbound-section-header">
           <h3>快速入库</h3>
         </div>
-        <div class="quick-inbound-row">
-            <span class="quick-inbound-label">医疗器械唯一标识</span>
+        <div class="inbound-quick-row">
+            <span class="inbound-quick-label">医疗器械唯一标识</span>
             <UdiScanHint />
             <el-input
                 v-model="quickInboundDisplay"
-                class="quick-inbound-input"
+                class="inbound-quick-input"
                 placeholder="请输入或扫描UDI"
                 clearable
                 @keydown.enter.prevent="handleQuickInbound"
             />
             <el-input
                 v-model="quickInbound.note"
-                class="quick-inbound-note"
+                class="inbound-quick-note"
                 placeholder="注释（可选）"
                 clearable
                 @keydown.enter.prevent="handleQuickInbound"
             />
-            <button class="stock-action-btn stock-action-btn--inline" @click="handleQuickInbound">
+            <button class="stock-action-btn" @click="handleQuickInbound">
               <span>入库</span>
             </button>
         </div>
       </section>
 
-      <section class="panel-section">
-        <div class="panel-header">
+      <section class="inbound-section inbound-standard">
+        <div class="inbound-section-header">
           <h3>常规入库</h3>
         </div>
-        <div class="toolbar-grid">
-            <div class="field-row">
-                <span class="field-label">试剂</span>
+        <div class="inbound-form-grid">
+            <div class="inbound-field-row">
+                <span class="inbound-field-label">试剂</span>
                 <reagent-select
-                    class="field-control"
+                    class="inbound-field-control"
                     v-model="formData.reagentid"
                     placeholder="选择试剂"
                     @options-loaded="handleReagentOptionsLoaded"
                     @change="handleReagentChange"
                 />
             </div>
-            <div class="field-row">
-                <span class="field-label">批号</span>
+            <div class="inbound-field-row">
+                <span class="inbound-field-label">批号</span>
                 <lot-select
-                    class="field-control"
+                    class="inbound-field-control"
                     v-model="formData.lotid"
                     :reagent-id="formData.reagentid"
                     placeholder="选择批号"
@@ -58,10 +57,10 @@
                     @change="handleLotChange"
                 />
             </div>
-            <div class="field-row">
-                <span class="field-label">数量</span>
+            <div class="inbound-field-row">
+                <span class="inbound-field-label">数量</span>
                 <el-input-number
-                    class="field-control field-control-small"
+                    class="inbound-field-control inbound-field-control--small"
                     v-model="formData.number"
                     :min="1"
                     :max="9999"
@@ -69,24 +68,24 @@
                     @change="syncSubmitDisabled"
                 />
             </div>
-            <div class="field-row">
-                <span class="field-label">注释</span>
+            <div class="inbound-field-row">
+                <span class="inbound-field-label">注释</span>
                 <el-input
-                    class="field-control"
+                    class="inbound-field-control"
                     v-model="formData.note"
                     placeholder="可填写注释"
                 />
             </div>
         </div>
-        <div class="toolbar-actions">
+        <div class="inbound-form-actions">
             <el-button
-                class="prepare-stock-btn"
+                class="inbound-prepare-btn"
                 type="primary"
                 :disabled="formData.submitDisabled"
                 @click="ready_inbound"
             >准备入库</el-button>
         </div>
-        <div class="inbound-table">
+        <div class="inbound-table-wrap">
           <el-auto-resizer>
             <template #default="{ width, height }">
               <el-table-v2
@@ -101,13 +100,13 @@
             </template>
           </el-auto-resizer>
         </div>
-        <div class="page-actions">
+        <div class="inbound-footer-actions">
           <button class="stock-action-btn" @click="inbound">
               <span>入库</span>
           </button>
         </div>
       </section>
-      <svg id="barcode"></svg>
+      <svg class="inbound-barcode"></svg>
     </div>
 </template>
 
@@ -115,9 +114,9 @@
 import { reactive, ref, h, computed } from 'vue'
 import { ElButton, ElMessage } from 'element-plus'
 import { api_operation_fast_inbound, api_operation_inbound } from '@/api/operation'
-import ReagentSelect from '@/components/reagent_select.vue'
-import LotSelect from '@/components/lot_select.vue'
-import UdiScanHint from '@/components/udi_scan_hint.vue'
+import ReagentSelect from '@/components/lab-management/reagent_select.vue'
+import LotSelect from '@/components/lab-management/lot_select.vue'
+import UdiScanHint from '@/components/lab-management/udi_scan_hint.vue'
 import { syncSubmitDisabledByFields } from '@/utils/crud'
 import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
 import { usePageLoading } from '@/utils/pageLoading'
@@ -302,8 +301,7 @@ async function handleQuickInbound() {
   overflow: hidden;
 }
 
-.quick-section,
-.panel-section {
+.inbound-section {
   border: 1px solid var(--el-border-color-light);
   border-radius: 10px;
   background: var(--el-bg-color-overlay);
@@ -312,61 +310,52 @@ async function handleQuickInbound() {
   flex-direction: column;
 }
 
-.quick-section {
-  flex-shrink: 0;
-}
-
-.panel-section {
+.inbound-standard {
   flex: 1;
   min-height: 0;
 }
 
-.panel-header h3 {
+.inbound-section-header h3 {
   margin: 0 0 6px 0;
   color: var(--el-text-color-primary);
   font-size: 22px;
   font-weight: 800;
 }
 
-.panel-header {
-  display: flex;
-  align-items: center;
-  min-height: 34px;
-}
-
-.toolbar-grid {
+.inbound-form-grid {
   margin-top: 8px;
   display: grid;
   grid-template-columns: repeat(2, minmax(340px, 1fr));
   gap: 12px 24px;
 }
 
-.field-row {
+.inbound-field-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.field-label {
+.inbound-field-label {
   width: 56px;
   color: var(--el-text-color-primary);
 }
 
-.field-control {
+.inbound-field-control {
   width: 300px;
+  max-width: 100%;
 }
 
-.field-control-small {
+.inbound-field-control--small {
   width: 160px;
 }
 
-.toolbar-actions {
+.inbound-form-actions {
   margin-top: 12px;
   display: flex;
   align-items: center;
 }
 
-.quick-inbound-row {
+.inbound-quick-row {
   margin-top: 6px;
   display: flex;
   align-items: center;
@@ -374,29 +363,30 @@ async function handleQuickInbound() {
   flex-wrap: wrap;
 }
 
-.quick-inbound-label {
+.inbound-quick-label {
   min-width: 168px;
   color: var(--el-text-color-primary);
   font-size: 16px;
   font-weight: 700;
 }
 
-.quick-inbound-input {
+.inbound-quick-input {
   width: 420px;
   max-width: 56vw;
 }
 
-.quick-inbound-note {
+.inbound-quick-note {
   width: 260px;
+  max-width: 40vw;
 }
 
-:deep(.quick-inbound-input .el-input__wrapper) {
+:deep(.inbound-quick-input .el-input__wrapper) {
   min-height: 48px;
   border-radius: 12px;
   box-shadow: 0 0 0 1px var(--el-border-color) inset;
 }
 
-:deep(.quick-inbound-input .el-input__inner) {
+:deep(.inbound-quick-input .el-input__inner) {
   font-size: 17px;
 }
 
@@ -406,22 +396,22 @@ async function handleQuickInbound() {
   min-height: 32px;
 }
 
-.prepare-stock-btn {
+.inbound-prepare-btn {
   width: 160px;
   height: 40px;
 }
 
-.inbound-table {
+.inbound-table-wrap {
   margin-top: 12px;
   flex: 1;
   min-height: 0;
 }
 
-.page-actions {
+.inbound-footer-actions {
   margin-top: 12px;
 }
 
-#barcode {
+.inbound-barcode {
   position: absolute;
   width: 0;
   height: 0;
@@ -429,4 +419,22 @@ async function handleQuickInbound() {
   pointer-events: none;
 }
 
+@media (max-width: 1200px) {
+  .inbound-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inbound-quick-input {
+    width: min(420px, 100%);
+    max-width: 100%;
+  }
+
+  .inbound-quick-note {
+    width: min(260px, 100%);
+    max-width: 100%;
+  }
+}
+
 </style>
+
+

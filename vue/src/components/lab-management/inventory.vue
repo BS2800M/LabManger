@@ -1,30 +1,30 @@
 <template>
   <div
-    id="background"
-    class="inventory-page"
+    class="lm-page"
     v-loading="pageLoading"
     element-loading-text="正在加载库存数据..."
   >
-    <section class="panel-section">
-      <div class="panel-header">
+    <section class="inventory-section lm-section">
+      <div class="lm-section-header">
         <h3>库存查询</h3>
       </div>
-      <div id="background2" class="toolbar">
+      <div class="lm-toolbar">
         <el-input
-          class="toolbar-search"
+          class="lm-toolbar-search"
+          style="width: 250px"
           v-model="state.reagentname"
           placeholder="搜索试剂名称"
           @input="list_reagentnumber"
         />
         <el-pagination
-          class="toolbar-pagination"
+          class="lm-toolbar-pagination"
           background
           layout="prev, pager, next"
           v-model:current-page="state.page"
           :page-count="state.totalpage"
           @change="list_reagentnumber"
         />
-        <div class="button-container">
+        <div class="lm-toolbar-actions">
           <el-button id="export" type="primary" @click="inventory_exporttoexcel_list">
             导出盘库表
           </el-button>
@@ -36,7 +36,7 @@
           </el-button>
         </div>
       </div>
-      <div class="inventory-table">
+      <div class="lm-table-wrap">
         <el-auto-resizer>
           <template #default="{ width, height }">
             <el-table-v2
@@ -60,7 +60,7 @@
 
   <el-drawer v-model="state.drawer" direction="rtl" size="80%" @open="state.selectedRowId = null">
     <template #header>
-      <span class="drawer-title">库存查询</span>
+      <span class="inventory-drawer-title lm-drawer-title">库存查询</span>
     </template>
     <template #footer>
       <div style="flex: auto">
@@ -68,16 +68,16 @@
       </div>
     </template>
     <template #default>
-      <div class="drawer-content">
-        <div class="chart-container">
+      <div class="inventory-drawer-content">
+        <div class="inventory-chart-wrap">
           <statistics_chart v-model="state.statisticsData" />
         </div>
-        <div class="drawer-form">
+        <div class="inventory-drawer-form">
           <p>开始时间</p>
           <el-config-provider :locale="zhCn">
             <el-date-picker
               v-model="formData.starttime"
-              class="drawer-field"
+              class="inventory-drawer-field"
               type="datetime"
               placeholder="选择开始时间"
               size="default"
@@ -90,7 +90,7 @@
           <el-config-provider :locale="zhCn">
             <el-date-picker
               v-model="formData.endtime"
-              class="drawer-field"
+              class="inventory-drawer-field"
               type="datetime"
               placeholder="选择结束时间"
               size="default"
@@ -102,7 +102,7 @@
           <p>间隔时间(天)</p>
           <el-input-number
             v-model="formData.intervalday"
-            class="drawer-field"
+            class="inventory-drawer-field"
             :min="1"
             :max="365"
             placeholder="1"
@@ -118,7 +118,7 @@
             @change="syncSubmitDisabled"
           />
 
-          <div class="drawer-form-actions">
+          <div class="inventory-drawer-actions">
             <el-button type="primary" @click="statistics_data" :disabled="state.statisticsbuttondisabled">查询</el-button>
           </div>
         </div>
@@ -132,7 +132,7 @@ import { h, onMounted, reactive } from 'vue'
 import { api_inventory_show, api_inventory_auditall, api_inventory_statistics } from '@/api/inventory'
 import { inventory_exporttoexcel_list } from '@/utils/exportexcel'
 import { formatDateColumn, getnowtime_previousmonth, getnowtime, format_xAxisLabels } from '@/utils/format'
-import statistics_chart from './statistics_chart.vue'
+import statistics_chart from '@/components/lab-management/statistics_chart.vue'
 import { ElCheckbox, ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { createSingleToggleSelection, syncSubmitDisabledByFields } from '@/utils/crud'
@@ -372,94 +372,41 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.inventory-page {
-  height: calc(100dvh - 82px);
-  margin: 72px auto 0;
-  padding: 8px 12px;
-  max-width: 1900px;
-  box-sizing: border-box;
-}
-
-.panel-section {
+.inventory-section {
   height: 100%;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 10px;
-  background: var(--el-bg-color-overlay);
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
 }
 
-.panel-header h3 {
-  margin: 0 0 6px 0;
-  color: var(--el-text-color-primary);
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.drawer-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--el-text-color-primary);
-}
-
-.toolbar {
-  min-height: 90px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.toolbar-search {
-  width: 250px;
-}
-
-.toolbar-pagination {
-  margin-right: auto;
-}
-
-.button-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.inventory-table {
-  margin-top: 8px;
-  flex: 1;
-  min-height: 0;
-}
-
-.drawer-content {
+.inventory-drawer-content {
   display: grid;
   grid-template-columns: minmax(560px, 1fr) 320px;
   gap: 20px;
   align-items: start;
 }
 
-.chart-container {
+.inventory-chart-wrap {
   min-width: 0;
   overflow: auto;
 }
 
-.drawer-form p {
+.inventory-drawer-form p {
   margin: 0 0 6px 0;
 }
 
-.drawer-form :deep(.drawer-field) {
+.inventory-drawer-form :deep(.inventory-drawer-field) {
   width: 300px;
   margin-bottom: 12px;
 }
 
-.drawer-form-actions {
+.inventory-drawer-actions {
   margin-top: 10px;
 }
 
 @media (max-width: 1200px) {
-  .drawer-content {
+  .inventory-drawer-content {
     grid-template-columns: 1fr;
   }
 }
 </style>
+
+
+

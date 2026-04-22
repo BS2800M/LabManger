@@ -5,7 +5,7 @@
           {{state.message}}
         </span>
       <template #footer>
-        <div class="dialog-footer">
+        <div >
           <el-button @click="state.centerDialogVisible = false" size="large"  v-if="state.cancelVisible">取消</el-button>
           <el-button type="primary"  size="large" @click="state.action">
            确认
@@ -84,3 +84,4 @@ onMounted(() => {
 }
 
 </style>
+

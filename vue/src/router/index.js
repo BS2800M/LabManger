@@ -4,15 +4,15 @@ import {createRouter,createWebHashHistory} from 'vue-router'
 
 const signin = () => import('@/components/signin.vue');
 const home = () => import('@/components/home.vue');
-const homebar = () => import('@/components/homebar.vue');   
-const team = () => import('@/components/team.vue');
-const user = () => import('@/components/user.vue');
-const inbound = () => import('@/components/inbound.vue');
-const outbound = () => import('@/components/outbound.vue');
-const operation = () => import('@/components/operation.vue');
-const inventory = () => import('@/components/inventory.vue');
-const reagentLot = () => import('@/components/reagentLot.vue');
-const locationSensorRecord = () => import('@/components/locationSensorRecord.vue');
+const homebar = () => import('@/components/homebar/homebar.vue');   
+const team = () => import('@/components/system-management/team.vue');
+const user = () => import('@/components/system-management/user.vue');
+const inbound = () => import('@/components/lab-management/inbound.vue');
+const outbound = () => import('@/components/lab-management/outbound.vue');
+const operation = () => import('@/components/lab-management/operation.vue');
+const inventory = () => import('@/components/lab-management/inventory.vue');
+const reagentLot = () => import('@/components/lab-management/reagentLot.vue');
+const locationSensorRecord = () => import('@/components/lab-management/locationSensorRecord.vue');
 
 
 const router=createRouter({
@@ -67,3 +67,4 @@ const router=createRouter({
 })
 
 export default router
+

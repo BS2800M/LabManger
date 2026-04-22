@@ -61,7 +61,7 @@
 <script lang="ts" setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import IdentityActionPopover from '@/components/identity_action_popover.vue'
+import IdentityActionPopover from '@/components/homebar/identity_action_popover.vue'
 import { api_others_time } from '@/api/others'
 
 const router = useRouter()
@@ -312,3 +312,4 @@ onBeforeUnmount(() => {
 }
 
 </style>
+

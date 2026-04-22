@@ -9,7 +9,7 @@
   color: var(--table-unactive-row-text) !important;
 }
 
-/* Custom light theme (gray tone) */
+/* === 主题变量模块：亮色主题（light）=== */
 html:not(.dark) {
   --el-color-primary: #3e8ff9;
   --el-color-primary-light-3: #9ca3af;
@@ -60,7 +60,7 @@ html:not(.dark) body {
 
 
 
-/* Custom dark theme (gray tone) */
+/* === 主题变量模块：暗色主题（dark）=== */
 html.dark {
   --el-color-primary: #f59e0b;
   --el-color-primary-light-3: #fbbf24;
@@ -121,7 +121,7 @@ html.dark body {
   color: var(--table-hover-row-text) !important;
 }
 
-/* Table V2 row status */
+/* === 表格状态模块：Table V2 行状态（warning/unactive/current/hover）=== */
 .el-table-v2__row.warning-row .el-table-v2__row-cell {
   background-color: #ff000026 !important;
 }
@@ -156,7 +156,106 @@ html.dark body {
   border-radius: var(--pagination-radius) !important;
 }
 
-/* Unified stock action button style (inbound / outbound) */
+/* === 页面布局模块：管理页通用 lm-* 基类 === */
+/* page：页面容器 */
+.lm-page {
+  height: calc(100dvh - 82px);
+  margin: 72px auto 0;
+  padding: 8px 12px;
+  max-width: 1900px;
+  box-sizing: border-box;
+}
+
+.lm-page.lm-page--stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.lm-page.lm-page--split {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* section：区块容器 */
+.lm-section {
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 10px;
+  background: var(--el-bg-color-overlay);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lm-section-header h3 {
+  margin: 0 0 6px 0;
+  color: var(--el-text-color-primary);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* toolbar：工具栏区 */
+.lm-toolbar {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lm-toolbar-input {
+  width: 220px;
+}
+
+.lm-toolbar-search {
+  width: 250px;
+}
+
+.lm-toolbar-date {
+  width: 150px;
+}
+
+.lm-toolbar-pagination {
+  margin-right: auto;
+}
+
+.lm-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* table：表格容器区 */
+.lm-table-wrap {
+  margin-top: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* drawer：抽屉标题与网格 */
+.lm-drawer-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--el-text-color-primary);
+}
+
+.lm-drawer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 1200px) {
+  .lm-drawer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === 按钮模块：库存动作按钮（inbound/outbound）=== */
 .stock-action-btn {
   color: var(--el-text-color-primary);
   width: 214px;

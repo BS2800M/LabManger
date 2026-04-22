@@ -1,29 +1,31 @@
 <template>
   <div
-    id="background"
-    class="operation-page"
+    class="lm-page"
     v-loading="pageLoading"
     element-loading-text="正在加载操作记录..."
   >
-    <section class="panel-section">
-      <div class="panel-header">
+    <section class="operation-section lm-section">
+      <div class="lm-section-header">
         <h3>操作查询</h3>
       </div>
-      <div id="background2" class="toolbar">
+      <div class="lm-toolbar">
         <el-input
-          class="toolbar-input"
+          class="lm-toolbar-input"
+          style="width: 250px"
           v-model="state.reagentName"
           placeholder="试剂名称"
           @input="operation_show"
         />
         <el-input
-          class="toolbar-input"
+          class="lm-toolbar-input"
+          style="width: 250px"
           v-model="state.barcodeNumber"
           placeholder="条码号"
           @input="operation_show"
         />
         <el-input
-          class="toolbar-input"
+          class="lm-toolbar-input"
+          style="width: 250px"
           v-model="state.udi"
           placeholder="UDI"
           @input="operation_show"
@@ -31,7 +33,7 @@
         <el-config-provider :locale="zhCn">
           <el-date-picker
             v-model="state.starttime_show"
-            class="toolbar-date"
+            class="lm-toolbar-date"
             type="date"
             placeholder="开始日期"
             size="default"
@@ -42,7 +44,7 @@
         <el-config-provider :locale="zhCn">
           <el-date-picker
             v-model="state.endtime_show"
-            class="toolbar-date"
+            class="lm-toolbar-date"
             type="date"
             placeholder="结束日期"
             size="default"
@@ -51,21 +53,21 @@
           />
         </el-config-provider>
         <el-pagination
-          class="toolbar-pagination"
+          class="lm-toolbar-pagination"
           background
           layout="prev, pager, next"
           v-model:current-page="state.page"
           :page-count="state.totalpage"
           @change="operation_show"
         />
-        <div class="export-button-container">
+        <div class="lm-toolbar-actions">
           <el-button id="export" type="primary" @click="handleExport">导出记录</el-button>
           <el-button id="view" type="primary" @click="view_record">查看记录</el-button>
           <el-button id="disable" type="primary" @click="showDisableRecordConfirm">禁用记录</el-button>
         </div>
       </div>
 
-      <div class="operation-table">
+      <div class="lm-table-wrap">
         <el-auto-resizer>
           <template #default="{ width, height }">
             <el-table-v2
@@ -85,7 +87,7 @@
 
   <el-drawer v-model="state.drawer" direction="rtl" size="70%" @open="state.selectedRowId = null" @close="resetFormData">
     <template #header>
-      <span class="drawer-title">操作查询</span>
+      <span class="operation-drawer-title lm-drawer-title">操作查询</span>
     </template>
     <template #footer>
       <div style="flex: auto">
@@ -95,8 +97,8 @@
       </div>
     </template>
     <template #default>
-      <div class="drawer-form-grid">
-        <div id="content1">
+      <div class="operation-drawer-grid lm-drawer-grid">
+        <div class="operation-drawer-main">
           <p>试剂名称</p>
           <el-input v-model="formData.reagentName" style="width: 300px" disabled />
           <p>试剂批号</p>
@@ -116,7 +118,7 @@
           <p>操作人</p>
           <el-input v-model="formData.userName" style="width: 300px" disabled />
         </div>
-        <div id="content2">
+        <div class="operation-drawer-secondary">
           <p>实际试剂名称</p>
           <el-input v-model="formData.actualReagentName" style="width: 300px" disabled />
           <p>实际试剂批号</p>
@@ -126,9 +128,9 @@
           <p>注释</p>
           <el-input v-model="formData.note" style="width: 300px" disabled />
         </div>
-        <div id="content3">
+        <div class="operation-drawer-detail">
           <p>操作详情</p>
-            <div class="operationdetail-table">
+            <div class="operation-detail-table">
               <el-auto-resizer>
                 <template #default="{ width, height }">
                   <el-table-v2
@@ -161,7 +163,7 @@ import { format_YYYYMMDDHHmm_iso } from '@/utils/format'
 import { operation_exporttoexcel_list } from '@/utils/exportexcel.js'
 import { api_reagent_showall } from '@/api/reagent'
 import { api_lot_showall } from '@/api/lot'
-import { createSingleToggleSelection } from '@/utils/crud'
+import { createSingleToggleSelection, tryOpenEditDrawerBySelection } from '@/utils/crud'
 import { closeMessageBox, openConfirmMessageBox, openInfoMessageBox } from '@/utils/messagebox'
 import { usePageLoading } from '@/utils/pageLoading'
 
@@ -475,8 +477,12 @@ async function copyUdi() {
 
 
 function view_record() {
-  state.selectedRowId = null
-  state.drawer = true
+  tryOpenEditDrawerBySelection({
+    selectedRowId: state.selectedRowId,
+    title: '查看记录',
+    emptyMessage: '请选择要查看的记录',
+    onOpen: () => { state.drawer = true },
+  })
 }
 
 
@@ -526,78 +532,16 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.operation-page {
-  height: calc(100dvh - 82px);
-  margin: 72px auto 0;
-  padding: 8px 12px;
-  max-width: 1900px;
-  box-sizing: border-box;
-}
-
-.panel-section {
+.operation-section {
   height: 100%;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 10px;
-  background: var(--el-bg-color-overlay);
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
 }
 
-.panel-header h3 {
-  margin: 0 0 6px 0;
-  color: var(--el-text-color-primary);
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.toolbar {
-  min-height: 90px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.toolbar-input {
-  width: 220px;
-}
-
-.toolbar-date {
-  width: 150px;
-}
-
-.toolbar-pagination {
-  margin-right: auto;
-}
-
-.export-button-container {
-  display: flex;
-  gap: 10px;
-}
-
-.operation-table {
-  margin-top: 8px;
-  flex: 1;
-  min-height: 0;
-}
-
-.drawer-form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 36px;
-  align-items: start;
-}
-
-
-
-#content3 {
+.operation-drawer-detail {
   grid-column: 1 / -1;
   min-width: 0;
 }
 
-.operationdetail-table {
+.operation-detail-table {
   margin-top: 8px;
   height: 260px;
   min-height: 220px;
@@ -610,17 +554,10 @@ onMounted(async () => {
 
 
 @media (max-width: 900px) {
-  .drawer-form-grid {
+  .operation-drawer-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.drawer-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--el-text-color-primary);
-}
-
-
-
 </style>
+

@@ -1,30 +1,30 @@
 <template>
     <div
-      id="background"
-      class="team-page"
+      class="lm-page"
       v-loading="pageLoading"
       element-loading-text="正在加载小组数据..."
     >
-      <section class="panel-section">
-      <div class="panel-header">
+      <section class="team-section lm-section">
+      <div class="lm-section-header">
         <h3>小组管理</h3>
       </div>
-      <div id="background2" class="toolbar">
+      <div class="lm-toolbar">
         <el-input 
-          class="toolbar-input"
+          class="lm-toolbar-input"
+          style="width: 250px"
           v-model="state.name" 
           placeholder="搜索检验小组" 
           @input="team_show" 
         />
         <el-pagination 
-          class="toolbar-pagination" 
+          class="lm-toolbar-pagination" 
           background  
           layout="prev, pager, next"  
           v-model:current-page="state.page" 
           :page-count="state.totalpage" 
           @change="team_show" 
         />
-                 <div class="action-button-container">
+                 <div class="lm-toolbar-actions">
            <el-button 
              id="add" 
              type="success" 
@@ -43,7 +43,7 @@
          </div>
 
       </div>
-      <div class="team-table">
+      <div class="lm-table-wrap">
         <el-auto-resizer>
           <template #default="{ width, height }">
             <el-table-v2
@@ -63,7 +63,7 @@
 
     <el-drawer v-model="state.drawer" direction="rtl" size="30%" @open="state.selectedRowId = null">
       <template #header>
-      <span class="drawer-title">小组管理</span>
+      <span class="team-drawer-title lm-drawer-title">小组管理</span>
     </template>
       <template #footer>
       <div style="flex: auto">
@@ -287,62 +287,8 @@ onMounted(() => {
 
 </script >
 <style scoped>
-.team-page {
-  height: calc(100dvh - 82px);
-  margin: 72px auto 0;
-  padding: 8px 12px;
-  max-width: 1900px;
-  box-sizing: border-box;
-}
-
-.panel-section {
+.team-section {
   height: 100%;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 10px;
-  background: var(--el-bg-color-overlay);
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.panel-header h3 {
-  margin: 0 0 6px 0;
-  color: var(--el-text-color-primary);
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.drawer-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--el-text-color-primary);
-}
-
-.toolbar {
-  min-height: 90px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.toolbar-input {
-  width: 220px;
-}
-
-.toolbar-pagination {
-  margin-right: auto;
-}
-
-.action-button-container {
-  display: flex;
-  gap: 10px;
-}
-
-.team-table {
-  margin-top: 8px;
-  flex: 1;
-  min-height: 0;
 }
 </style>
+
