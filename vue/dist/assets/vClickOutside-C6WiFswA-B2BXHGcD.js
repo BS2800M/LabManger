@@ -1,1 +1,0 @@
-const c={beforeMount(e,n){e.clickOutsideEvent=function(t){e===t.target||e.contains(t.target)||n.value(t)},document.addEventListener("click",e.clickOutsideEvent)},unmounted(e){document.removeEventListener("click",e.clickOutsideEvent)}};export{c as i};
