@@ -170,6 +170,7 @@ impl BarcodeApp {
         let shown = printer.unwrap_or_else(|| "系统默认".to_string());
         self.push_log(format!("[gui] 默认打印机已设置为: {shown}"));
     }
+    
 
     fn start_server(&mut self) {
         let config = Arc::clone(&self.runtime_config);

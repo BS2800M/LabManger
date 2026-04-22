@@ -133,7 +133,6 @@
 import { ElMessage } from 'element-plus'
 import { h } from 'vue'
 import { ElButton } from 'element-plus'
-import 'element-plus/dist/index.css'
 import { reactive, ref, computed } from 'vue'
 import { api_operation_fast_outbound, api_operation_outbound } from '../api/operation';
 import ReagentSelect from '@/components/reagent_select.vue'

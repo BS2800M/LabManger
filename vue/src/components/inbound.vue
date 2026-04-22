@@ -121,7 +121,6 @@ import UdiScanHint from '@/components/udi_scan_hint.vue'
 import { syncSubmitDisabledByFields } from '@/utils/crud'
 import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
 import { usePageLoading } from '@/utils/pageLoading'
-import 'element-plus/dist/index.css'
 // 组件引用
 // 使用reactive统一管理状态
 const formData = reactive({

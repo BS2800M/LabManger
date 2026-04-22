@@ -54,7 +54,6 @@
               :row-height="36"
               :header-height="34"
               :row-class="({ rowData, rowIndex }) => getRowClass(rowData, rowIndex)"
-              :row-event-handlers="{ onClick: handleRowClick }"
             />
           </template>
         </el-auto-resizer>
@@ -93,17 +92,17 @@
 
 </template>
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { ElCheckbox } from 'element-plus'
+import { h, onMounted, reactive } from 'vue'
 import { api_team_show,api_team_del,api_team_update,api_team_add} from '@/api/team.js'
 import {
   syncSubmitDisabledByFields,
-  toggleRowSelection,
   showDeleteConfirmBySelection,
   deleteWithSelection,
   openDrawerByMode,
   openAddDrawerFlow,
   tryOpenEditDrawerBySelection,
-  resolveSelectableRowClass,
+  createSingleToggleSelection,
 } from '@/utils/crud'
 import { usePageLoading } from '@/utils/pageLoading'
 
@@ -133,16 +132,32 @@ const REQUIRED_FIELDS = ['name']
 const { pageLoading, withPageLoading } = usePageLoading()
 
 const tableColumns = [
+  {
+    key: 'team-select-checkbox',
+    dataKey: 'team-select-checkbox',
+    title: '',
+    width: 56,
+    cellRenderer: ({ rowData }) => h(ElCheckbox, {
+      modelValue: state.selectedRowId === rowData.id,
+      'aria-label': 'select-row',
+      onChange: (checked) => {
+        handleCheckboxChange(checked, rowData)
+      },
+    }),
+  },
   { key: 'name', dataKey: 'name', title: '名字', width: 160, flexGrow: 1 },
   { key: 'phone', dataKey: 'phone', title: '电话', width: 160, flexGrow: 1 },
   { key: 'note', dataKey: 'note', title: '其他说明', width: 360, flexGrow: 1 },
 ]
-function getRowClass(rowData) {
-  return resolveSelectableRowClass({
-    rowData,
-    selectedRowId: state.selectedRowId,
-    defaultClass: 'normal-row',
-  })
+const rowSelection = createSingleToggleSelection({
+  getSelectedRowId: () => state.selectedRowId,
+  setSelectedRowId: (value) => { state.selectedRowId = value },
+  onSelect: fillFormDataFromRow,
+  onDeselect: resetFormData,
+})
+
+function getRowClass() {
+  return 'normal-row'
 }
 
 function resetFormData() {
@@ -182,14 +197,8 @@ function openDrawer(mode) {
   })
 }
 
-function handleRowClick({ rowData }) {
-  toggleRowSelection({
-    rowData,
-    isSameSelection: state.selectedRowId === rowData.id,
-    setSelectedRowId: (value) => { state.selectedRowId = value },
-    onSelect: fillFormDataFromRow,
-    onDeselect: resetFormData,
-  })
+function handleCheckboxChange(checked, rowData) {
+  rowSelection.onToggleByChecked({ checked, rowData })
   syncSubmitDisabled()
 }
 

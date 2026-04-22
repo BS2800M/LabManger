@@ -140,6 +140,13 @@ html.dark body {
   color: var(--table-hover-row-text) !important;
 }
 
+.el-table .el-checkbox,
+.el-table-v2 .el-checkbox,
+.el-table-v2__row .el-checkbox {
+  transform: scale(1.3);
+  transform-origin: center;
+}
+
 .el-pagination.is-background .btn-prev,
 .el-pagination.is-background .btn-next,
 .el-pagination.is-background .el-pager li {

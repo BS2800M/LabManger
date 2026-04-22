@@ -44,8 +44,7 @@
               :height="height"
               :row-height="36"
               :header-height="34"
-              :row-class="({ rowData, rowIndex }) => getReagentRowClass(rowData, rowIndex)"
-              :row-event-handlers="{ onClick: handleReagentRowClick }"
+              :row-class="({ rowData }) => getReagentRowClass(rowData)"
             />
           </template>
         </el-auto-resizer>
@@ -92,8 +91,7 @@
               :height="height"
               :row-height="36"
               :header-height="34"
-              :row-class="({ rowData, rowIndex }) => getLotRowClass(rowData, rowIndex)"
-              :row-event-handlers="{ onClick: handleLotRowClick }"
+              :row-class="({ rowData }) => getLotRowClass(rowData)"
             />
           </template>
         </el-auto-resizer>
@@ -203,9 +201,9 @@
 </template>
 
 <script setup>
-import { ElConfigProvider } from 'element-plus'
+import { ElCheckbox, ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { onMounted, reactive, ref } from 'vue'
+import { h, onMounted, reactive, ref } from 'vue'
 import { GS1Field, GS1Parser } from '@valentynb/gs1-parser'
 import ReagentSelect from '@/components/reagent_select.vue'
 import { api_reagent_show, api_reagent_del, api_reagent_update, api_reagent_add } from '@/api/reagent'
@@ -213,13 +211,12 @@ import { api_lot_show, api_lot_del, api_lot_update, api_lot_add } from '@/api/lo
 import { format_iso_YYYYMMDDHHmm, format_YYYYMMDDHHmm_iso, formatDateColumn } from '@/utils/format'
 import {
   syncSubmitDisabledByFields,
-  toggleRowSelection,
   showDeleteConfirmBySelection,
   deleteWithSelection,
   openDrawerByMode,
   openAddDrawerFlow,
   tryOpenEditDrawerBySelection,
-  resolveSelectableRowClass,
+  createSingleToggleSelection,
 } from '@/utils/crud'
 import { usePageLoading } from '@/utils/pageLoading'
 
@@ -253,6 +250,19 @@ const reagentFormData = reactive({
 
 const reagentRequiredFields = ['name']
 const reagentTableColumns = [
+  {
+    key: 'reagent-select-checkbox',
+    dataKey: 'reagent-select-checkbox',
+    title: '',
+    width: 56,
+    cellRenderer: ({ rowData }) => h(ElCheckbox, {
+      modelValue: reagentState.selectedRowId === rowData.id,
+      'aria-label': 'select-row',
+      onChange: (checked) => {
+        handleReagentCheckboxChange(checked, rowData)
+      },
+    }),
+  },
   { key: 'name', dataKey: 'name', title: '试剂名称', width: 180, flexGrow: 1 },
   { key: 'di', dataKey: 'di', title: 'DI（产品标识）', width: 180, flexGrow: 1 },
   { key: 'specifications', dataKey: 'specifications', title: '规格', width: 140, flexGrow: 1 },
@@ -287,6 +297,19 @@ const { pageLoading, withPageLoading } = usePageLoading()
 const gs1Parser = new GS1Parser()
 
 const lotTableColumns = [
+  {
+    key: 'lot-select-checkbox',
+    dataKey: 'lot-select-checkbox',
+    title: '',
+    width: 56,
+    cellRenderer: ({ rowData }) => h(ElCheckbox, {
+      modelValue: lotState.selectedRowId === rowData.id,
+      'aria-label': 'select-row',
+      onChange: (checked) => {
+        handleLotCheckboxChange(checked, rowData)
+      },
+    }),
+  },
   { key: 'name', dataKey: 'name', title: '批号', width: 180, flexGrow: 1 },
   {
     key: 'expirationDate',
@@ -305,6 +328,20 @@ const lotTableColumns = [
     cellRenderer: ({ rowData }) => rowData.reagent?.name ?? '',
   },
 ]
+
+const reagentRowSelection = createSingleToggleSelection({
+  getSelectedRowId: () => reagentState.selectedRowId,
+  setSelectedRowId: (value) => { reagentState.selectedRowId = value },
+  onSelect: fillReagentFormDataFromRow,
+  onDeselect: resetReagentFormData,
+})
+
+const lotRowSelection = createSingleToggleSelection({
+  getSelectedRowId: () => lotState.selectedRowId,
+  setSelectedRowId: (value) => { lotState.selectedRowId = value },
+  onSelect: fillLotFormDataFromRow,
+  onDeselect: resetLotFormData,
+})
 
 function resetReagentFormData(options = {}) {
   const { generateLot = false } = options
@@ -377,24 +414,13 @@ function openReagentDrawer(mode) {
   })
 }
 
-function handleReagentRowClick({ rowData }) {
-  toggleRowSelection({
-    rowData,
-    isSameSelection: reagentState.selectedRowId === rowData.id,
-    setSelectedRowId: (value) => { reagentState.selectedRowId = value },
-    onSelect: fillReagentFormDataFromRow,
-    onDeselect: resetReagentFormData,
-  })
+function handleReagentCheckboxChange(checked, rowData) {
+  reagentRowSelection.onToggleByChecked({ checked, rowData })
   syncReagentSubmitDisabled()
 }
 
-function getReagentRowClass(rowData, rowIndex) {
-  return resolveSelectableRowClass({
-    rowData,
-    rowIndex,
-    selectedRowId: reagentState.selectedRowId,
-    getStatusClass: ({ row }) => (row.status === 1 ? 'unactive-row' : 'normal-row'),
-  })
+function getReagentRowClass(rowData) {
+  return rowData.status === 1 ? 'unactive-row' : 'normal-row'
 }
 
 
@@ -518,24 +544,13 @@ function openLotDrawer(mode) {
   })
 }
 
-function handleLotRowClick({ rowData }) {
-  toggleRowSelection({
-    rowData,
-    isSameSelection: lotState.selectedRowId === rowData.id,
-    setSelectedRowId: (value) => { lotState.selectedRowId = value },
-    onSelect: fillLotFormDataFromRow,
-    onDeselect: resetLotFormData,
-  })
+function handleLotCheckboxChange(checked, rowData) {
+  lotRowSelection.onToggleByChecked({ checked, rowData })
   syncLotSubmitDisabled()
 }
 
-function getLotRowClass(rowData, rowIndex) {
-  return resolveSelectableRowClass({
-    rowData,
-    rowIndex,
-    selectedRowId: lotState.selectedRowId,
-    getStatusClass: ({ row }) => (row.status === 1 ? 'unactive-row' : 'normal-row'),
-  })
+function getLotRowClass(rowData) {
+  return rowData.status === 1 ? 'unactive-row' : 'normal-row'
 }
 
 function openLotAddDrawer() {

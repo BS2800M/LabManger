@@ -1,20 +1,25 @@
-﻿import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import * as crypto from 'crypto';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { Status } from '../common/enums/enums';
 import { UserPrismaService } from '../prisma/user-prisma.service';
 import { SessionUser } from '../common/decorators/session-user.decorator';
 import { UserDto } from './user.dto';
+import { generateSalt, hashWithSalt } from './password.util';
 import type { Prisma } from '../../generated/prisma-user/client';
-
-const hashPassword = (password: string): string => {
-    const hash = crypto.createHash('sha256');
-    hash.update(password, 'utf8');
-    return hash.digest('hex').toUpperCase();
-};
 
 @Injectable()
 export class UserService {
     constructor(private readonly prisma: UserPrismaService) { }
+
+    private buildPasswordStorage(checkerPlainPassword: string, reviewerPlainPassword: string) {
+        const checkerPassWordSalt = generateSalt();
+        const reviewerPassWordSalt = generateSalt();
+        return {
+            checkerPassWordSalt,
+            reviewerPassWordSalt,
+            checkerPassWord: hashWithSalt(checkerPlainPassword, checkerPassWordSalt),
+            reviewerPassWord: hashWithSalt(reviewerPlainPassword, reviewerPassWordSalt),
+        };
+    }
 
     async add(
         dto: UserDto['requestAdd'],
@@ -32,15 +37,15 @@ export class UserService {
             throw new HttpException('账号已存在', HttpStatus.FORBIDDEN);
         }
 
+        const passwordStorage = this.buildPasswordStorage(dto.checkerPassWord, dto.reviewerPassWord);
         const user = await tx.user.create({
             data: {
                 account: dto.account,
                 userName: dto.userName,
-                checkerPassWord: hashPassword(dto.checkerPassWord),
-                reviewerPassWord: hashPassword(dto.reviewerPassWord),
                 role: dto.role,
                 teamId: dto.teamId,
                 status: dto.status,
+                ...passwordStorage,
             },
             include: { team: true },
         });
@@ -126,16 +131,16 @@ export class UserService {
             throw new HttpException('账号已存在', HttpStatus.FORBIDDEN);
         }
 
+        const passwordStorage = this.buildPasswordStorage(dto.checkerPassWord, dto.reviewerPassWord);
         const user = await tx.user.update({
             where: { id: dto.id },
             data: {
                 account: dto.account,
                 userName: dto.userName,
-                checkerPassWord: hashPassword(dto.checkerPassWord),
-                reviewerPassWord: hashPassword(dto.reviewerPassWord),
                 role: dto.role,
                 status: dto.status,
                 teamId: dto.teamId,
+                ...passwordStorage,
             },
             include: { team: true },
         });

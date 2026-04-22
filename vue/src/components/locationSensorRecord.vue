@@ -44,8 +44,7 @@
               :height="height"
               :row-height="36"
               :header-height="34"
-              :row-class="({ rowData, rowIndex }) => getLocationRowClass(rowData, rowIndex)"
-              :row-event-handlers="{ onClick: handleLocationRowClick }"
+              :row-class="({ rowData }) => getLocationRowClass(rowData)"
             />
           </template>
         </el-auto-resizer>
@@ -115,8 +114,7 @@
               :height="height"
               :row-height="36"
               :header-height="34"
-              :row-class="({ rowData, rowIndex }) => getSensorRowClass(rowData, rowIndex)"
-              :row-event-handlers="{ onClick: handleSensorRowClick }"
+              :row-class="({ rowData }) => getSensorRowClass(rowData)"
             />
           </template>
         </el-auto-resizer>
@@ -192,22 +190,21 @@
 </template>
 
 <script setup>
-import { ElConfigProvider } from 'element-plus'
+import { ElCheckbox, ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { onMounted, reactive, ref } from 'vue'
+import { h, onMounted, reactive, ref } from 'vue'
 import { api_location_show, api_location_del, api_location_update, api_location_add, api_location_showAll } from '@/api/location'
 import { api_sensorRecord_show, api_sensorRecord_add, api_sensorRecord_update, api_sensorRecord_del } from '@/api/sensorRecord'
 import { sensorRecord_exporttoexcel_list } from '@/utils/exportexcel.js'
 import { formatDateColumn, getnowtime_previousmonth, getnowtime, format_YYYYMMDDHHmm_iso } from '@/utils/format'
 import {
   syncSubmitDisabledByFields,
-  toggleRowSelection,
   showDeleteConfirmBySelection,
   deleteWithSelection,
   openDrawerByMode,
   openAddDrawerFlow,
   tryOpenEditDrawerBySelection,
-  resolveSelectableRowClass,
+  createSingleToggleSelection,
 } from '@/utils/crud'
 import { usePageLoading } from '@/utils/pageLoading'
 
@@ -236,6 +233,19 @@ const locationFormData = reactive({
 
 const locationRequiredFields = ['name', 'uploadIntervalMinutes', 'maxTemperature', 'minTemperature', 'maxHumidity', 'minHumidity']
 const locationTableColumns = [
+  {
+    key: 'location-select-checkbox',
+    dataKey: 'location-select-checkbox',
+    title: '',
+    width: 56,
+    cellRenderer: ({ rowData }) => h(ElCheckbox, {
+      modelValue: locationState.selectedRowId === rowData.id,
+      'aria-label': 'select-row',
+      onChange: (checked) => {
+        handleLocationCheckboxChange(checked, rowData)
+      },
+    }),
+  },
   { key: 'id', dataKey: 'id', title: 'ID', width: 80, flexGrow: 1 },
   {
     key: 'teamName',
@@ -291,6 +301,19 @@ const { pageLoading, withPageLoading } = usePageLoading()
 
 const sensorTableColumns = [
   {
+    key: 'sensor-select-checkbox',
+    dataKey: 'sensor-select-checkbox',
+    title: '',
+    width: 56,
+    cellRenderer: ({ rowData }) => h(ElCheckbox, {
+      modelValue: sensorState.selectedRowId === rowData.id,
+      'aria-label': 'select-row',
+      onChange: (checked) => {
+        handleSensorCheckboxChange(checked, rowData)
+      },
+    }),
+  },
+  {
     key: 'locationName',
     dataKey: 'locationName',
     title: '位置名称',
@@ -318,6 +341,20 @@ const sensorTableColumns = [
   },
   { key: 'battery', dataKey: 'battery', title: '电池', width: 100, flexGrow: 1 },
 ]
+
+const locationCheckboxSelection = createSingleToggleSelection({
+  getSelectedRowId: () => locationState.selectedRowId,
+  setSelectedRowId: (value) => { locationState.selectedRowId = value },
+  onSelect: fillLocationFormDataFromRow,
+  onDeselect: resetLocationFormData,
+})
+
+const sensorCheckboxSelection = createSingleToggleSelection({
+  getSelectedRowId: () => sensorState.selectedRowId,
+  setSelectedRowId: (value) => { sensorState.selectedRowId = value },
+  onSelect: fillSensorFormDataFromRow,
+  onDeselect: resetSensorFormData,
+})
 
 function resetLocationFormData() {
   Object.assign(locationFormData, {
@@ -364,25 +401,13 @@ function openLocationDrawer(mode) {
   })
 }
 
-function handleLocationRowClick({ rowData }) {
-  toggleRowSelection({
-    rowData,
-    isSameSelection: locationState.selectedRowId === rowData.id,
-    setSelectedRowId: (value) => { locationState.selectedRowId = value },
-    onSelect: fillLocationFormDataFromRow,
-    onDeselect: resetLocationFormData,
-  })
+function handleLocationCheckboxChange(checked, rowData) {
+  locationCheckboxSelection.onToggleByChecked({ checked, rowData })
   syncLocationSubmitDisabled()
 }
 
-function getLocationRowClass(rowData, rowIndex) {
-  return resolveSelectableRowClass({
-    rowData,
-    rowIndex,
-    selectedRowId: locationState.selectedRowId,
-    getStatusClass: getLocationStatusClass,
-    defaultClass: 'normal-row',
-  })
+function getLocationRowClass(rowData) {
+  return getLocationStatusClass({ row: rowData }) || 'normal-row'
 }
 
 function getLocationStatusClass({ row }) {
@@ -512,28 +537,15 @@ function openSensorDrawer(mode) {
   })
 }
 
-function handleSensorRowClick({ rowData }) {
-  toggleRowSelection({
-    rowData,
-    isSameSelection: sensorState.selectedRowId === rowData.id,
-    setSelectedRowId: (value) => { sensorState.selectedRowId = value },
-    onSelect: fillSensorFormDataFromRow,
-    onDeselect: resetSensorFormData,
-  })
+function handleSensorCheckboxChange(checked, rowData) {
+  sensorCheckboxSelection.onToggleByChecked({ checked, rowData })
   syncSensorSubmitDisabled()
 }
 
-function getSensorRowClass(rowData, rowIndex) {
-  return resolveSelectableRowClass({
-    rowData,
-    rowIndex,
-    selectedRowId: sensorState.selectedRowId,
-    getStatusClass: ({ row }) => (
-      row.warningTemperature === true || row.warningHumidity === true
-    )
-      ? 'warning-row'
-      : 'normal-row',
-  })
+function getSensorRowClass(rowData) {
+  return rowData.warningTemperature === true || rowData.warningHumidity === true
+    ? 'warning-row'
+    : 'normal-row'
 }
 
 function openSensorAddDrawer() {

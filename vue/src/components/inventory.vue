@@ -51,7 +51,6 @@
               :row-height="36"
               :header-height="34"
               :row-class="({ rowData, rowIndex }) => getRowClass(rowData, rowIndex)"
-              :row-event-handlers="{ onClick: handleRowClick }"
             />
           </template>
         </el-auto-resizer>
@@ -129,14 +128,14 @@
 </template>
 
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { h, onMounted, reactive } from 'vue'
 import { api_inventory_show, api_inventory_auditall, api_inventory_statistics } from '@/api/inventory'
 import { inventory_exporttoexcel_list } from '@/utils/exportexcel'
 import { formatDateColumn, getnowtime_previousmonth, getnowtime, format_xAxisLabels } from '@/utils/format'
 import statistics_chart from './statistics_chart.vue'
-import { ElConfigProvider } from 'element-plus'
+import { ElCheckbox, ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { syncSubmitDisabledByFields, toggleRowSelection, resolveSelectableRowClass } from '@/utils/crud'
+import { createSingleToggleSelection, syncSubmitDisabledByFields } from '@/utils/crud'
 import { openInfoMessageBox } from '@/utils/messagebox'
 import { usePageLoading } from '@/utils/pageLoading'
 
@@ -173,6 +172,19 @@ const WARN_LABELS = {
 }
 
 const tableColumns = [
+  {
+    key: 'inventory-select-checkbox',
+    dataKey: 'inventory-select-checkbox',
+    title: '',
+    width: 56,
+    cellRenderer: ({ rowData }) => h(ElCheckbox, {
+      modelValue: state.selectedRowId === rowData.id,
+      'aria-label': 'select-row',
+      onChange: (checked) => {
+        handleCheckboxChange(checked, rowData)
+      },
+    }),
+  },
   { key: 'name', dataKey: 'name', title: '名称', width: 220, flexGrow: 1 },
   {
     key: 'nodeType',
@@ -204,18 +216,19 @@ const tableColumns = [
   },
 ]
 
+const inventoryCheckboxSelection = createSingleToggleSelection({
+  getSelectedRowId: () => state.selectedRowId,
+  setSelectedRowId: (value) => { state.selectedRowId = value },
+  getRowId: (row) => row.id,
+  onSelect: fillFormDataFromRow,
+  onDeselect: resetSelectedFormData,
+})
+
 const REQUIRED_FIELDS = ['starttime', 'endtime', 'intervalday', 'reagentId']
 
 function getRowClass(rowData, rowIndex) {
-  return resolveSelectableRowClass({
-    rowData,
-    rowIndex,
-    selectedRowId: state.selectedRowId,
-    getStatusClass: ({ row }) => {
-      if (row.status !== 0) return 'unactive-row'
-      return row.warn > 0 ? 'warning-row' : 'normal-row'
-    },
-  })
+  if (rowData.status !== 0) return 'unactive-row'
+  return rowData.warn > 0 ? 'warning-row' : 'normal-row'
 }
 
 function resetSelectedFormData() {
@@ -238,16 +251,8 @@ function fillFormDataFromRow(rowData) {
   })
 }
 
-function handleRowClick({ rowData }) {
-  toggleRowSelection({
-    rowData,
-    selectedRowId: state.selectedRowId,
-    isSameSelection: state.selectedRowId === rowData.id,
-    getRowId: (row) => row.id,
-    setSelectedRowId: (value) => { state.selectedRowId = value },
-    onSelect: fillFormDataFromRow,
-    onDeselect: resetSelectedFormData,
-  })
+function handleCheckboxChange(checked, rowData) {
+  inventoryCheckboxSelection.onToggleByChecked({ checked, rowData })
 }
 
 function statistics() {

@@ -1,13 +1,12 @@
-﻿import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { execSync } from 'child_process';
-import { createHash } from 'crypto';
-import * as path from 'path';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { UserRole } from '../enums/enums';
+import type { SessionUser } from '../decorators/session-user.decorator';
+import { TeamService } from '../../identity/team.service';
+import { UserService } from '../../identity/user.service';
 import { UserPrismaService } from '../../prisma/user-prisma.service';
 import { InventoryService } from '../../stock/inventory.service';
 import { SensorRecordService } from '../../sensorMonitor/sensorRecord.service';
 import { MangerPrismaService } from '../../prisma/manger-prisma.service';
-
-const PROJECT_ROOT = path.join(__dirname, '../../../../');
 
 @Injectable()
 export class InitService implements OnModuleInit {
@@ -18,7 +17,19 @@ export class InitService implements OnModuleInit {
         private readonly mangerPrisma: MangerPrismaService,
         private readonly inventoryService: InventoryService,
         private readonly sensorRecordService: SensorRecordService,
+        private readonly teamService: TeamService,
+        private readonly userService: UserService,
     ) { }
+
+    private buildSystemSession(teamId: number): SessionUser {
+        return {
+            sessionId: 'system-init',
+            userId: 0,
+            teamId,
+            role: UserRole.Admin,
+            loginType: 'reviewer',
+        };
+    }
 
     async onModuleInit() {
         await this.migrateInit();
@@ -33,42 +44,33 @@ export class InitService implements OnModuleInit {
         this.logger.log('检查完成');
     }
 
-
-
     async migrateInit() {
-
-
-        const teamCount = await this.userPrisma.team.count();
-        if (teamCount === 0) {
-            await this.userPrisma.team.create({
-                data: {
-                    id: 1,
-                    name: '默认小组',
-                    note: '系统初始化默认小组',
-                    phone: '',
-                },
-            });
-            this.logger.log('没有小组，创建默认小组');
-        }
-
         const userCount = await this.userPrisma.user.count();
-        if (userCount === 0) {
-            const password = createHash('sha256')
-                .update('123456', 'utf8')
-                .digest('hex')
-                .toUpperCase();
-
-            await this.userPrisma.user.create({
-                data: {
-                    account: '00010',
-                    userName: '管理员',
-                    checkerPassWord: password,
-                    reviewerPassWord: password,
-                    teamId: 1,
-                    role: 3,
-                },
-            });
-            this.logger.log('没有用户，创建默认管理员用户 账号00010 用户名管理员 检验者密码123456 审核者密码123456');
+        if (userCount !== 0) {
+            return;
         }
+
+        await this.userPrisma.$transaction(async (tx) => {
+            const bootstrapSession = this.buildSystemSession(0);
+            const teamResult = await this.teamService.add({
+                name: '默认小组',
+                phone: '',
+                note: '系统初始化默认小组',
+                status: 0,
+            }, bootstrapSession, tx);
+
+            const adminSession = this.buildSystemSession(teamResult.data.id);
+            await this.userService.add({
+                account: '00010',
+                userName: '管理员',
+                checkerPassWord: '123456',
+                reviewerPassWord: '123456',
+                role: UserRole.Admin,
+                teamId: teamResult.data.id,
+                status: 0,
+            }, adminSession, tx);
+        });
+
+        this.logger.log('没有用户，创建默认管理员用户 账号00010 用户名管理员 检验者密码123456 审核者密码123456');
     }
 }

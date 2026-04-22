@@ -76,7 +76,6 @@
               :row-height="36"
               :header-height="34"
               :row-class="({ rowData, rowIndex }) => getRowClass(rowData, rowIndex)"
-              :row-event-handlers="{ onClick: handleRowClick }"
             />
           </template>
         </el-auto-resizer>
@@ -139,7 +138,6 @@
                     :height="height"
                     :row-height="36"
                     :header-height="34"
-                    :row-event-handlers="{ onClick: handleDetailRowClick }"
                     :row-class="({ rowData, rowIndex }) => getDetailRowClass(rowData, rowIndex)"
                   />
                 </template>
@@ -153,8 +151,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
-import { ElConfigProvider } from 'element-plus'
+import { h, onMounted, reactive, ref } from 'vue'
+import { ElCheckbox, ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { api_operation_show, api_operation_disable } from '@/api/operation'
 import { api_barcode_printer_print } from '@/api/barcodePrinter'
@@ -163,7 +161,7 @@ import { format_YYYYMMDDHHmm_iso } from '@/utils/format'
 import { operation_exporttoexcel_list } from '@/utils/exportexcel.js'
 import { api_reagent_showall } from '@/api/reagent'
 import { api_lot_showall } from '@/api/lot'
-import { resolveSelectableRowClass } from '@/utils/crud'
+import { createSingleToggleSelection } from '@/utils/crud'
 import { closeMessageBox, openConfirmMessageBox, openInfoMessageBox } from '@/utils/messagebox'
 import { usePageLoading } from '@/utils/pageLoading'
 
@@ -208,7 +206,48 @@ const detailFormData = reactive({
   udi: '',
   id: null,
 })
+const dataDetailColumns = [
+  {
+    key: 'id',
+    dataKey: 'id',
+    title: 'ID',
+    width: 100,
+    flexGrow: 1,
+    cellRenderer: ({ rowData }) => rowData.id,
+  },
+  {
+    key: 'barcodeNumber',
+    dataKey: 'barcodeNumber',
+    title: '条码号',
+    width: 300,
+    flexGrow: 1,
+
+    cellRenderer: ({ rowData }) => rowData.barcodeNumber,
+  },
+  {
+    key: 'udi',
+    dataKey: 'udi',
+    title: 'UDI',
+    width: 700,
+    flexGrow: 1,
+    cellRenderer: ({ rowData }) => rowData.udi,
+  },
+]
+
 const tableColumns = [
+  {
+    key: 'operation-select-checkbox',
+    dataKey: 'operation-select-checkbox',
+    title: '',
+    width: 56,
+    cellRenderer: ({ rowData }) => h(ElCheckbox, {
+      modelValue: state.selectedRowId === rowData.batchId,
+      'aria-label': 'select-row',
+      onChange: (checked) => {
+        handleOperationCheckboxChange(checked, rowData)
+      },
+    }),
+  },
   {
     key: 'createTime',
     dataKey: 'createTime',
@@ -252,35 +291,42 @@ const tableColumns = [
     cellRenderer: ({ rowData }) => rowData.userNameSnapshot ?? '',
   },
 ]
+
 const tableDetailColumns = [
   {
-    key: 'id',
-    dataKey: 'id',
-    title: 'ID',
-    width: 100,
-    flexGrow: 1,
-    cellRenderer: ({ rowData }) => rowData.id,
+    key: 'operation-detail-select-checkbox',
+    dataKey: 'operation-detail-select-checkbox',
+    title: '',
+    width: 56,
+    cellRenderer: ({ rowData }) => h(ElCheckbox, {
+      modelValue: state.selectedDetailRowId === rowData.id,
+      'aria-label': 'select-detail-row',
+      onChange: (checked) => {
+        handleDetailCheckboxChange(checked, rowData)
+      },
+    }),
   },
-  {
-    key: 'barcodeNumber',
-    dataKey: 'barcodeNumber',
-    title: '条码号',
-    width: 300,
-    flexGrow: 1,
-
-    cellRenderer: ({ rowData }) => rowData.barcodeNumber,
-  },
-  {
-    key: 'udi',
-    dataKey: 'udi',
-    title: 'UDI',
-    width: 700,
-    flexGrow: 1,
-    cellRenderer: ({ rowData }) => rowData.udi,
-  },
+  ...dataDetailColumns,
 ]
+
+const operationCheckboxSelection = createSingleToggleSelection({
+  getSelectedRowId: () => state.selectedRowId,
+  setSelectedRowId: (value) => { state.selectedRowId = value },
+  getRowId: (row) => row.batchId,
+  onSelect: fillFormDataFromRow,
+  onDeselect: resetFormData,
+})
+
+const detailCheckboxSelection = createSingleToggleSelection({
+  getSelectedRowId: () => state.selectedDetailRowId,
+  setSelectedRowId: (value) => { state.selectedDetailRowId = value },
+  getRowId: (row) => row.id,
+  onSelect: fillDetailFormDataFromRow,
+  onDeselect: resetDetailFormData,
+})
 function resetFormData() {
   state.selectedRowId = null
+  resetDetailFormData()
   Object.assign(formData, {
     batchId: null,
     action: '',
@@ -334,44 +380,19 @@ function resetDetailFormData() {
 }
 
 function getRowClass(rowData, rowIndex) {
-  return resolveSelectableRowClass({
-    rowData,
-    rowIndex,
-    selectedRowId: state.selectedRowId,
-    getRowId: (row) => row.batchId,
-    getStatusClass: ({ row }) => (row.status === 1 ? 'unactive-row' : 'normal-row'),
-  })
+  return rowData.status === 1 ? 'unactive-row' : 'normal-row'
 }
 
 function getDetailRowClass(rowData, rowIndex) {
-  return resolveSelectableRowClass({
-    rowData,
-    rowIndex,
-    selectedRowId: state.selectedDetailRowId,
-    getRowId: (row) => row.id,
-    defaultClass: 'normal-row',
-  })
+  return 'normal-row'
 }
 
-async function handleRowClick({ rowData }) {
-  if (state.selectedRowId === rowData.batchId) {
-    resetFormData()
-  }
-  else{
-    state.selectedRowId = rowData.batchId
-    fillFormDataFromRow(rowData)
-  }
+function handleOperationCheckboxChange(checked, rowData) {
+  operationCheckboxSelection.onToggleByChecked({ checked, rowData })
 }
 
-async function handleDetailRowClick({ rowData }) {
-
-  if (state.selectedDetailRowId === rowData.id) {
-    resetDetailFormData()
-  }
-  else{
-    state.selectedDetailRowId = rowData.id
-    fillDetailFormDataFromRow(rowData)
-  }
+function handleDetailCheckboxChange(checked, rowData) {
+  detailCheckboxSelection.onToggleByChecked({ checked, rowData })
 }
 async function operation_show() {
   const reqId = ++operationShowReqId

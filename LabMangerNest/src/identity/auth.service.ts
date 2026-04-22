@@ -2,13 +2,8 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { UserPrismaService } from '../prisma/user-prisma.service';
 import { AuthDto } from './auth.dto';
+import { hashWithSalt } from './password.util';
 import type { Prisma } from '../../generated/prisma-user/client';
-
-const hashPassword = (password: string): string => {
-    const hash = crypto.createHash('sha256');
-    hash.update(password, 'utf8');
-    return hash.digest('hex').toUpperCase();
-};
 
 @Injectable()
 export class AuthService {
@@ -20,17 +15,19 @@ export class AuthService {
         loginType: 'checker' | 'reviewer',
         tx: Prisma.TransactionClient,
     ) {
-        const hashedPwd = hashPassword(passWord);
-        const passwordWhere = loginType === 'checker'
-            ? { checkerPassWord: hashedPwd }
-            : { reviewerPassWord: hashedPwd };
-
-        const user = await tx.user.findFirst({
-            where: { account, ...passwordWhere },
+        const user = await tx.user.findUnique({
+            where: { account },
             include: { team: true },
         });
 
-        if (!user) {
+        if (!user || !user.team) {
+            throw new HttpException('用户名或密码错误', HttpStatus.FORBIDDEN);
+        }
+
+        const salt = loginType === 'checker' ? user.checkerPassWordSalt : user.reviewerPassWordSalt;
+        const storedHash = loginType === 'checker' ? user.checkerPassWord : user.reviewerPassWord;
+        const hashedPwd = hashWithSalt(passWord, salt);
+        if (hashedPwd !== storedHash) {
             throw new HttpException('用户名或密码错误', HttpStatus.FORBIDDEN);
         }
 

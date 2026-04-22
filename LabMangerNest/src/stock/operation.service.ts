@@ -158,7 +158,7 @@ export class OperationService {
   }
 
   private buildBatchQuery(dto: OperationQueryFilters): Prisma.OperationBatchWhereInput {
-    // 展示查询仅过滤未删除批次，不按 team 做组隔离。
+    // 展示查询仅过滤未删除批次
     const where: Prisma.OperationBatchWhereInput = {
       status: { not: Status.Delete },
       items: {

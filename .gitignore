@@ -1,11 +1,14 @@
-/electron-vite/node_modules
-/electron-vite/dist
-/electron-vite/electron-dist
+/vue/node_modules
+/vue/dist
+
 /LabMangerNest/node_modules
-/LabMangerNest/prisma/data.db
 /LabMangerNest/dist
 /LabMangerNest/generated
+/LabMangerNest/prisma/migrations
 *.db
+
+
 /barcode_printer/target
 
 
+/.local-skills/
