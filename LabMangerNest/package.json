@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "prisma:generate": "npx prisma generate --schema prisma/user/schema.prisma && npx prisma generate --schema prisma/manger/schema.prisma && npx prisma generate --schema prisma/PatientTest/schema.prisma",
-    "prisma:migrate": "npx prisma db push --schema prisma/user/schema.prisma --url \"file:./prisma/user.db\" && npx prisma db push --schema prisma/manger/schema.prisma --url \"file:./prisma/manger.db\" && npx prisma db push --schema prisma/PatientTest/schema.prisma --url \"file:./prisma/PatientTest.db\"",
+    "prisma:generate": "npx prisma generate --schema prisma/user.prisma && npx prisma generate --schema prisma/manger.prisma && npx prisma generate --schema prisma/PatientTest.prisma",
+    "prisma:migrate": "npx prisma db push --schema prisma/user.prisma --url \"file:./prisma/user.db\" && npx prisma db push --schema prisma/manger.prisma --url \"file:./prisma/manger.db\" && npx prisma db push --schema prisma/PatientTest.prisma --url \"file:./prisma/PatientTest.db\"",
     "prisma:build": "npm run prisma:generate && npm run prisma:migrate",
     "build": "nest build",
     "start": "nest start",
@@ -49,3 +49,4 @@
     "typescript": "^5.9.3"
   }
 }
+

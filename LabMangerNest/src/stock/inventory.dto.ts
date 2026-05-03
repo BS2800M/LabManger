@@ -1,63 +1,47 @@
 import { z } from 'zod';
 import { ApiRequestZod, ZodToDto } from '../common/dtos/api-request.dto';
 import { ApiResponseZod } from '../common/dtos/api-response.dto';
+import { Status } from '../common/enums/enums';
 
 const queryBoolean = z.preprocess(
     (value) => (value === 'true' ? true : value === 'false' ? false : value),
     z.boolean(),
 );
 
+const reagentInventoryRow = z.object({
+    id: z.number(),
+    name: z.string(),
+    specifications: z.string(),
+    number: z.number(),
+    warnNumber: z.number(),
+    status: z.enum(Object.values(Status) as [Status, ...Status[]]),
+    updatedAt: z.coerce.date().nullable(),
+});
 
-
-const inventoryTreeRow: any = z.lazy(() =>
-    z.object({
-        id: z.string(),
-        nodeType: z.enum(['reagent', 'lot']),
-        reagentId: z.number(),
-        lotId: z.number().nullable(),
-        reagentName: z.string(),
-        lotName: z.string(),
-        name: z.string(),
-        number: z.number(),
-        specifications: z.string(),
-        lotExpirationDate: z.coerce.date().nullable(),
-        warnNumber: z.number(),
-        warn: z.number(),
-        status: z.number(),
-        children: z.array(inventoryTreeRow).optional(),
-    }),
-);
-
-const responseStatisticsData = z.object({
-    xAxisLabels: z.array(z.coerce.date()),
-    dataSet: z.array(z.object({
-        name: z.string(),
-        number: z.array(z.number()),
-    })),
+const lotInventoryRow = z.object({
+    id: z.number(),
+    name: z.string(),
+    reagent:z.object({ id: z.number(), name: z.string() }),
+    expirationDate: z.coerce.date(),
+    warnDays: z.number(),
+    warningDate: z.coerce.date(),
+    number: z.number(),
+    status: z.enum(Object.values(Status) as [Status, ...Status[]]),
+    updatedAt: z.coerce.date().nullable(),
 });
 
 export const InventoryZod = {
-    requestShow: ApiRequestZod.pageQuery.extend({
+    requestShowReagent: ApiRequestZod.pageQuery.extend({
         name: z.string().optional(),
+        lowStockOnly: queryBoolean.optional(),
     }),
-    requestShowAll: z.object({
-        page: z.coerce.number().min(1).optional(),
-        pageSize: z.coerce.number().min(1).max(9999999).optional(),
-        name: z.string().optional(),
-    }),
-    requestAuditAll: z.object({}),
-    requestStatistics: z.object({
+    requestShowLot: ApiRequestZod.pageQuery.extend({
+        lot: z.string().optional(),
         reagentId: z.coerce.number().min(1),
-        lotId: z.coerce.number().min(1).optional(),
-        onlyLot: queryBoolean.optional(),
-        startTime: z.coerce.date(),
-        endTime: z.coerce.date(),
-        intervalDay: z.coerce.number().min(1),
+        expiredOnly: queryBoolean.optional(),
     }),
-    responseShow: ApiResponseZod.extend({ data: z.array(inventoryTreeRow) }),
-    responseShowAll: ApiResponseZod.extend({ data: z.array(inventoryTreeRow) }),
-    responseAuditAll: ApiResponseZod.extend({data:z.object({message:z.string().optional()})}),
-    responseStatistics: ApiResponseZod.extend({ data: responseStatisticsData }),
+    responseShowReagent: ApiResponseZod.extend({ data: z.array(reagentInventoryRow) }),
+    responseShowLot: ApiResponseZod.extend({ data: z.array(lotInventoryRow) }),
 } as const;
 
 export type InventoryDto = ZodToDto<typeof InventoryZod>;

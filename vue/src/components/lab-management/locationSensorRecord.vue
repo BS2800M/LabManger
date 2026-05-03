@@ -209,6 +209,7 @@ import {
   createSingleToggleSelection,
 } from '@/utils/crud'
 import { usePageLoading } from '@/utils/pageLoading'
+import { fa } from 'element-plus/es/locale/index.mjs'
 
 const locationState = reactive({
   name: '',
@@ -339,7 +340,7 @@ const sensorTableColumns = [
     title: '创建时间',
     width: 180,
     flexGrow: 1,
-    cellRenderer: ({ rowData }) => formatDateColumn(rowData, null, rowData.createTime),
+    cellRenderer: ({ rowData }) => formatDateColumn(rowData, null, rowData.createdAt),
   },
   { key: 'battery', dataKey: 'battery', title: '电池', width: 100, flexGrow: 1 },
 ]
@@ -368,7 +369,7 @@ function resetLocationFormData() {
     minTemperature: 1,
     maxHumidity: 99,
     minHumidity: 1,
-    status: true,
+    status: false,
   })
 }
 
@@ -382,7 +383,7 @@ function fillLocationFormDataFromRow(rowData) {
     minTemperature: rowData.minTemperature,
     maxHumidity: rowData.maxHumidity,
     minHumidity: rowData.minHumidity,
-    status: rowData.status === 0,
+    status: rowData.status === 'Enable' ? true : false,
   })
 }
 
@@ -409,16 +410,11 @@ function handleLocationCheckboxChange(checked, rowData) {
 }
 
 function getLocationRowClass(rowData) {
-  return getLocationStatusClass({ row: rowData }) || 'normal-row'
+  return rowData.status === 'Disable' ? 'unactive-row' : 'normal-row'
 }
 
 function getLocationStatusClass({ row }) {
-  if (row.status === 0) {
-    if (row.warningTemperature === false && row.warningHumidity === false && row.warningUploadTime === false) return 'normal-row'
-    return 'warning-row'
-  }
-  if (row.status === 1) return 'unactive-row'
-  return ''
+  return rowData.status === 'Disable' ? 'unactive-row' : 'normal-row'
 }
 
 function openLocationAddDrawer() {
@@ -474,7 +470,7 @@ async function locationDel() {
 
 async function locationUpdate() {
   return withPageLoading(async () => {
-    locationFormData.status = locationFormData.status ? 0 : 1
+    locationFormData.status = locationFormData.status ? 'Enable' : 'Disable'
     await api_location_update(locationFormData)
     locationState.drawer = false
     await Promise.all([locationShow(), listAllLocationsForSensor()])
@@ -485,7 +481,7 @@ async function locationUpdate() {
 
 async function locationAdd() {
   return withPageLoading(async () => {
-    locationFormData.status = locationFormData.status ? 0 : 1
+    locationFormData.status = locationFormData.status ? 'Enable' : 'Disable'
     await api_location_add(locationFormData)
     locationState.drawer = false
     await Promise.all([locationShow(), listAllLocationsForSensor()])
@@ -519,6 +515,7 @@ function fillSensorFormDataFromRow(rowData) {
     seletevalue: rowData.locationId,
     battery: rowData.battery,
     note: rowData.note,
+    status: rowData.status === 'Enable' ? true : false,
   })
 }
 
@@ -545,9 +542,7 @@ function handleSensorCheckboxChange(checked, rowData) {
 }
 
 function getSensorRowClass(rowData) {
-  return rowData.warningTemperature === true || rowData.warningHumidity === true
-    ? 'warning-row'
-    : 'normal-row'
+  return rowData.status === 1 || rowData.status === 'Disable' ? 'unactive-row' : 'normal-row'
 }
 
 function openSensorAddDrawer() {

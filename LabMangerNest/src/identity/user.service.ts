@@ -31,7 +31,7 @@ export class UserService {
             throw new HttpException('不存在的团队id', HttpStatus.FORBIDDEN);
         }
         const accountExists = await tx.user.findFirst({
-            where: { account: dto.account, status: { not: Status.Delete } },
+            where: { account: dto.account, status: { not: Status.Delete as any } },
         });
         if (accountExists) {
             throw new HttpException('账号已存在', HttpStatus.FORBIDDEN);
@@ -42,9 +42,9 @@ export class UserService {
             data: {
                 account: dto.account,
                 userName: dto.userName,
-                role: dto.role,
+                role: dto.role as any,
                 teamId: dto.teamId,
-                status: dto.status,
+                status: dto.status as any,
                 ...passwordStorage,
             },
             include: { team: true },
@@ -55,8 +55,8 @@ export class UserService {
                 id: user.id,
                 account: user.account,
                 userName: user.userName,
-                role: user.role,
-                status: user.status,
+                role: user.role as any,
+                status: user.status as any,
                 teamId: user.teamId,
                 teamName: user.team.name,
             },
@@ -65,7 +65,7 @@ export class UserService {
 
     async show(dto: UserDto['requestShow'], session: SessionUser): Promise<UserDto['responseShow']> {
         const where: any = {
-            status: { not: Status.Delete },
+            status: { not: Status.Delete as any },
         };
         if (dto.keyword) {
             where.OR = [
@@ -95,8 +95,8 @@ export class UserService {
                 id: user.id,
                 account: user.account,
                 userName: user.userName,
-                role: user.role,
-                status: user.status,
+                role: user.role as any,
+                status: user.status as any,
                 teamId: user.teamId,
                 teamName: user.team.name,
             })),
@@ -110,7 +110,7 @@ export class UserService {
         tx: Prisma.TransactionClient,
     ): Promise<UserDto['responseUpdate']> {
         const exists = await tx.user.findFirst({
-            where: { id: dto.id, status: { not: Status.Delete } },
+            where: { id: dto.id, status: { not: Status.Delete as any } },
         });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
@@ -123,7 +123,7 @@ export class UserService {
         const accountExists = await tx.user.findFirst({
             where: {
                 account: dto.account,
-                status: { not: Status.Delete },
+                status: { not: Status.Delete as any },
                 id: { not: dto.id },
             },
         });
@@ -137,8 +137,8 @@ export class UserService {
             data: {
                 account: dto.account,
                 userName: dto.userName,
-                role: dto.role,
-                status: dto.status,
+                role: dto.role as any,
+                status: dto.status as any,
                 teamId: dto.teamId,
                 ...passwordStorage,
             },
@@ -150,8 +150,8 @@ export class UserService {
                 id: user.id,
                 account: user.account,
                 userName: user.userName,
-                role: user.role,
-                status: user.status,
+                role: user.role as any,
+                status: user.status as any,
                 teamId: user.teamId,
                 teamName: user.team.name,
             },
@@ -164,7 +164,7 @@ export class UserService {
         tx: Prisma.TransactionClient,
     ): Promise<UserDto['responseDel']> {
         const exists = await tx.user.findFirst({
-            where: { id: dto.id, status: { not: Status.Delete } },
+            where: { id: dto.id, status: { not: Status.Delete as any } },
         });
         if (!exists) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
@@ -172,7 +172,7 @@ export class UserService {
 
         const user = await tx.user.update({
             where: { id: dto.id },
-            data: { status: Status.Delete },
+            data: { status: Status.Delete as any },
             include: { team: true },
         });
         return {
@@ -181,8 +181,8 @@ export class UserService {
                 id: user.id,
                 account: user.account,
                 userName: user.userName,
-                role: user.role,
-                status: user.status,
+                role: user.role as any,
+                status: user.status as any,
                 teamId: user.teamId,
                 teamName: user.team.name,
             },
@@ -191,7 +191,7 @@ export class UserService {
 
     async showAll(): Promise<UserDto['responseShowAll']> {
         const users = await this.prisma.user.findMany({
-            where: { status: Status.Enable },
+            where: { status: Status.Enable as any },
             orderBy: { id: 'asc' },
             include: { team: true },
         });
@@ -202,8 +202,8 @@ export class UserService {
                 id: user.id,
                 account: user.account,
                 userName: user.userName,
-                role: user.role,
-                status: user.status,
+                role: user.role as any,
+                status: user.status as any,
                 teamId: user.teamId,
                 teamName: user.team?.name,
             })),

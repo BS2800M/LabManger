@@ -5,6 +5,13 @@ import { Status, UserRole } from '../common/enums/enums';
 import { TeamDto } from './team.dto';
 import type { Prisma } from '../../generated/prisma-user/client';
 
+const roleRank: Record<UserRole, number> = {
+    [UserRole.Member]: 0,
+    [UserRole.Leader]: 1,
+    [UserRole.Director]: 2,
+    [UserRole.Admin]: 3,
+};
+
 @Injectable()
 export class TeamService {
     constructor(private readonly prisma: UserPrismaService) { }
@@ -14,7 +21,7 @@ export class TeamService {
         session: SessionUser,
         tx: Prisma.TransactionClient,
     ): Promise<TeamDto['responseAdd']> {
-        if (session.role < UserRole.Director) {
+        if (roleRank[session.role] < roleRank[UserRole.Director]) {
             throw new HttpException('权限不足', HttpStatus.FORBIDDEN);
         }
         const team = await tx.team.create({
@@ -25,7 +32,7 @@ export class TeamService {
             },
         });
 
-        return { success: true, data: team };
+        return { success: true, data: { ...team, status: team.status as any } };
     }
 
     async show(dto: TeamDto['requestShow'], session: SessionUser): Promise<TeamDto['responseShow']> {
@@ -49,7 +56,11 @@ export class TeamService {
         const page = dto.page || 1;
         const pageSize = dto.pageSize || 10;
         const totalPage = Math.ceil(total / pageSize);
-        return { success: true, data: teams, meta: { total, pageSize, page, totalPage } };
+        return {
+            success: true,
+            data: teams.map((team) => ({ ...team, status: team.status as any })),
+            meta: { total, pageSize, page, totalPage },
+        };
     }
 
     async update(
@@ -58,7 +69,7 @@ export class TeamService {
         tx: Prisma.TransactionClient,
     ): Promise<TeamDto['responseUpdate']> {
         const existing = await tx.team.findFirst({
-            where: { id: dto.id, status: { not: Status.Delete } },
+            where: { id: dto.id, status: { not: Status.Delete as any } },
         });
         if (!existing) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
@@ -70,11 +81,11 @@ export class TeamService {
                 name: dto.name,
                 phone: dto.phone,
                 note: dto.note,
-                status: dto.status,
+                status: dto.status as any,
             },
         });
 
-        return { success: true, data: team };
+        return { success: true, data: { ...team, status: team.status as any } };
     }
 
     async del(
@@ -83,7 +94,7 @@ export class TeamService {
         tx: Prisma.TransactionClient,
     ): Promise<TeamDto['responseDel']> {
         const existing = await tx.team.findFirst({
-            where: { id: dto.id, status: { not: Status.Delete } },
+            where: { id: dto.id, status: { not: Status.Delete as any } },
         });
         if (!existing) {
             throw new HttpException('不存在的资源id', HttpStatus.FORBIDDEN);
@@ -91,9 +102,9 @@ export class TeamService {
         const team = await tx.team.update({
             where: { id: dto.id },
             data: {
-                status: Status.Delete,
+                status: Status.Delete as any,
             },
         });
-        return { success: true, data: team };
+        return { success: true, data: { ...team, status: team.status as any } };
     }
 }

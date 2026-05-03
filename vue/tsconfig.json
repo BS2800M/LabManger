@@ -12,10 +12,6 @@
     "isolatedModules": true,
     "noEmit": true,
     "allowJs": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
     "types": ["vite/client"]
   },
   "include": [

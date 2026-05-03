@@ -3,6 +3,7 @@ import { myrequest } from './request'
 export let api_lot_show=(params)=>{
     return myrequest.get('/stock/lots/show',{
         name:params.name,
+        reagentId:params.reagentId,
         page:params.page,
         pageSize:params.pageSize
     })
@@ -20,7 +21,8 @@ export let api_lot_update=(body)=>{
         reagentId:body.reagentId,
         name:body.name,
         expirationDate:body.expirationDate,
-        status:body.status
+        status:body.status,
+        warnDays:body.warnDays
     })
 }
 
@@ -28,7 +30,9 @@ export let api_lot_add=(body)=>{
     return myrequest.post('/stock/lots/add',{
         name:body.name,
         reagentId:body.reagentId,
-        expirationDate:body.expirationDate
+        expirationDate:body.expirationDate,
+        warnDays:body.warnDays,
+        status:body.status
     })
 }
 

@@ -7,7 +7,7 @@ const responseSensorRecordData = z.object({
     locationId: z.number(),
     location: z.object({id:z.number(),name:z.string()}),
     team: z.object({id:z.number(),name:z.string()}),
-    createTime: z.coerce.date(),
+    createdAt: z.coerce.date(),
     temperature: z.number(),
     humidity: z.number(),
     battery: z.number(),
@@ -17,7 +17,7 @@ const sensorRecordItem = z.object({
     locationId: z.number().min(1),
     temperature: z.number(),
     humidity: z.number(),
-    createTime: z.coerce.date().default(new Date()),
+    createdAt: z.coerce.date().default(new Date()),
     battery: z.number().default(0),
 });
 
@@ -35,7 +35,7 @@ export const SensorRecordZod = {
         temperature: z.number(),
         humidity: z.number(),
         locationId: z.number().min(1),
-        createTime: z.coerce.date(),
+        createdAt: z.coerce.date(),
         battery: z.number(),
     }),
     requestDel: z.object({

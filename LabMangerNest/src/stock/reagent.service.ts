@@ -7,6 +7,7 @@ import { SessionUser } from '../common/decorators/session-user.decorator';
 import { InventoryService } from './inventory.service';
 import { LotService } from './lot.service';
 import type { Prisma } from '../../generated/prisma-manger/client';
+import type { Status as PrismaStatus } from '../../generated/prisma-manger/enums';
 
 @Injectable()
 export class ReagentService {
@@ -78,13 +79,6 @@ export class ReagentService {
             },
         });
 
-        await this.inventoryService.addInventoryReagentRow(
-            {
-                reagentId: reagent.id,
-                teamId: reagent.teamId,
-            },
-            tx,
-        );
 
         if (dto.generateLot) {
             const expirationDate = new Date();
@@ -101,7 +95,7 @@ export class ReagentService {
             );
         }
 
-        return { success: true, data: reagent };
+        return { success: true, data: { ...reagent, status: reagent.status as PrismaStatus } };
     }
 
     async show(dto: ReagentDto['requestShow'], session: SessionUser): Promise<ReagentDto['responseShow']> {
@@ -122,7 +116,11 @@ export class ReagentService {
         ]);
 
         const totalPage = Math.ceil(total / pageSize);
-        return { success: true, data: reagents, meta: { total, page, pageSize, totalPage } };
+        return {
+            success: true,
+            data: reagents.map((reagent) => ({ ...reagent, status: reagent.status as PrismaStatus })),
+            meta: { total, page, pageSize, totalPage },
+        };
     }
 
     async update(
@@ -155,7 +153,7 @@ export class ReagentService {
         });
         await this.inventoryService.updateInventory(reagent.id, 0, undefined, tx);
 
-        return { success: true, data: reagent };
+        return { success: true, data: { ...reagent, status: reagent.status as PrismaStatus } };
     }
 
     async del(
@@ -172,7 +170,7 @@ export class ReagentService {
             where: { id: dto.id },
             data: { status: Status.Delete },
         });
-        return { success: true, data: reagent };
+        return { success: true, data: { ...reagent, status: reagent.status as PrismaStatus } };
     }
 
     async showAll(session: SessionUser): Promise<ReagentDto['responseShowAll']> {

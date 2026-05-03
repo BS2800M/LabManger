@@ -5,6 +5,7 @@ import { LotDto } from './lot.dto';
 import { Status } from '../common/enums/enums';
 import { SessionUser } from '../common/decorators/session-user.decorator';
 import type { Prisma } from '../../generated/prisma-manger/client';
+import type { Status as PrismaStatus } from '../../generated/prisma-manger/enums';
 
 @Injectable()
 export class LotService {
@@ -13,11 +14,10 @@ export class LotService {
         private readonly inventoryService: InventoryService,
     ) { }
 
-    // 批号状态聚合规则：任一删除 -> 删除；否则任一停用 -> 停用；否则启用
-    private resolveLotStatus(lotStatus: number, reagentStatus: number): number {
-        if (lotStatus === Status.Delete || reagentStatus === Status.Delete) return Status.Delete;
-        if (lotStatus === Status.Disable || reagentStatus === Status.Disable) return Status.Disable;
-        return Status.Enable;
+    private buildWarningDate(expirationDate: Date, warnDays: number): Date {
+        const warningDate = new Date(expirationDate);
+        warningDate.setDate(warningDate.getDate() - warnDays);
+        return warningDate;
     }
 
     async add(
@@ -35,26 +35,21 @@ export class LotService {
                 name: dto.name,
                 reagentId: dto.reagentId,
                 expirationDate: dto.expirationDate,
+                warnDays: reagent.warnDays,
+                warningDate: this.buildWarningDate(dto.expirationDate, reagent.warnDays),
                 teamId: reagent.teamId,
             },
             include: { reagent: { select: { id: true, name: true } } },
         });
 
-        await this.inventoryService.addInventoryLotRow(
-            {
-                reagentId: lot.reagentId,
-                lotId: lot.id,
-                teamId: lot.teamId,
-                number: 0,
-            },
-            tx,
-        );
-        return { success: true, data: lot };
+
+        return { success: true, data: { ...lot, status: lot.status as PrismaStatus } };
     }
 
     async show(dto: LotDto['requestShow'], session: SessionUser): Promise<LotDto['responseShow']> {
         const where: any = {
             status: { not: Status.Delete },
+            reagentId: dto.reagentId,
             reagent: { status: { not: Status.Delete } },
         };
         if (dto.name) { where.name = { contains: dto.name }; }
@@ -73,15 +68,10 @@ export class LotService {
             this.prisma.lot.count({ where }),
         ]);
 
-        const lotsToReturn = lots.map((lot) => ({
-            ...lot,
-            status: this.resolveLotStatus(lot.status, lot.reagent.status),
-        }));
-
         const totalPage = Math.ceil(total / pageSize);
         return {
             success: true,
-            data: lotsToReturn,
+            data: lots.map((lot) => ({ ...lot, status: lot.status as PrismaStatus })),
             meta: { total, page, pageSize, totalPage },
         };
     }
@@ -101,13 +91,6 @@ export class LotService {
         }
         const oldReagentId = exists.reagentId;
         const newReagentId = dto.reagentId;
-        const reagentChanged = oldReagentId !== newReagentId;
-        const inventoryRow = reagentChanged
-            ? await tx.inventoryLot.findFirst({
-                where: { lotId: dto.id, reagentId: oldReagentId, status: { not: Status.Delete } },
-                select: { id: true, number: true },
-            })
-            : null;
 
         const lot = await tx.lot.update({
             where: { id: dto.id },
@@ -115,31 +98,17 @@ export class LotService {
                 name: dto.name,
                 reagentId: newReagentId,
                 expirationDate: dto.expirationDate,
+                warnDays: dto.warnDays,
+                warningDate: this.buildWarningDate(dto.expirationDate, dto.warnDays),
                 status: dto.status,
                 teamId: reagent.teamId,
             },
             include: { reagent: { select: { id: true, name: true } } },
         });
 
-        if (reagentChanged) {
-            if (!inventoryRow) {
-                throw new HttpException('不存在的库存记录', HttpStatus.FORBIDDEN);
-            }
-            await this.inventoryService.updateInventoryLotRow(
-                {
-                    id: inventoryRow.id,
-                    reagentId: newReagentId,
-                    lotId: dto.id,
-                    teamId: reagent.teamId,
-                    number: inventoryRow.number,
-                },
-                tx,
-            );
-        }
 
-        // 批号有效期变更后，立即刷新该 lot 在库存子表中的 warn/status。
-        await this.inventoryService.updateExpirationWarning(dto.id, tx);
-        return { success: true, data: lot };
+
+        return { success: true, data: { ...lot, status: lot.status as PrismaStatus } };
     }
 
     async del(
@@ -160,7 +129,7 @@ export class LotService {
 
         return {
             success: true,
-            data: lot,
+            data: { ...lot, status: lot.status as PrismaStatus },
         };
     }
 
@@ -180,11 +149,7 @@ export class LotService {
 
         return {
             success: true,
-            data: lots.map((lot) => ({
-                id: lot.id,
-                name: lot.name,
-                status: this.resolveLotStatus(lot.status, lot.reagent.status),
-            })),
+            data: lots.map((lot) => ({ id: lot.id, name: lot.name, status: lot.status as PrismaStatus })),
         };
     }
 }

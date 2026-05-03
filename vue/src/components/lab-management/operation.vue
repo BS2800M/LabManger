@@ -1,10 +1,10 @@
 <template>
   <div
-    class="lm-page"
+    class="lm-page lm-page--split"
     v-loading="pageLoading"
     element-loading-text="正在加载操作记录..."
   >
-    <section class="operation-section lm-section">
+    <section class="lm-section">
       <div class="lm-section-header">
         <h3>操作查询</h3>
       </div>
@@ -66,7 +66,9 @@
           <el-button id="disable" type="primary" @click="showDisableRecordConfirm">禁用记录</el-button>
         </div>
       </div>
-
+      <div class="lm-toolbar">
+        
+      </div>
       <div class="lm-table-wrap">
         <el-auto-resizer>
           <template #default="{ width, height }">
@@ -83,32 +85,56 @@
         </el-auto-resizer>
       </div>
     </section>
+    <section class="operation-detail lm-section">
+      <div class="lm-section-header">
+        <h3>操作详情</h3>
+      </div>
+      <div class="lm-toolbar">
+        <el-pagination
+          class="lm-toolbar-pagination"
+          background
+          layout="prev, pager, next"
+          v-model:current-page="state.detailpage"
+          :page-count="state.detailtotalpage"
+          @change="operation_showdetail"
+        />
+        <div class="lm-toolbar-actions">
+          <el-button id="barcodeprint" type="primary" @click="barcodeprint">补打条码</el-button>
+          <el-button id="copyudi" type="primary" @click="copyUdi">复制UDI</el-button>
+        </div>
+      </div>
+
+      <div class="lm-table-wrap">
+        <el-auto-resizer>
+          <template #default="{ width, height }">
+            <el-table-v2
+              :columns="tableDetailColumns"
+              :data="state.detailTableData"
+              :width="width"
+              :height="height"
+              :row-height="36"
+              :header-height="34"
+              :row-class="({ rowData, rowIndex }) => getDetailRowClass(rowData, rowIndex)"
+            />
+          </template>
+        </el-auto-resizer>
+      </div>
+    </section>
   </div>
 
   <el-drawer v-model="state.drawer" direction="rtl" size="70%" @open="state.selectedRowId = null" @close="resetFormData">
     <template #header>
       <span class="operation-drawer-title lm-drawer-title">操作查询</span>
     </template>
-    <template #footer>
-      <div style="flex: auto">
-        <el-button size="large" type="primary" @click="barcodeprint">补打条码</el-button>
-        <el-button size="large" type="primary" @click="copyUdi">复制UDI</el-button>
-        <el-button size="large" type="primary" @click="state.drawer = false">关闭</el-button>
-      </div>
-    </template>
     <template #default>
       <div class="operation-drawer-grid lm-drawer-grid">
         <div class="operation-drawer-main">
-          <p>试剂名称</p>
-          <el-input v-model="formData.reagentName" style="width: 300px" disabled />
-          <p>试剂批号</p>
-          <el-input v-model="formData.lotName" style="width: 300px" disabled />
           <p>动作</p>
           <el-input v-model="formData.action" style="width: 300px" disabled />
           <p>操作时间</p>
           <el-config-provider :locale="zhCn">
             <el-date-picker
-              v-model="formData.createTime"
+              v-model="formData.createdAt"
               type="datetime"
               size="default"
               value-format="YYYY-MM-DD HH:mm:ss"
@@ -128,24 +154,6 @@
           <p>注释</p>
           <el-input v-model="formData.note" style="width: 300px" disabled />
         </div>
-        <div class="operation-drawer-detail">
-          <p>操作详情</p>
-            <div class="operation-detail-table">
-              <el-auto-resizer>
-                <template #default="{ width, height }">
-                  <el-table-v2
-                    :columns="tableDetailColumns"
-                    :data="formData.detailData"
-                    :width="width"
-                    :height="height"
-                    :row-height="36"
-                    :header-height="34"
-                    :row-class="({ rowData, rowIndex }) => getDetailRowClass(rowData, rowIndex)"
-                  />
-                </template>
-              </el-auto-resizer>
-            </div>
-        </div>
       </div>
 
     </template>
@@ -156,7 +164,7 @@
 import { h, onMounted, reactive, ref } from 'vue'
 import { ElCheckbox, ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { api_operation_show, api_operation_disable } from '@/api/operation'
+import { api_operation_show, api_operation_disable,api_operation_showdetail } from '@/api/operation'
 import { api_barcode_printer_print } from '@/api/barcodePrinter'
 import { formatDateColumn, getnowtime, getnowtime_previousmonth, format_operation_action } from '@/utils/format'
 import { format_YYYYMMDDHHmm_iso } from '@/utils/format'
@@ -166,6 +174,7 @@ import { api_lot_showall } from '@/api/lot'
 import { createSingleToggleSelection, tryOpenEditDrawerBySelection } from '@/utils/crud'
 import { closeMessageBox, openConfirmMessageBox, openInfoMessageBox } from '@/utils/messagebox'
 import { usePageLoading } from '@/utils/pageLoading'
+
 
 const allreagentlist = ref([])
 
@@ -179,7 +188,10 @@ const state = reactive({
   endtime: '',
   page: 1,
   totalpage: 1,
-  pagesize: 20,
+  pagesize: 10,
+  detailpage: 1,
+  detailtotalpage: 1,
+  detailpagesize: 50,
   starttime_show: getnowtime_previousmonth(),
   endtime_show: getnowtime(),
   drawer: false,
@@ -193,9 +205,7 @@ let operationShowReqId = 0
 const formData = reactive({
   batchId: null,
   action: '',
-  createTime: '',
-  reagentName: '',
-  lotName: '',
+  createdAt: '',
   note: '',
   detailData: [],
   userName: '',
@@ -243,7 +253,7 @@ const tableColumns = [
     title: '',
     width: 56,
     cellRenderer: ({ rowData }) => h(ElCheckbox, {
-      modelValue: state.selectedRowId === rowData.batchId,
+      modelValue: state.selectedRowId === rowData.id,
       'aria-label': 'select-row',
       onChange: (checked) => {
         handleOperationCheckboxChange(checked, rowData)
@@ -251,12 +261,12 @@ const tableColumns = [
     }),
   },
   {
-    key: 'createTime',
-    dataKey: 'createTime',
+    key: 'createdAt',
+    dataKey: 'createdAt',
     title: '时间',
     width: 180,
     flexGrow: 1,
-    cellRenderer: ({ rowData }) => formatDateColumn(rowData, null, rowData.createTime),
+    cellRenderer: ({ rowData }) => formatDateColumn(rowData, null, rowData.createdAt),
   },
   {
     key: 'reagentName',
@@ -274,7 +284,7 @@ const tableColumns = [
     flexGrow: 1,
     cellRenderer: ({ rowData }) => rowData.lotNameSnapshot ?? '',
   },
-  { key: 'number', dataKey: 'number', title: '数量', width: 100, flexGrow: 1 },
+  { key: 'actionNum', dataKey: 'actionNum', title: '数量', width: 100, flexGrow: 1 },
   {
     key: 'action',
     dataKey: 'action',
@@ -314,8 +324,8 @@ const tableDetailColumns = [
 const operationCheckboxSelection = createSingleToggleSelection({
   getSelectedRowId: () => state.selectedRowId,
   setSelectedRowId: (value) => { state.selectedRowId = value },
-  getRowId: (row) => row.batchId,
-  onSelect: fillFormDataFromRow,
+  getRowId: (row) => row.id,
+  onSelect: (rowdata)=>{fillFormDataFromRow(rowdata),operation_showdetail()},
   onDeselect: resetFormData,
 })
 
@@ -332,9 +342,7 @@ function resetFormData() {
   Object.assign(formData, {
     batchId: null,
     action: '',
-    createTime: '',
-    reagentName: '',
-    lotName: '',
+    createdAt: '',
     note: '',
     detailData: [],
     userName: '',
@@ -346,22 +354,15 @@ function resetFormData() {
 
 function fillFormDataFromRow(rowData) {
   Object.assign(formData, {
-    batchId: rowData.batchId,
-    action: rowData.action === 1 ? '入库' : '出库',
-    createTime: rowData.createTime,
-    reagentName: rowData.reagentNameSnapshot,
-    lotName: rowData.lotNameSnapshot,
+    action: rowData.action === 'inbound' ? '入库' : '出库',
+    createdAt: rowData.createdAt,
     note: rowData.note,
-    detailData: rowData.detailData.map((item, index) => ({
-      barcodeNumber: item.barcodeNumber,
-      udi: item.udi,
-      id: item.id ?? `${rowData.batchId}-${index}`,
-    })),
     userName: rowData.userNameSnapshot,
-    actualReagentName: rowData.reagent.name,
-    actualLotName: rowData.lot.name,
-    actualUserName: rowData.user.userName,
+    actualReagentName: rowData.reagentNameSnapshot,
+    actualLotName: rowData.lotNameSnapshot,
+    actualUserName: rowData.userNameSnapshot,
   })
+  state.selectedRowId = rowData.id
 
 }
 function fillDetailFormDataFromRow(rowData) {
@@ -382,7 +383,7 @@ function resetDetailFormData() {
 }
 
 function getRowClass(rowData, rowIndex) {
-  return rowData.status === 1 ? 'unactive-row' : 'normal-row'
+  return rowData.status === 'Disable' ? 'unactive-row' : 'normal-row'
 }
 
 function getDetailRowClass(rowData, rowIndex) {
@@ -413,6 +414,21 @@ async function operation_show() {
     if (reqId !== operationShowReqId) return
     state.tableData = data.data
     state.totalpage = data.meta?.totalPage ?? 1
+    await operation_showdetail()
+  })
+}
+
+async function operation_showdetail() {
+  return withPageLoading(async () => {
+    const data = await api_operation_showdetail({
+      searchId: state.selectedRowId,
+      barcodeNumber: state.barcodeNumber,
+      udi: state.udi,
+      page: state.detailpage,
+      pageSize: state.detailpagesize,
+    })
+    state.detailTableData = data.data
+    state.detailtotalpage = data.meta?.totalPage ?? 1
   })
 }
 
@@ -422,9 +438,9 @@ async function barcodeprint() {
     return
   }
   const reagentName = String(
-    formData.reagentName || formData.actualReagentName || '',
+    detailFormData.actualReagentName
   ).trim()
-  const lotName = String(formData.lotName || formData.actualLotName || '').trim()
+  const lotName = String(detailFormData.actualLotName).trim()
   if (!reagentName || !lotName) {
     ElMessage.error('缺少试剂或批号信息，无法补打')
     return
@@ -532,24 +548,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.operation-section {
-  height: 100%;
-}
 
-.operation-drawer-detail {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
 
-.operation-detail-table {
-  margin-top: 8px;
-  height: 260px;
-  min-height: 220px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 8px;
-  overflow: hidden;
-  max-width: 70%;
-}
 
 
 

@@ -1,13 +1,14 @@
 import { z } from 'zod';
 import { ApiRequestZod, ZodToDto } from '../common/dtos/api-request.dto';
-import { ApiResponseZod } from 'src/common/dtos/api-response.dto';
+import { ApiResponseZod } from '../common/dtos/api-response.dto';
+import { Status } from '../common/enums/enums';
 
 const requestData = z.object({
     id: z.number().optional(),
     name: z.string(),
     phone: z.string().default(''),
     note: z.string().default(''),
-    status: z.number().default(0),
+    status: z.enum(Object.values(Status) as [Status, ...Status[]]).default(Status.Enable),
 });
 
 const responseShowData = z.object({
@@ -15,7 +16,7 @@ const responseShowData = z.object({
     name: z.string(),
     phone: z.string(),
     note: z.string(),
-    status: z.number(),
+    status: z.enum(Object.values(Status) as [Status, ...Status[]]),
 });
 
 export const TeamZod = {

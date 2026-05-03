@@ -1,412 +1,271 @@
 <template>
-  <div
-    class="lm-page"
-    v-loading="pageLoading"
-    element-loading-text="正在加载库存数据..."
-  >
-    <section class="inventory-section lm-section">
+  <div class="lm-page lm-page--split" v-loading="pageLoading" element-loading-text="正在加载库存数据...">
+    <section class="lm-section inventory-section">
       <div class="lm-section-header">
-        <h3>库存查询</h3>
+        <h3>试剂库存</h3>
       </div>
       <div class="lm-toolbar">
         <el-input
           class="lm-toolbar-search"
           style="width: 250px"
-          v-model="state.reagentname"
+          v-model="reagentState.name"
           placeholder="搜索试剂名称"
-          @input="list_reagentnumber"
+          @input="listReagentInventory"
+        />
+        <el-switch
+          v-model="reagentState.lowStockOnly"
+          size="large"
+          active-text="只显示低库存"
+          inactive-text="显示全部"
+          @change="handleLowStockChange"
         />
         <el-pagination
           class="lm-toolbar-pagination"
           background
           layout="prev, pager, next"
-          v-model:current-page="state.page"
-          :page-count="state.totalpage"
-          @change="list_reagentnumber"
+          v-model:current-page="reagentState.page"
+          :page-count="reagentState.totalPage"
+          @change="listReagentInventory"
         />
-        <div class="lm-toolbar-actions">
-          <el-button id="export" type="primary" @click="inventory_exporttoexcel_list">
-            导出盘库表
-          </el-button>
-          <el-button id="cal" type="primary" @click="inventory_audit">
-            更新信息
-          </el-button>
-          <el-button id="statistics" type="primary" @click="statistics">
-            库存统计
-          </el-button>
-        </div>
       </div>
       <div class="lm-table-wrap">
         <el-auto-resizer>
           <template #default="{ width, height }">
             <el-table-v2
-              v-model:expanded-row-keys="state.expandedRowKeys"
-              :columns="tableColumns"
-              :data="state.tableData"
+              :columns="reagentColumns"
+              :data="reagentState.tableData"
               :width="width"
               :height="height"
-              row-key="id"
-              expand-column-key="name"
-              :indent-size="16"
               :row-height="36"
               :header-height="34"
-              :row-class="({ rowData, rowIndex }) => getRowClass(rowData, rowIndex)"
+              :row-class="({ rowData }) => getStatusRowClass(rowData)"
+            />
+          </template>
+        </el-auto-resizer>
+      </div>
+    </section>
+
+    <section class="lm-section inventory-section">
+      <div class="lm-section-header">
+        <h3>批号库存</h3>
+      </div>
+      <div class="lm-toolbar">
+        <el-input
+          class="lm-toolbar-search"
+          style="width: 250px"
+          v-model="lotState.lot"
+          placeholder="搜索批号名称"
+          @input="listLotInventory"
+          :disabled="!reagentState.selectedReagentId"
+        />
+        <el-switch
+          v-model="lotState.expiredOnly"
+          size="large"
+          active-text="只显示临期"
+          inactive-text="显示全部"
+          @change="handleExpiredOnlyChange"
+          :disabled="!reagentState.selectedReagentId"
+        />
+        <el-pagination
+          class="lm-toolbar-pagination"
+          background
+          layout="prev, pager, next"
+          v-model:current-page="lotState.page"
+          :page-count="lotState.totalPage"
+          @change="listLotInventory"
+          :disabled="!reagentState.selectedReagentId"
+        />
+      </div>
+      <div class="lot-selected-tip">
+        <span v-if="reagentState.selectedReagentName">当前试剂：{{ reagentState.selectedReagentName }}</span>
+        <span v-else>请在上表勾选一个试剂后查看批号库存</span>
+      </div>
+      <div class="lm-table-wrap">
+        <el-auto-resizer>
+          <template #default="{ width, height }">
+            <el-table-v2
+              :columns="lotColumns"
+              :data="lotState.tableData"
+              :width="width"
+              :height="height"
+              :row-height="36"
+              :header-height="34"
+              :row-class="({ rowData }) => getStatusRowClass(rowData)"
             />
           </template>
         </el-auto-resizer>
       </div>
     </section>
   </div>
-
-  <el-drawer v-model="state.drawer" direction="rtl" size="80%" @open="state.selectedRowId = null">
-    <template #header>
-      <span class="inventory-drawer-title lm-drawer-title">库存查询</span>
-    </template>
-    <template #footer>
-      <div style="flex: auto">
-        <el-button type="primary" @click="state.drawer = false">关闭</el-button>
-      </div>
-    </template>
-    <template #default>
-      <div class="inventory-drawer-content">
-        <div class="inventory-chart-wrap">
-          <statistics_chart v-model="state.statisticsData" />
-        </div>
-        <div class="inventory-drawer-form">
-          <p>开始时间</p>
-          <el-config-provider :locale="zhCn">
-            <el-date-picker
-              v-model="formData.starttime"
-              class="inventory-drawer-field"
-              type="datetime"
-              placeholder="选择开始时间"
-              size="default"
-              @change="syncSubmitDisabled"
-              value-format="YYYY-MM-DD HH:mm:ss"
-            />
-          </el-config-provider>
-
-          <p>结束时间</p>
-          <el-config-provider :locale="zhCn">
-            <el-date-picker
-              v-model="formData.endtime"
-              class="inventory-drawer-field"
-              type="datetime"
-              placeholder="选择结束时间"
-              size="default"
-              @change="syncSubmitDisabled"
-              value-format="YYYY-MM-DD HH:mm:ss"
-            />
-          </el-config-provider>
-
-          <p>间隔时间(天)</p>
-          <el-input-number
-            v-model="formData.intervalday"
-            class="inventory-drawer-field"
-            :min="1"
-            :max="365"
-            placeholder="1"
-            @change="syncSubmitDisabled"
-          />
-
-          <p>只统计本批号</p>
-          <el-switch
-            v-model="formData.onlylot"
-            size="large"
-            active-text="是"
-            inactive-text="否"
-            @change="syncSubmitDisabled"
-          />
-
-          <div class="inventory-drawer-actions">
-            <el-button type="primary" @click="statistics_data" :disabled="state.statisticsbuttondisabled">查询</el-button>
-          </div>
-        </div>
-      </div>
-    </template>
-  </el-drawer>
 </template>
 
 <script setup>
 import { h, onMounted, reactive } from 'vue'
-import { api_inventory_show, api_inventory_auditall, api_inventory_statistics } from '@/api/inventory'
-import { inventory_exporttoexcel_list } from '@/utils/exportexcel'
-import { formatDateColumn, getnowtime_previousmonth, getnowtime, format_xAxisLabels } from '@/utils/format'
-import statistics_chart from '@/components/lab-management/statistics_chart.vue'
-import { ElCheckbox, ElConfigProvider } from 'element-plus'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { createSingleToggleSelection, syncSubmitDisabledByFields } from '@/utils/crud'
-import { openInfoMessageBox } from '@/utils/messagebox'
+import { ElCheckbox } from 'element-plus'
+import { api_inventory_showReagent, api_inventory_showLot } from '@/api/inventory'
+import { formatDateColumn } from '@/utils/format'
 import { usePageLoading } from '@/utils/pageLoading'
 
-const formData = reactive({
-  id: null,
-  reagentname: '',
-  reagentId: null,
-  lotId: null,
-  lotname: '',
-  starttime: null,
-  endtime: null,
-  intervalday: 1,
-  onlylot: false,
-})
-
-const state = reactive({
-  tableData: [],
-  page: 1,
-  totalpage: 1,
-  pagesize: 13,
-  reagentname: '',
-  expandedRowKeys: [],
-  selectedRowId: null,
-  drawer: false,
-  statisticsbuttondisabled: true,
-  statisticsData: {},
-})
 const { pageLoading, withPageLoading } = usePageLoading()
 
-const WARN_LABELS = {
-  0: '正常',
-  1: '数量预警',
-  2: '效期预警',
-}
+const reagentState = reactive({
+  tableData: [],
+  page: 1,
+  pageSize: 10,
+  totalPage: 1,
+  name: '',
+  lowStockOnly: false,
+  selectedReagentId: null,
+  selectedReagentName: '',
+})
 
-const tableColumns = [
+const lotState = reactive({
+  tableData: [],
+  page: 1,
+  pageSize: 10,
+  totalPage: 1,
+  lot: '',
+  expiredOnly: false,
+})
+
+const reagentColumns = [
   {
-    key: 'inventory-select-checkbox',
-    dataKey: 'inventory-select-checkbox',
+    key: 'inventory-reagent-select',
+    dataKey: 'inventory-reagent-select',
     title: '',
     width: 56,
     cellRenderer: ({ rowData }) => h(ElCheckbox, {
-      modelValue: state.selectedRowId === rowData.id,
-      'aria-label': 'select-row',
-      onChange: (checked) => {
-        handleCheckboxChange(checked, rowData)
-      },
+      modelValue: reagentState.selectedReagentId === rowData.id,
+      'aria-label': 'select-reagent-row',
+      onChange: (checked) => handleReagentSelectChange(checked, rowData),
     }),
   },
-  { key: 'name', dataKey: 'name', title: '名称', width: 220, flexGrow: 1 },
-  {
-    key: 'nodeType',
-    dataKey: 'nodeType',
-    title: '层级',
-    width: 100,
-    flexGrow: 1,
-    cellRenderer: ({ rowData }) => (rowData.nodeType === 'reagent' ? '试剂' : '批号'),
-  },
+  { key: 'name', dataKey: 'name', title: '试剂名称', width: 220, flexGrow: 1 },
+  { key: 'specifications', dataKey: 'specifications', title: '规格', width: 180, flexGrow: 1 },
   { key: 'number', dataKey: 'number', title: '库存', width: 120, flexGrow: 1 },
-  { key: 'specifications', dataKey: 'specifications', title: '规格', width: 120, flexGrow: 1 },
   {
-    key: 'lotExpirationDate',
-    dataKey: 'lotExpirationDate',
+    key: 'updatedAt',
+    dataKey: 'updatedAt',
+    title: '最后出库时间',
+    width: 200,
+    flexGrow: 1,
+    cellRenderer: ({ rowData }) => (rowData.updatedAt ? formatDateColumn(rowData, null, rowData.updatedAt) : '-'),
+  },
+]
+
+const lotColumns = [
+  { key: 'name', dataKey: 'name', title: '批号', width: 220, flexGrow: 1 },
+  { key: 'reagentName', dataKey: 'reagentName', title: '试剂名称', width: 180, flexGrow: 1 },
+  {
+    key: 'expirationDate',
+    dataKey: 'expirationDate',
     title: '有效期',
     width: 180,
     flexGrow: 1,
-    cellRenderer: ({ rowData }) =>
-      rowData.lotExpirationDate ? formatDateColumn(rowData, null, rowData.lotExpirationDate) : '-',
+    cellRenderer: ({ rowData }) => formatDateColumn(rowData, null, rowData.expirationDate),
   },
-  { key: 'warnNumber', dataKey: 'warnNumber', title: '警告数量', width: 140, flexGrow: 1 },
+  { key: 'number', dataKey: 'number', title: '库存', width: 120, flexGrow: 1 },
   {
-    key: 'warn',
-    dataKey: 'warn',
-    title: '预警类型',
-    width: 130,
+    key: 'updatedAt',
+    dataKey: 'updatedAt',
+    title: '最后出库时间',
+    width: 200,
     flexGrow: 1,
-    cellRenderer: ({ rowData }) => WARN_LABELS[rowData.warn] ?? '正常',
+    cellRenderer: ({ rowData }) => (rowData.updatedAt ? formatDateColumn(rowData, null, rowData.updatedAt) : '-'),
   },
+{ key: 'warningDate', dataKey: 'warningDate', title: '预警日期', width: 180, flexGrow: 1, cellRenderer: ({ rowData }) => formatDateColumn(rowData, null, rowData.warningDate) },
 ]
 
-const inventoryCheckboxSelection = createSingleToggleSelection({
-  getSelectedRowId: () => state.selectedRowId,
-  setSelectedRowId: (value) => { state.selectedRowId = value },
-  getRowId: (row) => row.id,
-  onSelect: fillFormDataFromRow,
-  onDeselect: resetSelectedFormData,
-})
-
-const REQUIRED_FIELDS = ['starttime', 'endtime', 'intervalday', 'reagentId']
-
-function getRowClass(rowData, rowIndex) {
-  if (rowData.status !== 0) return 'unactive-row'
-  return rowData.warn > 0 ? 'warning-row' : 'normal-row'
+function getStatusRowClass(rowData) {
+  return rowData.status === 'Disable' ? 'unactive-row' : 'normal-row'
 }
 
-function resetSelectedFormData() {
-  Object.assign(formData, {
-    id: null,
-    reagentname: '',
-    reagentId: null,
-    lotId: null,
-    lotname: '',
-  })
+function resetLotArea() {
+  lotState.tableData = []
+  lotState.page = 1
+  lotState.totalPage = 1
 }
 
-function fillFormDataFromRow(rowData) {
-  Object.assign(formData, {
-    id: rowData.id,
-    reagentname: rowData.reagentName,
-    reagentId: rowData.reagentId,
-    lotId: rowData.lotId ?? null,
-    lotname: rowData.lotName,
-  })
-}
-
-function handleCheckboxChange(checked, rowData) {
-  inventoryCheckboxSelection.onToggleByChecked({ checked, rowData })
-}
-
-function statistics() {
-  state.selectedRowId = null
-  if (formData.reagentId === null) {
-    openInfoMessageBox({ title: '库存统计', message: '请选择要统计的记录' })
+function handleReagentSelectChange(checked, rowData) {
+  if (!checked) {
+    reagentState.selectedReagentId = null
+    reagentState.selectedReagentName = ''
+    resetLotArea()
     return
   }
-
-  state.statisticsData = {
-    dataset: [
-      {
-        name: '示例',
-        series: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        color: '#ffffff',
-        type: 'line',
-        useProgression: false,
-        dataLabels: true,
-        smooth: false,
-        dashed: false,
-        useTag: 'none',
-        shape: 'circle',
-        useArea: true,
-      },
-    ],
-    xAxisLabels: ['2025-01-01', '2027-01-02', '2029-01-03', '2030-01-04', '2035-01-05'],
-    title: '试剂统计示例',
-  }
-  formData.starttime = getnowtime_previousmonth()
-  formData.endtime = getnowtime()
-  formData.intervalday = 1
-  if (!formData.lotId) {
-    formData.onlylot = false
-  }
-  syncSubmitDisabled()
-  state.drawer = true
+  reagentState.selectedReagentId = rowData.id
+  reagentState.selectedReagentName = rowData.name
+  lotState.page = 1
+  listLotInventory()
 }
 
-function syncSubmitDisabled() {
-  syncSubmitDisabledByFields({
-    formData,
-    requiredFields: REQUIRED_FIELDS,
-    target: state,
-    disabledKey: 'statisticsbuttondisabled',
-  })
-  if (formData.onlylot && !formData.lotId) {
-    state.statisticsbuttondisabled = true
-  }
+function handleLowStockChange() {
+  reagentState.page = 1
+  listReagentInventory()
 }
 
-async function list_reagentnumber() {
+function handleExpiredOnlyChange() {
+  lotState.page = 1
+  listLotInventory()
+}
+
+async function listReagentInventory() {
   return withPageLoading(async () => {
-    const data = await api_inventory_show({
-      name: state.reagentname,
-      page: state.page,
-      pageSize: state.pagesize,
+    const data = await api_inventory_showReagent({
+      name: reagentState.name,
+      lowStockOnly: reagentState.lowStockOnly,
+      page: reagentState.page,
+      pageSize: reagentState.pageSize,
     })
-    state.tableData = data.data ?? []
-    state.expandedRowKeys = state.tableData.map((row) => row.id)
-    state.totalpage = data.meta.totalPage
-  })
-}
-
-async function statistics_data() {
-  return withPageLoading(async () => {
-    if (formData.onlylot && !formData.lotId) {
-      openInfoMessageBox({ title: '库存统计', message: '当前选中的是试剂行，请选择具体批号或关闭“只统计本批号”' })
-      return
-    }
-    const data = await api_inventory_statistics({
-      onlyLot: formData.onlylot,
-      reagentId: formData.reagentId,
-      lotId: formData.onlylot ? formData.lotId : undefined,
-      startTime: formData.starttime,
-      endTime: formData.endtime,
-      intervalDay: formData.intervalday,
-    })
-    state.statisticsData.title = formData.onlylot && formData.lotId
-      ? `${formData.reagentname}  ${formData.lotname}`
-      : formData.reagentname
-    state.statisticsData.xAxisLabels = format_xAxisLabels(data.data.xAxisLabels)
-    state.statisticsData.dataset = []
-    for (const i in data.data.dataSet) {
-      state.statisticsData.dataset.push({
-        name: data.data.dataSet[i].name,
-        series: data.data.dataSet[i].number,
-        useProgression: false,
-        dataLabels: true,
-        smooth: false,
-        dashed: false,
-        useTag: 'none',
-        color: lineStyles[i % lineStyles.length].color,
-        shape: 'circle',
-        type: lineStyles[i % lineStyles.length].type,
-        useArea: true,
-      })
+    reagentState.tableData = data.data ?? []
+    reagentState.totalPage = data.meta?.totalPage ?? 1
+    if (reagentState.selectedReagentId !== null) {
+      const exists = reagentState.tableData.some((item) => item.id === reagentState.selectedReagentId)
+      if (!exists) {
+        reagentState.selectedReagentId = null
+        reagentState.selectedReagentName = ''
+        resetLotArea()
+      }
     }
   })
 }
 
-async function inventory_audit() {
+async function listLotInventory() {
+  if (!reagentState.selectedReagentId) {
+    resetLotArea()
+    return
+  }
   return withPageLoading(async () => {
-    await api_inventory_auditall(state)
-    await list_reagentnumber()
+    const data = await api_inventory_showLot({
+      reagentId: reagentState.selectedReagentId,
+      lot: lotState.lot,
+      expiredOnly: lotState.expiredOnly,
+      page: lotState.page,
+      pageSize: lotState.pageSize,
+    })
+    lotState.tableData = data.data ?? []
+    lotState.totalPage = data.meta?.totalPage ?? 1
   })
 }
 
-const lineStyles = [
-  { color: '#42d392', type: 'line' },
-  { color: '#ffae00', type: 'line' },
-  { color: '#0084ff', type: 'line' },
-]
-
-onMounted(() => {
-  list_reagentnumber()
+onMounted(async () => {
+  await listReagentInventory()
 })
 </script>
 
 <style scoped>
 .inventory-section {
-  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.inventory-drawer-content {
-  display: grid;
-  grid-template-columns: minmax(560px, 1fr) 320px;
-  gap: 20px;
-  align-items: start;
+.inventory-section .lm-table-wrap {
+  min-height: 180px;
 }
 
-.inventory-chart-wrap {
-  min-width: 0;
-  overflow: auto;
-}
-
-.inventory-drawer-form p {
-  margin: 0 0 6px 0;
-}
-
-.inventory-drawer-form :deep(.inventory-drawer-field) {
-  width: 300px;
-  margin-bottom: 12px;
-}
-
-.inventory-drawer-actions {
-  margin-top: 10px;
-}
-
-@media (max-width: 1200px) {
-  .inventory-drawer-content {
-    grid-template-columns: 1fr;
-  }
+.lot-selected-tip {
+  margin-top: 8px;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
 }
 </style>
-
-
-

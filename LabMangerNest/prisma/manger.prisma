@@ -1,0 +1,240 @@
+// manger 库：库存、出入库批次、环境监控等业务主库
+// 说明：本文件仅描述数据模型；业务枚举语义由应用层维护
+generator client {
+  // 生成 manger 库对应的 Prisma Client
+  provider = "prisma-client"
+  output   = "../generated/prisma-manger"
+}
+
+datasource db {
+  // 当前使用 sqlite，连接由启动参数/环境变量注入
+  provider = "sqlite"
+}
+
+enum Status {
+  Enable
+  Disable
+  Delete
+}
+
+enum OperationAction {
+  NoInfo
+  Inbound
+  Outbound
+}
+
+// 试剂主表
+model Reagent {
+  id               Int       @id @default(autoincrement())
+  // 试剂名称
+  name             String    @map("Name")
+  // DI/注册相关标识
+  di               String    @default("") @map("DI")
+  // 规格型号
+  specifications   String    @map("Specifications")
+  // 单价（整数）
+  price            Int       @default(0) @map("Price")
+  // 存储条件
+  storageCondition String    @map("StorageCondition")
+  // 生产厂家
+  manufacturer     String    @map("Manufacturer")
+  // 备注
+  note             String    @map("Note")
+  // 试剂总库存（独立字段，由库存流程增量维护）
+  number           Int       @default(0) @map("Number")
+  // 低库存阈值（用于低库存筛选）
+  warnNumber       Int       @default(0) @map("WarnNumber")
+  // 临期预警天数（当前可作为业务保留字段）
+  warnDays         Int       @default(0) @map("WarnDays")
+  // 创建时间
+  createdAt        DateTime  @default(now()) @map("CreatedAt")
+  // 最后一次出库时间（非 @updatedAt，需业务手动写入）
+  updatedAt        DateTime? @map("UpdatedAt")
+  // 所属团队
+  teamId           Int       @map("TeamId")
+  // 状态位（启用/删除等，语义由业务枚举解释）
+  status           Status    @default(Enable) @map("Status")
+
+  // 该试剂下的批号
+  lots             Lot[]
+  // 该试剂相关的出入库批次
+  operationBatches OperationBatch[]
+
+  @@index([status, name])
+  @@map("Reagent")
+}
+
+// 批号表
+model Lot {
+  id             Int       @id @default(autoincrement())
+  // 批号名称/编号
+  name           String    @map("Name")
+  // 所属试剂
+  reagentId      Int       @map("ReagentId")
+  // 失效日期
+  expirationDate DateTime  @map("ExpirationDate")
+  // 批号级临期预警天数（创建时默认取试剂配置，之后可独立维护）
+  warnDays       Int       @default(0) @map("WarnDays")
+  // 临期预警日期：expirationDate - warnDays 天，用于分页筛选
+  warningDate    DateTime  @default(now()) @map("WarningDate")
+  // 当前批号库存
+  number         Int       @default(0) @map("Number")
+  // 最后一次出库时间（非自动更新时间）
+  updatedAt      DateTime? @map("UpdatedAt")
+  // 状态位（启用/删除等，语义由业务枚举解释）
+  status         Status    @default(Enable) @map("Status")
+  // 所属团队
+  teamId         Int       @map("TeamId")
+
+  // 外键：批号 -> 试剂
+  reagent          Reagent         @relation(fields: [reagentId], references: [id])
+  // 批号关联的出入库批次
+  operationBatches OperationBatch[]
+
+  @@index([reagentId, status, expirationDate])
+  @@index([reagentId, status, warningDate])
+  @@map("Lot")
+}
+
+// 出入库批次主表（一次业务操作的汇总头）
+model OperationBatch {
+  id                  Int      @id @default(autoincrement())
+  // 团队上下文
+  teamId              Int      @map("TeamId")
+  // 关联试剂
+  reagentId           Int      @map("ReagentId")
+  // 关联批号
+  lotId               Int      @map("LotId")
+  // 操作人（用户库 user.id）
+  userId              Int      @map("UserId")
+  // 操作类型（入库/出库等，语义由业务枚举解释）
+  action              OperationAction @map("Action")
+  // 备注
+  note                String   @default("") @map("Note")
+  // 操作时间
+  createdAt           DateTime @default(now()) @map("CreatedAt")
+  // 状态位（有效/删除等）
+  status              Status   @default(Enable) @map("Status")
+  // 试剂名称快照（避免后续名称变更影响历史可读性）
+  reagentNameSnapshot String   @default("") @map("ReagentNameSnapshot")
+  // 批号名称快照
+  lotNameSnapshot     String   @default("") @map("LotNameSnapshot")
+  //用户名快照
+  userNameSnapshot    String   @default("") @map("userNameSnapshot")
+  //操作数量(例如一次性出库10个)
+  actionNum           Int
+  // 外键：批次 -> 试剂
+  reagent Reagent         @relation(fields: [reagentId], references: [id])
+  // 外键：批次 -> 批号
+  lot     Lot             @relation(fields: [lotId], references: [id])
+  // 一次批次下的条码明细
+  items   OperationItem[]
+
+  // 常用查询：按团队+时间倒序查看操作记录
+  @@index([teamId, createdAt])
+  // 常用查询：按动作类型+时间筛选
+  @@index([action, createdAt])
+  // 常用查询：按团队+试剂+批号定位记录
+  @@index([teamId, reagentId, lotId])
+  @@map("OperationBatch")
+}
+
+// 出入库条码明细表（从属 OperationBatch）
+model OperationItem {
+  id            Int    @id @default(autoincrement())
+  // 所属批次
+  batchId       Int    @map("BatchId")
+  //条码号 用作模糊查询
+  barcodeNumber  String    @map("barcodeNumber")
+  // UDI 扩展标识
+  udi           String @default("") @map("Udi")
+  // 状态位（有效/删除等）
+  status        Status   @default(Enable) @map("Status")
+
+  // 外键：明细 -> 批次
+  batch OperationBatch          @relation(fields: [batchId], references: [id])
+
+
+  // 常用查询：按批次拉取明细
+  @@index([batchId])
+  @@map("OperationItem")
+}
+
+// 位置点位表（库位/监测点）
+model Location {
+  id                    Int            @id @default(autoincrement())
+  // 点位名称
+  name                  String         @map("Name")
+  // 点位备注
+  note                  String         @map("Note")
+  // 状态位
+  status                Status         @default(Enable) @map("Status")
+  // 所属团队
+  teamId                Int            @map("TeamId")
+  // 采样/上报间隔（分钟）
+  uploadIntervalMinutes Int            @default(0) @map("UploadIntervalMinutes")
+  // 温度上限
+  maxTemperature        Float          @default(-50) @map("MaxTemperature")
+  // 温度下限
+  minTemperature        Float          @default(-50) @map("MinTemperature")
+  // 湿度上限
+  maxHumidity           Float          @default(100) @map("MaxHumidity")
+  // 湿度下限
+  minHumidity           Float          @default(100) @map("MinHumidity")
+  // 最近一次上报时间
+  lastUploadTime        DateTime       @default(now()) @map("LastUploadTime")
+  // 最近一次上报温度
+  lastUploadTemperature Float          @default(0) @map("LastUploadTemperature")
+  // 最近一次上报湿度
+  lastUploadHumidity    Float          @default(0) @map("LastUploadHumidity")
+  // 最近一次温度是否超阈值
+  warningTemperature    Boolean        @default(false) @map("WarningTemperature")
+  // 最近一次湿度是否超阈值
+  warningHumidity       Boolean        @default(false) @map("WarningHumidity")
+  // 最近一次是否上传超时
+  warningUploadTime     Boolean        @default(false) @map("WarningUploadTime")
+  // 最近一次上报电量
+  lastUploadBattery     Int            @default(0) @map("LastUploadBattery")
+  // 点位历史记录
+  sensorRecords         SensorRecord[]
+
+  @@map("Location")
+}
+
+// 传感器历史记录表
+model SensorRecord {
+  id                 Int      @id @default(autoincrement())
+  // 关联点位
+  locationId         Int      @map("LocationId")
+  // 团队上下文
+  teamId             Int      @map("TeamId")
+  // 团队名称快照
+  teamName           String   @default("") @map("TeamName")
+  // 采集时间
+  createdAt          DateTime @default(now()) @map("CreatedAt")
+  // 采集温度
+  temperature        Float    @map("Temperature")
+  // 采集湿度
+  humidity           Float    @map("Humidity")
+  // 采集电量
+  battery            Int      @default(0) @map("Battery")
+  // 本条记录温度告警标记
+  warningTemperature Boolean  @default(false) @map("WarningTemperature")
+  // 本条记录湿度告警标记
+  warningHumidity    Boolean  @default(false) @map("WarningHumidity")
+
+  // 外键：记录 -> 点位
+  location Location @relation(fields: [locationId], references: [id])
+
+  @@index([locationId, createdAt])
+  @@map("SensorRecord")
+}
+
+
+//条码自增计数器
+model BarcodeCounter { 
+  id    Int    @id @default(1)
+  value BigInt @default(0)
+
+  @@map("BarcodeCounter")
+}

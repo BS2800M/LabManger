@@ -139,6 +139,7 @@ import LotSelect from '@/components/lab-management/lot_select.vue'
 import UdiScanHint from '@/components/lab-management/udi_scan_hint.vue'
 import { syncSubmitDisabledByFields } from '@/utils/crud'
 import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
+import { openErrorMessageBox } from '@/utils/messagebox'
 import { usePageLoading } from '@/utils/pageLoading'
 
 const reagentOptions = ref([])
@@ -195,6 +196,37 @@ const tableColumns = [
   },
 ]
 
+function showOperationResults(results) {
+    const failedMessages = []
+    for (const result of results) {
+        if (result.isSuccess === true) {
+            ElMessage({
+                type: 'success',
+                duration: 5000,
+                message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+                    h('span', null, result.message)
+                ]),
+            })
+        } else {
+            failedMessages.push(result.message)
+        }
+    }
+
+    if (failedMessages.length > 0) {
+        openErrorMessageBox({
+            title: '出库失败',
+            message: failedMessages.join('\n'),
+        })
+    }
+}
+
+function normalizeOperationResult(data, fallbackMessage) {
+    return {
+        isSuccess: data?.isSuccess ?? data?.status === true,
+        message: data?.message ?? fallbackMessage,
+    }
+}
+
 
 
 async function operation_outbound(){
@@ -216,16 +248,23 @@ async function operation_outbound(){
             note: String(quickOutbound.note ?? '').trim(),
           }
             )
-            quickOutbound.rawInput = ""
-            quickOutbound.note = ""
-            const msg = data.data?.message ?? ''
-            const warningKeyWord = ["库存不足", "该条码已经出库", "该条码未进行入库", "该UDI已经出库", "该UDI未进行入库"]
-            ElMessage({
-                type: warningKeyWord.some(item => msg.includes(item)) ? "warning" : "success",
-                message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-                    h('span', null, msg)
-                ]),
-            })
+            const result = normalizeOperationResult(data.data, '快速出库处理完成')
+            if (result.isSuccess === true) {
+                quickOutbound.rawInput = ""
+                quickOutbound.note = ""
+                ElMessage({
+                    type: 'success',
+                    duration: 5000,
+                    message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+                        h('span', null, result.message)
+                    ]),
+                })
+            } else {
+                openErrorMessageBox({
+                    title: '出库失败',
+                    message: result.message,
+                })
+            }
         })
     } catch (err) {
         ElMessage({
@@ -267,23 +306,7 @@ async function operation_special_outbound(){
     return withPageLoading(async () => {
         const data = await api_operation_outbound(formData.tableData)
         formData.tableData = []
-        const messages = data.data?.messages ?? []
-        let message_type = "error"
-        for (let i in messages) {
-            if (messages[i].includes("库存不足")) {
-                message_type = "error"
-            } else if (messages[i].includes("库存达到警告线")) {
-                message_type = "warning"
-            } else if (messages[i].includes("库存更新成功")) {
-                message_type = "success"
-            }
-            ElMessage({
-                type: message_type,
-                message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-                    h('span', null, messages[i])
-                ]),
-            })
-        }
+        showOperationResults(data.data ?? [])
     })
 }
 

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ApiRequestZod, ZodToDto } from '../common/dtos/api-request.dto';
 import { ApiResponseZod } from '../common/dtos/api-response.dto';
+import { Status } from '../common/enums/enums';
 
 const responseReagentData = z.object({
     id: z.number(),
@@ -13,9 +14,9 @@ const responseReagentData = z.object({
     note: z.string(),
     warnNumber: z.number(),
     warnDays: z.number(),
-    createTime: z.coerce.date(),
+    createdAt: z.coerce.date(),
     teamId: z.number(),
-    status: z.number(),
+    status: z.enum(Object.values(Status) as [Status, ...Status[]]),
 });
 
 const responseShowAllData = z.object({
@@ -50,7 +51,7 @@ export const ReagentZod = {
         note: z.string().default(''),
         warnNumber: z.number().default(0),
         warnDays: z.number().default(0),
-        status: z.number(),
+        status: z.enum(Object.values(Status) as [Status, ...Status[]]),
     }),
     requestDel: z.object({
         id: z.number().min(1),

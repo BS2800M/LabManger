@@ -10,6 +10,7 @@ import { Prisma } from '../../generated/prisma-manger/client';
 import { LotService } from './lot.service';
 import { GS1Field, GS1Parser } from '@valentynb/gs1-parser';
 
+
 type OperationQueryFilters = Pick<
   OperationDto['requestShow'],
   'reagentName' | 'barcodeNumber' | 'udi' | 'startTime' | 'endTime'
@@ -27,8 +28,6 @@ const operationBatchArgs = {
   },
 } satisfies Prisma.OperationBatchDefaultArgs;
 
-type OperationBatchRecord = Prisma.OperationBatchGetPayload<typeof operationBatchArgs>;
-type OperationListRow = OperationDto['responseShow']['data'][number];
 
 @Injectable()
 export class OperationService {
@@ -42,15 +41,7 @@ export class OperationService {
     private readonly lotService: LotService,
   ) {}
 
-  // 批量查询后统一构建用户快照映射，避免逐行查用户表。
-  private async loadUserMap(userIds: number[]): Promise<Map<number, string>> {
-    if (userIds.length === 0) return new Map();
-    const users = await this.userPrisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, userName: true },
-    });
-    return new Map(users.map((user) => [user.id, user.userName]));
-  }
+
 
   private async loadReagentMap(reagentIds: number[]): Promise<Map<number, string>> {
     // 预加载试剂名快照，批量写入时避免重复查表。
@@ -126,36 +117,7 @@ export class OperationService {
     }
   }
 
-  private async createBatch(
-    tx: Prisma.TransactionClient,
-    params: {
-      teamId: number;
-      reagentId: number;
-      lotId: number;
-      userId: number;
-      action: number;
-      note: string;
-      reagentNameSnapshot: string;
-      lotNameSnapshot: string;
-    },
-  ): Promise<number> {
-    // 批次头存储业务归属字段和快照字段；明细表只保留条码明细。
-    const batch = await tx.operationBatch.create({
-      data: {
-        teamId: params.teamId,
-        reagentId: params.reagentId,
-        lotId: params.lotId,
-        userId: params.userId,
-        action: params.action,
-        note: params.note,
-        status: Status.Enable,
-        reagentNameSnapshot: params.reagentNameSnapshot,
-        lotNameSnapshot: params.lotNameSnapshot,
-      },
-      select: { id: true },
-    });
-    return batch.id;
-  }
+
 
   private buildBatchQuery(dto: OperationQueryFilters): Prisma.OperationBatchWhereInput {
     // 展示查询仅过滤未删除批次
@@ -169,9 +131,9 @@ export class OperationService {
     };
 
     if (dto.startTime || dto.endTime) {
-      where.createTime = {};
-      if (dto.startTime) where.createTime.gte = dto.startTime;
-      if (dto.endTime) where.createTime.lte = dto.endTime;
+      where.createdAt = {};
+      if (dto.startTime) where.createdAt.gte = dto.startTime;
+      if (dto.endTime) where.createdAt.lte = dto.endTime;
     }
 
     if (dto.reagentName) {
@@ -187,10 +149,9 @@ export class OperationService {
     }
     if (dto.udi) {
       // 若 barcode/udi 同时传入，需要在同一个 items.some 中叠加条件。
-      const baseSome = where.items?.some ?? { status: { not: Status.Delete } };
       where.items = {
         some: {
-          ...baseSome,
+          ...where.items?.some,
           udi: { contains: dto.udi },
         },
       };
@@ -198,43 +159,7 @@ export class OperationService {
     return where;
   }
 
-  private mapBatchesToRows(
-    batches: OperationBatchRecord[],
-    userMap: Map<number, string>,
-  ): OperationListRow[] {
-    // 后端统一输出前端需要的展示模型，前端不再二次拼装快照字段。
-    const rows: OperationListRow[] = [];
-
-    for (const batch of batches) {
-      const items = batch.items.filter((item) => item.status !== Status.Delete);
-      if (items.length === 0) continue;
-
-      rows.push({
-        batchId: batch.id,
-        createTime: batch.createTime,
-        reagent: { id: batch.reagent.id, name: batch.reagent.name },
-        lot: { id: batch.lot.id, name: batch.lot.name },
-        number: items.length,
-        detailData: items.map((item) => ({
-          id: item.id,
-          barcodeNumber: item.barcodeNumber,
-          udi: item.udi,
-        })),
-        note: batch.note,
-        action: batch.action,
-        status: batch.status,
-        user: {
-          id: batch.userId,
-          userName: userMap.get(batch.userId) ?? '',
-        },
-        userNameSnapshot: userMap.get(batch.userId) ?? '',
-        reagentNameSnapshot: batch.reagentNameSnapshot || batch.reagent.name,
-        lotNameSnapshot: batch.lotNameSnapshot || batch.lot.name,
-      });
-    }
-
-    return rows;
-  }
+  
 
   async fastInbound(
     dto: OperationDto['requestFastInbound'],
@@ -242,11 +167,12 @@ export class OperationService {
     tx: Prisma.TransactionClient,
   ): Promise<OperationDto['responseFastInbound']> {
     // 快速入库：解析 UDI -> 定位试剂/批号 -> 写批次/明细 -> 更新库存。
+
     const normalizedUdiInput = String(dto.udi ?? '').trim();
     const normalizedNote = String(dto.note ?? '').trim();
     const normalizedUdi = this.parseUdi(normalizedUdiInput);
     if (!normalizedUdi) {
-      return { success: true, data: { status: 1, message: '无效的UDI' } };
+      return { success: true, data: { status:false, message: '无效的UDI' } };
     }
 
     const existReagent = await tx.reagent.findFirst({
@@ -257,8 +183,8 @@ export class OperationService {
       },
     });
     if (!existReagent) {
-      return { success: true, data: { status: 1, message: '该UDI 试剂信息没有维护' } };
-    }
+        return { success: true, data: { status: false, message: '该UDI 试剂信息没有维护' } };
+      }
 
     let existLot = await tx.lot.findFirst({
       where: {
@@ -297,11 +223,28 @@ export class OperationService {
     });
 
     if (existInbound) {
-      return { success: true, data: { status: 1, message: '该UDI已经入库' } };
+      return { success: true, data: { status: false, message: '该UDI已经入库' } };
+    }
+
+    const result = await this.inventoryService.updateInventory(
+      existReagent.id,
+      1,
+      existLot.id,
+      tx,
+      { allowExpiringInbound: dto.allowExpiringInbound, allowNegativeInventory: false },
+    );
+
+    if (result.isSuccess===false) {
+      return {
+        success: true,
+        data: { status: false, message: result.message },
+      };
     }
 
     const startId = await this.reserveBarcodeRange(1, tx);
-    const batchId = await this.createBatch(tx, {
+    const batch = await tx.operationBatch.create({
+      data: {
+      actionNum:1,
       teamId: session.teamId,
       reagentId: existReagent.id,
       lotId: existLot.id,
@@ -310,25 +253,22 @@ export class OperationService {
       note: normalizedNote || '快速入库',
       reagentNameSnapshot: existReagent.name,
       lotNameSnapshot: existLot.name,
+      userNameSnapshot: session.userName ?? '未知用户',
+      }
     });
-
     await tx.operationItem.create({
       data: {
-        batchId,
+        batchId: batch.id,
         barcodeNumber: this.encodeBarcode(startId),
         udi: normalizedUdiInput,
         status: Status.Enable,
       },
     });
 
-    const result = await this.inventoryService.updateInventory(
-      existReagent.id,
-      1,
-      existLot.id,
-      tx,
-    );
-
-    return { success: true, data: { status: result.isSuccess ? 0 : 1, message: result.message } };
+    return {
+      success: true,
+      data: { status: result.isSuccess, message: result.message },
+    };
   }
 
   async inbound(
@@ -337,7 +277,6 @@ export class OperationService {
     tx: Prisma.TransactionClient,
   ): Promise<OperationDto['responseInbound']> {
     // 普通入库：一条 inboundList 对应一个批次头，多个条码明细挂在同一批次下。
-    const totalCount = dto.inboundList.reduce((sum, item) => sum + item.number, 0);
     const reagentIds = [...new Set(dto.inboundList.map((item) => item.reagentId))];
     const lotIds = [...new Set(dto.inboundList.map((item) => item.lotId))];
     const [reagentMap, lotMap] = await Promise.all([
@@ -345,48 +284,57 @@ export class OperationService {
       this.loadLotMap(lotIds),
     ]);
 
-    const startId = await this.reserveBarcodeRange(totalCount, tx);
-    let offset = 0;
-    const inventoryResults: { isSuccess: boolean; message: string }[] = [];
+    let inventoryResults = await Promise.all(
+      dto.inboundList.map(async (item) => {
+        return await this.inventoryService.updateInventory(
+          item.reagentId,
+          item.number,
+          item.lotId,
+          tx,
+          { allowExpiringInbound: dto.allowExpiringInbound, allowNegativeInventory: false },
+        );
+      })
+    );
 
-    for (const item of dto.inboundList) {
-      const batchId = await this.createBatch(tx, {
-        teamId: session.teamId,
-        reagentId: item.reagentId,
-        lotId: item.lotId,
-        userId: session.userId,
-        action: OperationAction.Inbound,
-        note: String(item.note ?? ''),
-        reagentNameSnapshot: reagentMap.get(item.reagentId) ?? '',
-        lotNameSnapshot: lotMap.get(item.lotId) ?? '',
-      });
+    const filterInboundList = dto.inboundList.filter((_, i) => inventoryResults[i].isSuccess);
+    const totalInboundCount = filterInboundList.reduce((sum, item) => sum + item.number, 0);
 
-      const itemsData: Prisma.OperationItemCreateManyInput[] = [];
-      for (let i = 0; i < item.number; i++) {
-        itemsData.push({
-          batchId,
-          barcodeNumber: this.encodeBarcode(startId + BigInt(offset++)),
-          udi: randomUUID(),
-          status: Status.Enable,
+    if (totalInboundCount > 0) {
+      let nextBarcodeId = await this.reserveBarcodeRange(totalInboundCount, tx);
+
+      for (const item of filterInboundList) {
+        const batch = await tx.operationBatch.create({
+          data: {
+            actionNum: item.number,
+            teamId: session.teamId,
+            reagentId: item.reagentId,
+            lotId: item.lotId,
+            userId: session.userId,
+            action: OperationAction.Inbound,
+            note: String(item.note ?? ''),
+            reagentNameSnapshot: reagentMap.get(item.reagentId) ?? '',
+            lotNameSnapshot: lotMap.get(item.lotId) ?? '',
+            userNameSnapshot: session.userName ?? '未知用户',
+          },
         });
-      }
-      await tx.operationItem.createMany({ data: itemsData });
 
-      const result = await this.inventoryService.updateInventory(
-        item.reagentId,
-        item.number,
-        item.lotId,
-        tx,
-      );
-      if (!result.isSuccess) {
-        throw new HttpException(result.message, HttpStatus.FORBIDDEN);
+        const itemsData: Prisma.OperationItemCreateManyInput[] = [];
+        for (let j = 0; j < item.number; j++) {
+          itemsData.push({
+            batchId: batch.id,
+            barcodeNumber: this.encodeBarcode(nextBarcodeId + BigInt(j)),
+            udi: randomUUID(),
+            status: Status.Enable,
+          });
+        }
+        await tx.operationItem.createMany({ data: itemsData });
+        nextBarcodeId += BigInt(item.number);
       }
-      inventoryResults.push(result);
     }
 
     return {
       success: true,
-      data: { messages: inventoryResults.map((r) => r.message) },
+      data: inventoryResults,
     };
   }
 
@@ -405,39 +353,41 @@ export class OperationService {
       const normalizedUdiInput = String(dto.udi ?? '').trim();
       const parsedUdi = this.parseUdi(normalizedUdiInput);
       if (!parsedUdi) {
-        return { success: true, data: { status: 1, message: '无效的UDI' } };
+        return { success: true, data: { status: false, message: '无效的UDI' } };
       }
       identifierWhere = { udi: normalizedUdiInput };
     } else {
       const barcodeNumber = String(dto.barcodeNumber ?? '').trim();
       if (!barcodeNumber) {
-        return { success: true, data: { status: 1, message: '无效的条码' } };
+        return { success: true, data: { status: false, message: '无效的条码' } };
       }
       identifierWhere = { barcodeNumber };
     }
 
-    const origin = await tx.operationItem.findFirst({
-      where: {
-        ...identifierWhere,
+  const origin = await tx.operationItem.findFirst({
+    where: {
+      ...identifierWhere,
+      status: Status.Enable,
+      batch: {
+        teamId: session.teamId,
+        action: OperationAction.Inbound,
         status: Status.Enable,
-        batch: {
-          teamId: session.teamId,
-          action: OperationAction.Inbound,
-          status: Status.Enable,
+      },
+    },
+    select: {
+      barcodeNumber: true, 
+      udi: true,
+      batch: {
+        include: {
+          reagent: { select: { name: true } },
+          lot: { select: { name: true } },
         },
       },
-      include: {
-        batch: {
-          include: {
-            reagent: { select: { name: true } },
-            lot: { select: { name: true } },
-          },
-        },
-      },
-    });
+    },
+  });
 
     if (!origin) {
-      return { success: true, data: { status: 1, message: notInboundMessage } };
+      return { success: true, data: { status: false, message: notInboundMessage } };
     }
 
     const outboundExists = await tx.operationItem.findFirst({
@@ -450,11 +400,11 @@ export class OperationService {
           status: Status.Enable,
         },
       },
-      select: { id: true },
+      select: { id: true ,barcodeNumber:true},
     });
 
     if (outboundExists) {
-      return { success: true, data: { status: 1, message: alreadyOutboundMessage } };
+      return { success: true, data: { status: false, message: alreadyOutboundMessage } };
     }
 
     const result = await this.inventoryService.updateInventory(
@@ -465,32 +415,35 @@ export class OperationService {
     );
 
     if (!result.isSuccess) {
-      return { success: true, data: { status: 1, message: result.message } };
+      return { success: true, data: { status: false, message: result.message } };
     }
 
-    const startId = await this.reserveBarcodeRange(1, tx);
-    const batchId = await this.createBatch(tx, {
-      teamId: origin.batch.teamId,
-      reagentId: origin.batch.reagentId,
-      lotId: origin.batch.lotId,
-      userId: session.userId,
-      action: OperationAction.Outbound,
-      note: normalizedNote || '快速出库',
-      reagentNameSnapshot:
-        origin.batch.reagentNameSnapshot || origin.batch.reagent.name,
-      lotNameSnapshot: origin.batch.lotNameSnapshot || origin.batch.lot.name,
-    });
 
+      const batch = await tx.operationBatch.create({
+        data: {
+        actionNum:1,
+        teamId: origin.batch.teamId,
+        reagentId: origin.batch.reagentId,
+        lotId: origin.batch.lotId,
+        userId: session.userId,
+        action: OperationAction.Outbound,
+        note: normalizedNote || '快速出库',
+        reagentNameSnapshot:origin.batch.reagentNameSnapshot || origin.batch.reagent.name,
+        lotNameSnapshot: origin.batch.lotNameSnapshot || origin.batch.lot.name,
+        userNameSnapshot: session.userName ?? '未知用户',
+      }
+    });
+    
     await tx.operationItem.create({
       data: {
-        batchId,
-        barcodeNumber: this.encodeBarcode(startId),
+        batchId: batch.id,
+        barcodeNumber: origin.barcodeNumber,
         udi: origin.udi,
         status: Status.Enable,
       },
     });
 
-    return { success: true, data: { status: 0, message: result.message } };
+    return { success: true, data: { status:result.isSuccess, message: result.message } };
   }
 
   async outbound(
@@ -506,57 +459,55 @@ export class OperationService {
       this.loadLotMap(lotIds),
     ]);
 
-    const inventoryResults: { isSuccess: boolean; message: string }[] = [];
-    for (const item of dto.outboundList) {
-      const result = await this.inventoryService.updateInventory(
-        item.reagentId,
-        -item.number,
-        item.lotId,
-        tx,
-      );
-      inventoryResults.push(result);
-    }
-
-    const validCount = dto.outboundList.reduce(
-      (sum, item, i) => sum + (inventoryResults[i].isSuccess ? item.number : 0),
-      0,
+    const inventoryResults = await Promise.all(
+      dto.outboundList.map(async (item) => {
+        return await this.inventoryService.updateInventory(
+          item.reagentId,
+          -item.number,
+          item.lotId,
+          tx,
+        );
+      }),
     );
 
+    const filterOutboundList = dto.outboundList.filter((_, i) => inventoryResults[i].isSuccess);
+    const validCount = filterOutboundList.reduce((sum, item) => sum + item.number, 0);
+
     if (validCount > 0) {
-      const startId = await this.reserveBarcodeRange(validCount, tx);
-      let offset = 0;
+      let nextBarcodeId = await this.reserveBarcodeRange(validCount, tx);
 
-      for (let i = 0; i < dto.outboundList.length; i++) {
-        if (!inventoryResults[i].isSuccess) continue;
-        const item = dto.outboundList[i];
-
-        const batchId = await this.createBatch(tx, {
-          teamId: session.teamId,
-          reagentId: item.reagentId,
-          lotId: item.lotId,
-          userId: session.userId,
-          action: OperationAction.Outbound,
-          note: String(item.note ?? ''),
-          reagentNameSnapshot: reagentMap.get(item.reagentId) ?? '',
-          lotNameSnapshot: lotMap.get(item.lotId) ?? '',
+      for (const item of filterOutboundList) {
+        const batch = await tx.operationBatch.create({
+          data: {
+            actionNum: item.number,
+            teamId: session.teamId,
+            reagentId: item.reagentId,
+            lotId: item.lotId,
+            userId: session.userId,
+            action: OperationAction.Outbound,
+            note: String(item.note ?? ''),
+            reagentNameSnapshot: reagentMap.get(item.reagentId) ?? '',
+            lotNameSnapshot: lotMap.get(item.lotId) ?? '',
+            userNameSnapshot: session.userName ?? '未知用户',
+          },
         });
-
         const itemsData: Prisma.OperationItemCreateManyInput[] = [];
         for (let j = 0; j < item.number; j++) {
           itemsData.push({
-            batchId,
-            barcodeNumber: this.encodeBarcode(startId + BigInt(offset++)),
+            batchId: batch.id,
+            barcodeNumber: this.encodeBarcode(nextBarcodeId + BigInt(j)),
             udi: randomUUID(),
             status: Status.Enable,
           });
         }
         await tx.operationItem.createMany({ data: itemsData });
+        nextBarcodeId += BigInt(item.number);
       }
     }
 
     return {
       success: true,
-      data: { messages: inventoryResults.map((r) => r.message) },
+      data: inventoryResults,
     };
   }
 
@@ -574,17 +525,56 @@ export class OperationService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: [{ createTime: 'desc' }, { id: 'desc' }],
-        include: operationBatchArgs.include,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       }),
       this.prisma.operationBatch.count({ where }),
     ]);
 
-    const userMap = await this.loadUserMap([...new Set(batches.map((batch) => batch.userId))]);
-    const rows = this.mapBatchesToRows(batches, userMap);
+
+    const rows = batches.map((batch) => ({  
+      user: { id: batch.userId, userName: batch.userNameSnapshot ?? '未知用户' },
+      id: batch.id,
+      createdAt: batch.createdAt,
+      reagentId: batch.reagentId,
+      lotId: batch.lotId,
+      actionNum: batch.actionNum,
+      note: batch.note,
+      action: batch.action,
+      status: batch.status,
+      reagentNameSnapshot: batch.reagentNameSnapshot,
+      lotNameSnapshot: batch.lotNameSnapshot,
+      userNameSnapshot: batch.userNameSnapshot,
+    }));
+
     const totalPage = Math.ceil(total / pageSize);
 
     return { success: true, data: rows, meta: { total, page, pageSize, totalPage } };
+  }
+  async showDetail(
+    dto: OperationDto['requestShowDetail'],
+    _session: SessionUser,
+  ): Promise<OperationDto['responseShowDetail']> {
+    // 该接口仅返回明细数据，供导出使用。
+    const page = dto.page || 1;
+    const pageSize = dto.pageSize || 10;
+    const items = await this.prisma.operationItem.findMany({
+      where: {
+        batchId: dto.searchId? dto.searchId : undefined,
+        barcodeNumber: dto.barcodeNumber ? { contains: dto.barcodeNumber } : undefined,
+        udi: dto.udi ? { contains: dto.udi } : undefined,
+      },
+      skip:(page-1)*pageSize,
+      take:pageSize,
+      orderBy: [{ id: 'asc' }],
+    })
+    const total = await this.prisma.operationItem.count({
+      where: {
+        batchId: dto.searchId? dto.searchId : undefined,
+        barcodeNumber: dto.barcodeNumber ? { contains: dto.barcodeNumber } : undefined,
+        udi: dto.udi ? { contains: dto.udi } : undefined,
+      },
+    });
+    return { success: true, data: items, meta: { total, page, pageSize, totalPage: Math.ceil(total / pageSize) } };
   }
 
   async showAll(
@@ -601,18 +591,23 @@ export class OperationService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: [{ createTime: 'desc' }, { id: 'desc' }],
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         include: operationBatchArgs.include,
       }),
       this.prisma.operationBatch.count({ where }),
     ]);
 
-    const userMap = await this.loadUserMap([...new Set(batches.map((batch) => batch.userId))]);
-    const rows = this.mapBatchesToRows(batches, userMap);
+    const rows = batches.map((batch) => ({  
+      user: { id: batch.userId, userName: batch.userNameSnapshot ?? '未知用户' },
+      userNameSnapshot: batch.userNameSnapshot ?? '未知用户',
+      ...batch
+    }));
+
     const totalPage = Math.ceil(total / pageSize);
 
     return { success: true, data: rows, meta: { total, page, pageSize, totalPage } };
   }
+
 
   async disable(
     dto: OperationDto['requestDisable'],
