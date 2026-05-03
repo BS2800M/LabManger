@@ -53,9 +53,9 @@ export const formatRole=(row,column,cellValue)=>{
 
 export const format_operation_action=(row,column,cellValue)=>{
   const table={
-    "0":"未知",
-    "1":"入库",
-    "2":"出库"
+    "NoInfo":"未知",
+    "Inbound":"入库",
+    "Outbound":"出库"
   }
   return table[cellValue]
 }

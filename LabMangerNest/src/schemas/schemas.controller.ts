@@ -68,9 +68,8 @@ export class SchemasController {
         showAll: generateSchemaFromZod(LotZod.requestShowAll, 'RequestLotShowAll'),
       },
       inventory: {
-        show: generateSchemaFromZod(InventoryZod.requestShow, 'RequestInventoryShow'),
-        auditAll: generateSchemaFromZod(InventoryZod.requestAuditAll, 'RequestInventoryAuditAll'),
-        statistics: generateSchemaFromZod(InventoryZod.requestStatistics, 'RequestInventoryStatistics'),
+        showReagent: generateSchemaFromZod(InventoryZod.requestShowReagent, 'RequestInventoryShowReagent'),
+        showLot: generateSchemaFromZod(InventoryZod.requestShowLot, 'RequestInventoryShowLot'),
       },
     }
   }

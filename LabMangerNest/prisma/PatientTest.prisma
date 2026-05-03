@@ -1,0 +1,13 @@
+// PatientTest 库：患者检测相关数据预留库
+// 当前仅保留 prisma client 与 datasource 配置，模型待后续业务落地
+generator client {
+  // 生成 PatientTest 库对应的 Prisma Client
+  provider = "prisma-client"
+  output   = "../generated/prisma-patient-test"
+}
+
+datasource db {
+  // 当前使用 sqlite，连接由启动参数/环境变量注入
+  provider = "sqlite"
+}
+

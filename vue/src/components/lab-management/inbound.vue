@@ -25,6 +25,12 @@
                 clearable
                 @keydown.enter.prevent="handleQuickInbound"
             />
+            <el-switch
+                v-model="quickInbound.allowExpiringInbound"
+                size="large"
+                active-text="允许入库临期试剂"
+                inactive-text="禁止入库临期试剂"
+            />
             <button class="stock-action-btn" @click="handleQuickInbound">
               <span>入库</span>
             </button>
@@ -76,6 +82,15 @@
                     placeholder="可填写注释"
                 />
             </div>
+            <div class="inbound-field-row">
+                <span class="inbound-field-label">临期</span>
+                <el-switch
+                    v-model="formData.allowExpiringInbound"
+                    size="large"
+                    active-text="允许入库临期试剂"
+                    inactive-text="禁止入库临期试剂"
+                />
+            </div>
         </div>
         <div class="inbound-form-actions">
             <el-button
@@ -119,6 +134,7 @@ import LotSelect from '@/components/lab-management/lot_select.vue'
 import UdiScanHint from '@/components/lab-management/udi_scan_hint.vue'
 import { syncSubmitDisabledByFields } from '@/utils/crud'
 import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
+import { openErrorMessageBox } from '@/utils/messagebox'
 import { usePageLoading } from '@/utils/pageLoading'
 // 组件引用
 // 使用reactive统一管理状态
@@ -128,6 +144,7 @@ const formData = reactive({
     reagentid:null,
     lotid:null,
     note: '',
+    allowExpiringInbound: false,
     tableData: [], // 表格数据  
 
 })
@@ -137,8 +154,9 @@ const lotOptions = ref([])
 const quickInbound = reactive({
   rawUdi: '',
   note: '',
+  allowExpiringInbound: false,
 })
-const quickInboundSubmitting = ref(false)
+
 const { pageLoading, withPageLoading } = usePageLoading()
 
 const quickInboundDisplay = computed({
@@ -169,6 +187,32 @@ const tableColumns = [
   },
 ]
 
+function showOperationResults(results) {
+  const failedMessages = []
+  for (const result of results) {
+    if (result.isSuccess === true) {
+      ElMessage({
+        type: 'success',
+        duration: 5000,
+        message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+          h('span', null, result.message),
+        ]),
+      })
+    } else {
+      failedMessages.push(result.message)
+    }
+  }
+
+  if (failedMessages.length > 0) {
+    openErrorMessageBox({
+      title: '入库失败',
+      message: failedMessages.join('\n'),
+    })
+  }
+}
+
+
+
 async function ready_inbound() {
         formData.tableData.push({
         rowsid: formData.tableData.length + 1,
@@ -184,25 +228,11 @@ async function ready_inbound() {
 }
 async function inbound() {
     return withPageLoading(async () => {
-      const data = await api_operation_inbound(formData.tableData)
+      const data = await api_operation_inbound(formData.tableData, {
+        allowExpiringInbound: formData.allowExpiringInbound,
+      })
       formData.tableData = []
-      const messages = data.data?.messages ?? []
-      let message_type = "error"
-      for (let i in messages) {
-          if (messages[i].includes("库存不足")) {
-              message_type = "error"
-          } else if (messages[i].includes("库存达到警告线")) {
-              message_type = "warning"
-          } else if (messages[i].includes("库存更新成功")) {
-              message_type = "success"
-          }
-          ElMessage({
-              type: message_type,
-              message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-                  h('span', null, messages[i])
-              ]),
-          })
-      }
+      showOperationResults(data.data ?? [])
     })
 }
 function delete_inbound(rowsid) {
@@ -235,60 +265,39 @@ function handleLotOptionsLoaded(options) {
 }
 
 async function handleQuickInbound() {
-  if (quickInboundSubmitting.value) return
-
-  const normalizedUdi = String(quickInbound.rawUdi ?? '')
-    .trim()
-
+  const normalizedUdi = String(quickInbound.rawUdi ?? '').trim()
   if (!normalizedUdi) {
     ElMessage.warning('请输入医疗器械唯一标识')
     return
   }
-
   quickInbound.rawUdi = normalizedUdi
-  quickInboundSubmitting.value = true
-
-  try {
     await withPageLoading(async () => {
-      const data = await api_operation_fast_inbound({
+      const result = await api_operation_fast_inbound({
         udi: normalizedUdi,
         note: String(quickInbound.note ?? '').trim(),
+        allowExpiringInbound: quickInbound.allowExpiringInbound,
       })
-      quickInbound.note = ''
-      const status = data.data?.status
-      const message = data.data?.message ?? '快速入库处理完成'
-
-      let messageType = 'info'
-      if (status === 0) {
-        messageType = 'success'
+      if (result.isSuccess === true) {
         quickInbound.rawUdi = ''
-      } else if (status === 1) {
-        messageType = 'warning'
+        quickInbound.note = ''
+        ElMessage({
+          type: 'success',
+          duration: 5000,
+          message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
+            h('span', null, result.data.message),
+          ]),
+        })
+      } else {
+        openErrorMessageBox({
+          title: '入库失败',
+          message: result.data.message,
+        })
       }
-
-      ElMessage({
-        type: messageType,
-        message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-          h('span', null, message),
-        ]),
-      })
     })
-  } catch (err) {
-    ElMessage({
-      type: 'error',
-      message: h('p', { style: 'line-height: 1; font-size: 25px' }, [
-        h('span', null, err?.response?.data?.message ?? '快速入库请求失败'),
-      ]),
-    })
-  } finally {
-    quickInboundSubmitting.value = false
-  }
 }
-
 </script>
 
 <style scoped>
-
 .inbound-page {
   height: calc(100dvh - 80px);
   margin: 72px auto 0;
@@ -300,7 +309,6 @@ async function handleQuickInbound() {
   gap: 8px;
   overflow: hidden;
 }
-
 .inbound-section {
   border: 1px solid var(--el-border-color-light);
   border-radius: 10px;

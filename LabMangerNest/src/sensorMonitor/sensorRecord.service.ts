@@ -1,17 +1,18 @@
-﻿import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+﻿import { Injectable,Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { MangerPrismaService } from '../prisma/manger-prisma.service';
 import { SensorRecordDto } from './sensorRecord.dto';
 import { SessionUser } from '../common/decorators/session-user.decorator';
 import { Status } from '../common/enums/enums';
 import { UserPrismaService } from '../prisma/user-prisma.service';
 import type { Prisma } from '../../generated/prisma-manger/client';
+
 @Injectable()
 export class SensorRecordService {
     constructor(
         private readonly prisma: MangerPrismaService,
         private readonly userPrisma: UserPrismaService,
     ) { }
-
+    private readonly logger = new Logger();
 
 
     async checkLocationWarning_TempHum(locationId: number, tx: Prisma.TransactionClient): Promise<void> {
@@ -95,7 +96,7 @@ export class SensorRecordService {
                     teamName: teamNameMap.get(loc.teamId) ?? '',
                     temperature: item.temperature,
                     humidity: item.humidity,
-                    createTime: item.createTime,
+                    createdAt: item.createdAt,
                     battery: item.battery,
                     warningTemperature: item.temperature > loc.maxTemperature || item.temperature < loc.minTemperature,
                     warningHumidity: item.humidity < loc.minHumidity || item.humidity > loc.maxHumidity,
@@ -131,9 +132,9 @@ export class SensorRecordService {
         const where: any = {};
         if (dto.locationName) { where.location = { name: { contains: dto.locationName } }; }
         if (dto.startTime || dto.endTime) {
-            where.createTime = {};
-            if (dto.startTime) { where.createTime.gte = dto.startTime; }
-            if (dto.endTime) { where.createTime.lte = dto.endTime; }
+            where.createdAt = {};
+            if (dto.startTime) { where.createdAt.gte = dto.startTime; }
+            if (dto.endTime) { where.createdAt.lte = dto.endTime; }
         }
 
         const page = dto.page || 1;
@@ -197,7 +198,7 @@ export class SensorRecordService {
                 temperature: dto.temperature,
                 humidity: dto.humidity,
                 locationId: dto.locationId,
-                createTime: dto.createTime,
+                createdAt: dto.createdAt,
                 battery: dto.battery,
             },
             include: {
@@ -265,6 +266,7 @@ export class SensorRecordService {
     }
 
     async checkUploadTimeout(tx: Prisma.TransactionClient): Promise<{ overdueCount: number; normalCount: number }> {
+        this.logger.log('检查传感器上传超时');
         const locations = await tx.location.findMany({
             where: { uploadIntervalMinutes: { gt: 0 },status:Status.Enable },
             select: { id: true, lastUploadTime: true, uploadIntervalMinutes: true },
@@ -295,6 +297,7 @@ export class SensorRecordService {
             }),
         ]);
 
+        this.logger.log('检查传感器上传超时完成，超时数量：' + overdueIds.length);
         return { overdueCount: overdueIds.length, normalCount: normalIds.length };
     }
 

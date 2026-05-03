@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import { UserPrismaService } from '../prisma/user-prisma.service';
 import { AuthDto } from './auth.dto';
 import { hashWithSalt } from './password.util';
+import { Status } from '../common/enums/enums';
 import type { Prisma } from '../../generated/prisma-user/client';
 
 @Injectable()
@@ -97,6 +98,6 @@ export class AuthService {
                 where: { sessionId: dto.sessionId },
             });
         }
-        return { success: true, data: { status: 0 } };
+        return { success: true, data: { status: Status.Enable } };
     }
 }

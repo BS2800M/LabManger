@@ -1,46 +1,26 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { InventoryDto, InventoryZod } from './inventory.dto';
-import { ZodQuery, ZodBody } from '../common/decorators/zod.decorator';
+import { ZodQuery } from '../common/decorators/zod.decorator';
 import { SessionUser, SessionUser as ISessionUser } from '../common/decorators/session-user.decorator';
-import { MangerPrismaService } from '../prisma/manger-prisma.service';
 
 @Controller('stock/inventory')
 export class InventoryController {
-    constructor(
-        private readonly inventoryService: InventoryService,
-        private readonly prisma: MangerPrismaService,
-    ) { }
+    constructor(private readonly inventoryService: InventoryService) { }
 
-    @Get('show')
-    show(
-        @ZodQuery(InventoryZod.requestShow) dto: InventoryDto['requestShow'],
+    @Get('showReagent')
+    showReagent(
+        @ZodQuery(InventoryZod.requestShowReagent) dto: InventoryDto['requestShowReagent'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.inventoryService.show(dto, session);
+        return this.inventoryService.showReagent(dto, session);
     }
 
-    @Get('showAll')
-    showAll(
-        @ZodQuery(InventoryZod.requestShowAll) dto: InventoryDto['requestShowAll'],
+    @Get('showLot')
+    showLot(
+        @ZodQuery(InventoryZod.requestShowLot) dto: InventoryDto['requestShowLot'],
         @SessionUser() session: ISessionUser,
     ) {
-        return this.inventoryService.showAll(dto, session);
-    }
-
-    @Post('auditAll')
-    auditAll(
-        @ZodBody(InventoryZod.requestAuditAll) _dto: any,
-        @SessionUser() session: any,
-    ) {
-        return this.prisma.$transaction((tx) => this.inventoryService.auditAll(session, tx));
-    }
-
-    @Get('statistics')
-    statistics(
-        @ZodQuery(InventoryZod.requestStatistics) dto: any,
-        @SessionUser() session: any,
-    ) {
-        return this.inventoryService.statistics(dto, session);
+        return this.inventoryService.showLot(dto, session);
     }
 }

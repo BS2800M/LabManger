@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { ApiResponseZod } from 'src/common/dtos/api-response.dto';
-import { ZodToDto } from 'src/common/dtos/api-request.dto';
+import { ApiResponseZod } from '../common/dtos/api-response.dto';
+import { ZodToDto } from '../common/dtos/api-request.dto';
+import { Status, UserRole } from '../common/enums/enums';
 
 export const LoginTypeZod = z.enum(['checker', 'reviewer']);
 const SigninBaseZod = z.object({
@@ -12,12 +13,12 @@ const ResponseSigninData = z.object({
     sessionId: z.string(),
     userName: z.string(),
     teamName: z.string(),
-    role: z.number(),
+    role: z.enum(Object.values(UserRole) as [UserRole, ...UserRole[]]),
     loginType: LoginTypeZod,
 });
 
 const ResponseSignoutData = z.object({
-    status: z.number(),
+    status: z.enum(Object.values(Status) as [Status, ...Status[]]),
 });
 
 export const AuthZod = {

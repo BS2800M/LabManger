@@ -27,6 +27,18 @@ export class SessionGuard implements CanActivate {
 
         const session = await this.prisma.session.findUnique({
             where: { sessionId },
+            select: {
+                sessionId: true,
+                userId: true,
+                teamId: true,
+                role: true,
+                loginType: true,
+                user: {
+                    select: {
+                        userName: true,
+                    },
+                },
+            },
         });
 
         if (!session) {
@@ -39,6 +51,7 @@ export class SessionGuard implements CanActivate {
             teamId: session.teamId,
             role: session.role,
             loginType: session.loginType as 'checker' | 'reviewer',
+            userName: session.user.userName,
         };
 
         return true;

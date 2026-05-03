@@ -1,7 +1,8 @@
 import { myrequest } from './request'
 
-export let api_operation_inbound=(inboundList)=>{
+export let api_operation_inbound=(inboundList, options = {})=>{
     return myrequest.post('/stock/operations/inbound',{
+        allowExpiringInbound: options.allowExpiringInbound === true,
         "inboundList": inboundList.map(item => ({
             reagentId: item.reagentId,
             lotId: item.lotId,
@@ -14,7 +15,8 @@ export let api_operation_inbound=(inboundList)=>{
 export let api_operation_fast_inbound=(body)=>{
     return myrequest.post('/stock/operations/fastInbound',{
         "udi": body.udi,
-        "note": body.note ?? ''
+        "note": body.note ?? '',
+        allowExpiringInbound: body.allowExpiringInbound === true
     })
 }
 
@@ -45,6 +47,15 @@ export let api_operation_show=(body)=>{
         udi:body.udi,
         startTime:body.startTime,
         endTime:body.endTime,
+        page:body.page,
+        pageSize:body.pageSize
+    })
+}
+export let api_operation_showdetail=(body)=>{
+    return myrequest.get('/stock/operations/showDetail',{
+        searchId:body.searchId,
+        barcodeNumber:body.barcodeNumber,
+        udi:body.udi,
         page:body.page,
         pageSize:body.pageSize
     })

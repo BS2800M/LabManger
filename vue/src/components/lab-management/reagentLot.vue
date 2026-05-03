@@ -63,6 +63,7 @@
           v-model="lotState.name"
           placeholder="搜索批号"
           @input="lotShow"
+          :disabled="!reagentState.selectedRowId"
         />
         <el-pagination
           class="reagent-lot-toolbar-pagination lm-toolbar-pagination"
@@ -71,17 +72,23 @@
           v-model:current-page="lotState.page"
           :page-count="lotState.totalpage"
           @change="lotShow"
+          :disabled="!reagentState.selectedRowId"
         />
         <div class="reagent-lot-toolbar-actions lm-toolbar-actions">
-          <el-button type="success" @click="openLotAddDrawer">增加批号</el-button>
-          <el-button type="primary" @click="openLotEditDrawer">修改批号</el-button>
+          <el-button type="success" @click="openLotAddDrawer" :disabled="!reagentState.selectedRowId">增加批号</el-button>
+          <el-button type="primary" @click="openLotEditDrawer" :disabled="!reagentState.selectedRowId">修改批号</el-button>
           <el-button
             type="danger"
             @click="showDeleteLotConfirm"
+            :disabled="!reagentState.selectedRowId"
           >
             删除批号
           </el-button>
         </div>
+      </div>
+      <div class="lot-selected-tip">
+        <span v-if="reagentState.selectedRowName">当前试剂：{{ reagentState.selectedRowName }}</span>
+        <span v-else>请在试剂表勾选一个试剂后查看批号</span>
       </div>
       <div class="reagent-lot-table-wrap lm-table-wrap">
         <el-auto-resizer>
@@ -138,7 +145,7 @@
             <p>价格</p>
             <el-input-number v-model="reagentFormData.price" :min="0" :max="99999999" placeholder="0" @change="syncReagentSubmitDisabled" />
             <p>创建时间</p>
-            <el-input disabled v-model="reagentFormData.createTime" style="width: 300px" placeholder="系统自动生成" />
+            <el-input disabled v-model="reagentFormData.createdAt" style="width: 300px" placeholder="系统自动生成" />
             <p>生成初始批号</p>
             <el-switch v-model="reagentFormData.generateLot" :disabled="reagentState.editbox_disablegeneratelot" size="large" @change="syncReagentSubmitDisabled" />
             <p>是否启用</p>
@@ -181,14 +188,9 @@
             />
           </el-config-provider>
           <p>所属试剂名</p>
-          <reagent-select
-            class="lot-reagent-select"
-            v-model="lotFormData.reagentId"
-            :refresh-trigger="lotReagentRefreshTrigger"
-            placeholder="选择试剂"
-            @change="lotCheckInput"
-            @selected-change="handleLotReagentSelected"
-          />
+          <el-input disabled v-model="lotFormData.reagentName" style="width: 300px" placeholder="请先选择试剂" />
+          <p>预警天数</p>
+            <el-input-number v-model="lotFormData.warnDays" :min="0" :max="9999" placeholder="0" @change="lotCheckInput" />
           <p>是否启用</p>
           <el-switch
             v-model="lotFormData.status"
@@ -205,9 +207,8 @@
 <script setup>
 import { ElCheckbox, ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { h, onMounted, reactive, ref } from 'vue'
+import { h, onMounted, reactive } from 'vue'
 import { GS1Field, GS1Parser } from '@valentynb/gs1-parser'
-import ReagentSelect from '@/components/lab-management/reagent_select.vue'
 import { api_reagent_show, api_reagent_del, api_reagent_update, api_reagent_add } from '@/api/reagent'
 import { api_lot_show, api_lot_del, api_lot_update, api_lot_add } from '@/api/lot'
 import { format_iso_YYYYMMDDHHmm, format_YYYYMMDDHHmm_iso, formatDateColumn } from '@/utils/format'
@@ -232,6 +233,7 @@ const reagentState = reactive({
   submitDisabled: true,
   editbox_disablegeneratelot: false,
   selectedRowId: null,
+  selectedRowName: '',
 })
 
 const reagentFormData = reactive({
@@ -246,7 +248,7 @@ const reagentFormData = reactive({
   warnDays: 0,
   generateLot: false,
   note: '',
-  createTime: null,
+  createdAt: null,
   status: true,
 })
 
@@ -266,11 +268,12 @@ const reagentTableColumns = [
     }),
   },
   { key: 'name', dataKey: 'name', title: '试剂名称', width: 180, flexGrow: 1 },
-  { key: 'di', dataKey: 'di', title: 'DI（产品标识）', width: 180, flexGrow: 1 },
+  { key: 'warnNumber', dataKey: 'warnNumber', title: '预警数量', width: 180, flexGrow: 1 },
   { key: 'specifications', dataKey: 'specifications', title: '规格', width: 140, flexGrow: 1 },
   { key: 'manufacturer', dataKey: 'manufacturer', title: '生产厂家', width: 160, flexGrow: 1 },
   { key: 'storageCondition', dataKey: 'storageCondition', title: '储存环境', width: 160, flexGrow: 1 },
   { key: 'note', dataKey: 'note', title: '备注', width: 180, flexGrow: 1 },
+  {key: 'status', dataKey: 'status', title: '状态', width: 120, flexGrow: 1 ,cellRenderer: ({ rowData }) => rowData.status === 'Enable' ? '启用' : '禁用' },
 ]
 
 const lotState = reactive({
@@ -291,10 +294,10 @@ const lotFormData = reactive({
   reagentId: null,
   status: true,
   reagentName: '',
+  warnDays: 0,
 })
 
-const lotRequiredFields = ['name', 'expirationdate', 'status', 'reagentId']
-const lotReagentRefreshTrigger = ref(0)
+const lotRequiredFields = ['name', 'expirationdate', 'status', 'reagentId', 'warnDays']
 const { pageLoading, withPageLoading } = usePageLoading()
 const gs1Parser = new GS1Parser()
 
@@ -323,12 +326,14 @@ const lotTableColumns = [
   },
   {
     key: 'reagentName',
-    dataKey: 'reagentName',
+    dataKey: 'reagent.name',
     title: '所属试剂名称',
     width: 220,
     flexGrow: 1,
-    cellRenderer: ({ rowData }) => rowData.reagent?.name ?? '',
   },
+  { key: 'warnDays', dataKey: 'warnDays', title: '预警天数', width: 180, flexGrow: 1 },
+  { key: 'warningDate', dataKey: 'warningDate', title: '预警日期', width: 180, flexGrow: 1, cellRenderer: ({ rowData }) => formatDateColumn(rowData, null, rowData.warningDate) },
+  {key: 'status', dataKey: 'status', title: '状态', width: 120, flexGrow: 1 ,cellRenderer: ({ rowData }) => rowData.status === 'Enable' ? '启用' : '禁用' },
 ]
 
 const reagentRowSelection = createSingleToggleSelection({
@@ -359,9 +364,17 @@ function resetReagentFormData(options = {}) {
     warnDays: 0,
     generateLot,
     note: '',
-    createTime: null,
+    createdAt: null,
     status: true,
   })
+}
+
+function resetLotArea() {
+  lotState.tableData = []
+  lotState.page = 1
+  lotState.totalpage = 1
+  lotState.selectedRowId = null
+  resetLotFormData()
 }
 
 function fillReagentFormDataFromRow(rowData) {
@@ -377,8 +390,8 @@ function fillReagentFormDataFromRow(rowData) {
     warnDays: rowData.warnDays,
     generateLot: rowData.generateLot,
     note: rowData.note,
-    createTime: format_iso_YYYYMMDDHHmm(rowData.createTime),
-    status: rowData.status === 0,
+    createdAt: format_iso_YYYYMMDDHHmm(rowData.createdAt),
+    status: rowData.status === 'Enable' ? true : false,
   })
 }
 
@@ -417,12 +430,22 @@ function openReagentDrawer(mode) {
 }
 
 function handleReagentCheckboxChange(checked, rowData) {
-  reagentRowSelection.onToggleByChecked({ checked, rowData })
+  const selected = reagentRowSelection.onToggleByChecked({ checked, rowData })
+  if (selected) {
+    reagentState.selectedRowName = rowData.name
+    lotState.page = 1
+    lotState.selectedRowId = null
+    resetLotFormData()
+    lotShow()
+  } else {
+    reagentState.selectedRowName = ''
+    resetLotArea()
+  }
   syncReagentSubmitDisabled()
 }
 
 function getReagentRowClass(rowData) {
-  return rowData.status === 1 ? 'unactive-row' : 'normal-row'
+  return rowData.status === 'Disable' ? 'unactive-row' : 'normal-row'
 }
 
 
@@ -459,6 +482,17 @@ async function reagentShow() {
     const data = await api_reagent_show(reagentState)
     reagentState.tableData = data.data
     reagentState.totalpage = data.meta.totalPage
+    if (reagentState.selectedRowId !== null) {
+      const selected = reagentState.tableData.find((item) => item.id === reagentState.selectedRowId)
+      if (!selected) {
+        reagentState.selectedRowId = null
+        reagentState.selectedRowName = ''
+        resetReagentFormData()
+        resetLotArea()
+      } else {
+        reagentState.selectedRowName = selected.name
+      }
+    }
   })
 }
 
@@ -471,10 +505,10 @@ async function reagentDel() {
       deleteAction: (id) => api_reagent_del(id),
       onAfterDelete: async () => {
         await reagentShow()
-        await lotShow()
         reagentState.selectedRowId = null
+        reagentState.selectedRowName = ''
         resetReagentFormData()
-        lotReagentRefreshTrigger.value += 1
+        resetLotArea()
       },
     })
   })
@@ -482,27 +516,27 @@ async function reagentDel() {
 
 async function reagentUpdate() {
   return withPageLoading(async () => {
-    reagentFormData.status = reagentFormData.status === true ? 0 : 1
+    reagentFormData.status = reagentFormData.status === true ? 'Enable' : 'Disable'
     await api_reagent_update(reagentFormData)
     reagentState.drawer = false
     await reagentShow()
     reagentState.selectedRowId = null
+    reagentState.selectedRowName = ''
     reagentFormData.id = null
-    await lotShow()
-    lotReagentRefreshTrigger.value += 1
+    resetLotArea()
   })
 }
 
 async function reagentAdd() {
   return withPageLoading(async () => {
-    reagentFormData.status = reagentFormData.status === true ? 0 : 1
+    reagentFormData.status = reagentFormData.status === true ? 'Enable' : 'Disable'
     await api_reagent_add(reagentFormData)
     reagentState.drawer = false
     await reagentShow()
     reagentState.selectedRowId = null
+    reagentState.selectedRowName = ''
     reagentFormData.id = null
-    await lotShow()
-    lotReagentRefreshTrigger.value += 1
+    resetLotArea()
   })
 }
 
@@ -511,9 +545,10 @@ function resetLotFormData() {
     id: null,
     name: '',
     expirationdate: null,
-    reagentId: null,
-    reagentName: '请选择试剂',
+    reagentId: reagentState.selectedRowId,
+    reagentName: reagentState.selectedRowName || '请先选择试剂',
     status: true,
+    warnDays: 0,
   })
 }
 
@@ -522,9 +557,10 @@ function fillLotFormDataFromRow(rowData) {
     id: rowData.id,
     name: rowData.name,
     expirationdate: rowData.expirationDate,
-    reagentId: rowData.reagent?.id ?? null,
-    reagentName: rowData.reagent?.name ?? '',
-    status: rowData.status === 0,
+    reagentId: rowData.reagentId ?? rowData.reagent?.id ?? reagentState.selectedRowId,
+    reagentName: rowData.reagent?.name ?? reagentState.selectedRowName,
+    status: rowData.status === 'Enable'? true : false,
+    warnDays: rowData.warnDays ?? 0,
   })
 }
 
@@ -552,10 +588,11 @@ function handleLotCheckboxChange(checked, rowData) {
 }
 
 function getLotRowClass(rowData) {
-  return rowData.status === 1 ? 'unactive-row' : 'normal-row'
+  return rowData.status === 'Disable' ? 'unactive-row' : 'normal-row'
 }
 
 function openLotAddDrawer() {
+  if (!reagentState.selectedRowId) return
   openAddDrawerFlow({
     setSelectedRowId: (value) => { lotState.selectedRowId = value },
     resetFormData: resetLotFormData,
@@ -564,6 +601,7 @@ function openLotAddDrawer() {
 }
 
 function openLotEditDrawer() {
+  if (!reagentState.selectedRowId) return
   tryOpenEditDrawerBySelection({
     selectedRowId: lotState.selectedRowId,
     title: '修改批号',
@@ -573,6 +611,7 @@ function openLotEditDrawer() {
 }
 
 function showDeleteLotConfirm() {
+  if (!reagentState.selectedRowId) return
   showDeleteConfirmBySelection({
     selectedRowId: lotState.selectedRowId,
     title: '删除批号',
@@ -586,14 +625,16 @@ function lotCheckInput() {
   syncLotSubmitDisabled()
 }
 
-function handleLotReagentSelected(selectedReagent) {
-  lotFormData.reagentName = selectedReagent?.name ?? '请选择试剂'
-  syncLotSubmitDisabled()
-}
-
 async function lotShow() {
+  if (!reagentState.selectedRowId) {
+    resetLotArea()
+    return
+  }
   return withPageLoading(async () => {
-    const data = await api_lot_show(lotState)
+    const data = await api_lot_show({
+      ...lotState,
+      reagentId: reagentState.selectedRowId,
+    })
     lotState.tableData = data.data
     lotState.totalpage = data.meta.totalPage
   })
@@ -618,13 +659,14 @@ async function lotDel() {
 async function lotUpdate() {
   return withPageLoading(async () => {
     const expirationDate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
-    lotFormData.status = lotFormData.status === true ? 0 : 1
+    lotFormData.status = lotFormData.status === true ? 'Enable' : 'Disable'
     await api_lot_update({
       id: lotFormData.id,
-      reagentId: lotFormData.reagentId,
+      reagentId: reagentState.selectedRowId,
       name: lotFormData.name,
       expirationDate,
       status: lotFormData.status,
+      warnDays: lotFormData.warnDays,
     })
     lotState.drawer = false
     await lotShow()
@@ -636,11 +678,13 @@ async function lotUpdate() {
 async function lotAdd() {
   return withPageLoading(async () => {
     const expirationDate = format_YYYYMMDDHHmm_iso(lotFormData.expirationdate)
-    lotFormData.status = lotFormData.status === true ? 0 : 1
+    lotFormData.status = lotFormData.status === true ? 'Enable' : 'Disable'
     await api_lot_add({
       name: lotFormData.name,
-      reagentId: lotFormData.reagentId,
+      reagentId: reagentState.selectedRowId,
       expirationDate,
+      warnDays: lotFormData.warnDays,
+      status: lotFormData.status,
     })
     lotState.drawer = false
     await lotShow()
@@ -650,7 +694,7 @@ async function lotAdd() {
 }
 
 onMounted(async () => {
-  await Promise.all([reagentShow(), lotShow()])
+  await reagentShow()
 })
 </script>
 
@@ -666,9 +710,12 @@ onMounted(async () => {
   flex: 1;
 }
 
-.lot-reagent-select {
-  width: 300px;
+.lot-selected-tip {
+  margin-top: 8px;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
 }
+
 </style>
 
 

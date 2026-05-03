@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ApiRequestZod, ZodToDto } from '../common/dtos/api-request.dto';
 import { ApiResponseZod } from '../common/dtos/api-response.dto';
+import { Status } from '../common/enums/enums';
 
 const responseLocationData = z.object({
     id: z.number(),
@@ -10,7 +11,7 @@ const responseLocationData = z.object({
         id: z.number(),
         name: z.string(),
     }),
-    status: z.number(),
+    status: z.enum(Object.values(Status) as [Status, ...Status[]]),
     uploadIntervalMinutes: z.number().min(1),
     maxTemperature: z.number(),
     minTemperature: z.number(),
@@ -33,7 +34,7 @@ export const LocationZod = {
         minTemperature: z.number().min(-50),
         maxHumidity: z.number().min(0),
         minHumidity: z.number().min(0),
-        status: z.number().min(0).max(2).optional(),
+        status: z.enum(Object.values(Status) as [Status, ...Status[]]).optional(),
     }),
     requestUpdate: z.object({
         id: z.number().min(1),
@@ -44,7 +45,7 @@ export const LocationZod = {
         minTemperature: z.number().min(-50),
         maxHumidity: z.number().min(0),
         minHumidity: z.number().min(0),
-        status: z.number().min(0).max(2).optional(),
+        status: z.enum(Object.values(Status) as [Status, ...Status[]]).optional(),
     }),
     requestShow: ApiRequestZod.pageQuery.extend({
         name: z.string().optional(),

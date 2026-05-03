@@ -1,0 +1,93 @@
+// user 库：团队、用户、会话认证信息
+// 说明：该库承载身份与权限上下文，不存放库存业务数据
+generator client {
+  // 生成 user 库对应的 Prisma Client
+  provider = "prisma-client"
+  output   = "../generated/prisma-user"
+}
+
+datasource db {
+  // 当前使用 sqlite，连接由启动参数/环境变量注入
+  provider = "sqlite"
+}
+
+enum Status {
+  Enable
+  Disable
+  Delete
+}
+
+enum UserRole {
+  Member
+  Leader
+  Director
+  Admin
+}
+
+// 团队表
+model Team {
+  id     Int    @id @default(autoincrement())
+  // 团队名称
+  name   String @map("Name")
+  // 联系电话
+  phone  String @map("Phone")
+  // 备注
+  note   String @map("Note")
+  // 状态位（启用/删除等）
+  status Status @default(Enable) @map("Status")
+
+  // 团队下的用户
+  users User[]
+
+  @@map("Team")
+}
+
+// 用户表
+model User {
+  // 登录账号（唯一）
+  account          String @unique @map("Account")
+  id               Int    @id @default(autoincrement())
+  // 用户名称
+  userName         String @map("UserName")
+  // 检验者密码哈希
+  checkerPassWord  String @map("CheckerPassWord")
+  // 检验者密码盐
+  checkerPassWordSalt String @map("CheckerPassWordSalt")
+  // 审核者密码哈希
+  reviewerPassWord String @map("ReviewerPassWord")
+  // 审核者密码盐
+  reviewerPassWordSalt String @map("ReviewerPassWordSalt")
+  // 角色（语义由业务枚举解释）
+  role             UserRole @default(Member) @map("Role")
+  // 状态位（启用/删除等）
+  status           Status   @default(Enable) @map("Status")
+  // 所属团队
+  teamId           Int    @map("Team_Id")
+
+  // 外键：用户 -> 团队
+  team Team @relation(fields: [teamId], references: [id])
+  sessions Session[]
+  @@map("User")
+  
+}
+
+// 会话表（登录态）
+model Session {
+  id         Int      @id @default(autoincrement())
+  // 会话唯一标识（token/session id）
+  sessionId  String   @unique @map("SessionId")
+  // 登录用户 id（对应 user 库）
+  userId     Int      @map("UserId")
+  // 登录团队上下文
+  teamId     Int      @map("TeamId")
+  // 登录时角色快照
+  role       UserRole @map("Role")
+  // 登录类型（checker/reviewer）
+  loginType  String   @map("LoginType")
+  // 会话创建时间
+  createdAt  DateTime @default(now()) @map("CreatedAt")
+
+  @@map("Session")
+  user User @relation(fields: [userId], references: [id])
+}
+

@@ -51,6 +51,13 @@ export class OperationController {
     ) {
         return this.operationService.show(query, session);
     }
+    @Get('showDetail')
+    async showDetail(
+        @ZodQuery(OperationZod.requestShowDetail) query: OperationDto['requestShowDetail'],
+        @SessionUser() session: ISessionUser,
+    ) {
+        return this.operationService.showDetail(query, session);
+    }
 
     @Get('showAll')
     async showAll(
