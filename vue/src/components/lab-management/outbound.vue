@@ -9,13 +9,13 @@
       <h3>快速出库</h3>
     </div>
     <div class="outbound-quick-row">
-      <span class="outbound-quick-label">{{ quickOutbound.useUdi ? '医疗器械唯一标识' : '条码号' }}</span>
+      <span class="outbound-quick-label">{{ quickOutboundFormdata.useUdi ? '医疗器械唯一标识' : '条码号' }}</span>
       <div class="outbound-quick-hint-slot">
-        <UdiScanHint v-if="quickOutbound.useUdi" />
+        <UdiScanHint v-if="quickOutboundFormdata.useUdi" />
       </div>
       <el-switch
         class="outbound-quick-switch"
-        v-model="quickOutbound.useUdi"
+        v-model="quickOutboundFormdata.useUdi"
         size="large"
         :width="60"
         :height="40"
@@ -28,13 +28,13 @@
         id="input_barcodenumber"
         class="outbound-quick-input"
         v-model="quickOutboundInputDisplay"
-        :placeholder="quickOutbound.useUdi ? '请输入或扫描UDI' : '请输入或扫描条码号'"
+        :placeholder="quickOutboundFormdata.useUdi ? '请输入或扫描UDI' : '请输入或扫描条码号'"
         clearable
         @keydown.enter.prevent="operation_outbound"
       />
       <el-input
         class="outbound-quick-note"
-        v-model="quickOutbound.note"
+        v-model="quickOutboundFormdata.note"
         placeholder="注释（可选）"
         clearable
         @keydown.enter.prevent="operation_outbound"
@@ -54,7 +54,7 @@
         <span class="outbound-field-label">试剂</span>
         <reagent-select
           class="outbound-field-control"
-          v-model="formData.reagentid"
+          v-model="outboundformData.reagentid"
           placeholder="选择试剂"
           @options-loaded="handleReagentOptionsLoaded"
           @change="handleReagentChange"
@@ -64,7 +64,7 @@
         <span class="outbound-field-label">数量</span>
         <el-input-number
           class="outbound-field-control outbound-field-control--small"
-          v-model="formData.number"
+          v-model="outboundformData.number"
           :min="1"
           :max="9999"
           placeholder="0"
@@ -75,8 +75,8 @@
         <span class="outbound-field-label">批号</span>
         <lot-select
           class="outbound-field-control"
-          v-model="formData.lotid"
-          :reagent-id="formData.reagentid"
+          v-model="outboundformData.lotid"
+          :reagent-id="outboundformData.reagentid"
           placeholder="选择批号"
           @options-loaded="handleLotOptionsLoaded"
           @change="handleLotChange"
@@ -86,7 +86,7 @@
         <span class="outbound-field-label">注释</span>
         <el-input
           class="outbound-field-control"
-          v-model="formData.note"
+          v-model="outboundformData.note"
           placeholder="可填写注释"
         />
       </div>
@@ -95,7 +95,7 @@
       <el-button
         class="outbound-prepare-btn"
         type="primary"
-        :disabled="formData.submitDisabled"
+        :disabled="outboundformData.submitDisabled"
         @click="ready_operation_special_outbound"
       >准备特殊出库</el-button>
     </div>
@@ -105,7 +105,7 @@
         <template #default="{ width, height }">
           <el-table-v2
             :columns="tableColumns"
-            :data="formData.tableData"
+            :data="outboundformData.tableData"
             :width="width"
             :height="height"
             :row-height="36"
@@ -142,37 +142,39 @@ import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
 import { openErrorMessageBox } from '@/utils/messagebox'
 import { usePageLoading } from '@/utils/pageLoading'
 
-const reagentOptions = ref([])
-const lotOptions = ref([])
-const quickOutbound = reactive({
-    useUdi: false,
+
+
+const quickOutboundFormdata = reactive({
+    useUdi: localStorage.getItem('quickOutbounduseUdi') === 'true'? true : false,
     rawInput: '',
     note: '',
+    reagentOptions:[],
+    lotOptions:[],
 })
-const quickOutboundSubmitting = ref(false)
+
 const { pageLoading, withPageLoading } = usePageLoading()
 
 const quickOutboundInputDisplay = computed({
-    get: () => (quickOutbound.useUdi ? gs1RawToVisible(quickOutbound.rawInput) : quickOutbound.rawInput),
+    get: () => (quickOutboundFormdata.useUdi ? gs1RawToVisible(quickOutboundFormdata.rawInput) : quickOutboundFormdata.rawInput),
     set: (value) => {
-        quickOutbound.rawInput = quickOutbound.useUdi ? gs1VisibleToRaw(value) : String(value ?? '')
+        quickOutboundFormdata.rawInput = quickOutboundFormdata.useUdi ? gs1VisibleToRaw(value) : String(value ?? '')
     },
 })
 
+const quickOutboundSubmitting = ref(false)
 
-
-
-
-const formData = reactive({
+const outboundformData = reactive({
     number:1,//出库数量
     submitDisabled: true, // 是否禁用按钮 默认禁用
     reagentid: null, // 选择试剂下拉菜单对应的id
     lotid: null, // 选择批号下拉菜单对应的id
     note: '',
     tableData: [], // 表格数据  
-
+    reagentOptions: [],
+    lotOptions: [],
 })
 const REQUIRED_FIELDS = ['reagentid', 'lotid', 'number']
+
 
 const tableColumns = [
   { key: 'reagentname', dataKey: 'reagentname', title: '试剂名字', width: 300, flexGrow: 1 },
@@ -232,9 +234,9 @@ function normalizeOperationResult(data, fallbackMessage) {
 async function operation_outbound(){
     if (quickOutboundSubmitting.value) return
 
-    const normalizedValue = String(quickOutbound.rawInput ?? '').trim()
+    const normalizedValue = String(quickOutboundFormdata.rawInput ?? '').trim()
     if (!normalizedValue) {
-        ElMessage.warning(quickOutbound.useUdi ? '请输入医疗器械唯一标识' : '请输入条码号')
+        ElMessage.warning(quickOutboundFormdata.useUdi ? '请输入医疗器械唯一标识' : '请输入条码号')
         return
     }
     quickOutboundSubmitting.value = true
@@ -242,16 +244,16 @@ async function operation_outbound(){
         await withPageLoading(async () => {
             const data = await api_operation_fast_outbound(
           {
-            useUdi: quickOutbound.useUdi,
-            udi: quickOutbound.useUdi ? normalizedValue : '',
-            barcodeNumber: quickOutbound.useUdi ? '' : normalizedValue,
-            note: String(quickOutbound.note ?? '').trim(),
+            useUdi: quickOutboundFormdata.useUdi,
+            udi: quickOutboundFormdata.useUdi ? normalizedValue : '',
+            barcodeNumber: quickOutboundFormdata.useUdi ? '' : normalizedValue,
+            note: String(quickOutboundFormdata.note ?? '').trim(),
           }
             )
             const result = normalizeOperationResult(data.data, '快速出库处理完成')
             if (result.isSuccess === true) {
-                quickOutbound.rawInput = ""
-                quickOutbound.note = ""
+                quickOutboundFormdata.rawInput = ""
+                quickOutboundFormdata.note = ""
                 ElMessage({
                     type: 'success',
                     duration: 5000,
@@ -279,7 +281,8 @@ async function operation_outbound(){
 }
 
 function handleQuickModeChange() {
-    quickOutbound.rawInput = ''
+    quickOutboundFormdata.rawInput = ''
+        localStorage.setItem('quickOutbounduseUdi', quickOutboundFormdata.useUdi? 'true' : 'false')
 }
 
 
@@ -289,38 +292,38 @@ function handleQuickModeChange() {
  
 
 function ready_operation_special_outbound(){
-  formData.tableData.push({
-        rowsid: formData.tableData.length + 1,
-        reagentId: formData.reagentid,
-        reagentid: formData.reagentid,
-        reagentname: reagentOptions.value.find(item => item.value === formData.reagentid)?.name,
-        lotId: formData.lotid,
-        lotid: formData.lotid,
-        lot: lotOptions.value.find(item => item.value === formData.lotid)?.name,
-        number: formData.number,
-        note: formData.note,
+  outboundformData.tableData.push({
+        rowsid: outboundformData.tableData.length + 1,
+        reagentId: outboundformData.reagentid,
+        reagentid: outboundformData.reagentid,
+        reagentname: outboundformData.reagentOptions.find(item => item.value === outboundformData.reagentid)?.name,
+        lotId: outboundformData.lotid,
+        lotid: outboundformData.lotid,
+        lot: outboundformData.lotOptions.find(item => item.value === outboundformData.lotid)?.name,
+        number: outboundformData.number,
+        note: outboundformData.note,
     })
 }
 
 async function operation_special_outbound(){
     return withPageLoading(async () => {
-        const data = await api_operation_outbound(formData.tableData)
-        formData.tableData = []
+        const data = await api_operation_outbound(outboundformData.tableData)
+        outboundformData.tableData = []
         showOperationResults(data.data ?? [])
     })
 }
 
 function delete_outbound(rowsid) {
-    formData.tableData = formData.tableData.filter(item => item.rowsid !== rowsid)
+    outboundformData.tableData = outboundformData.tableData.filter(item => item.rowsid !== rowsid)
 }
 
 
 
 function syncSubmitDisabled() {
     syncSubmitDisabledByFields({
-        formData,
+        formData: outboundformData,
         requiredFields: REQUIRED_FIELDS,
-        target: formData,
+        target: outboundformData,
         disabledKey: 'submitDisabled',
     })
 }
@@ -334,12 +337,13 @@ function handleLotChange() {
 }
 
 function handleReagentOptionsLoaded(options) {
-  reagentOptions.value = options
+  outboundformData.reagentOptions = options
 }
 
 function handleLotOptionsLoaded(options) {
-  lotOptions.value = options
+  outboundformData.lotOptions = options
 }
+
 
 </script>
 

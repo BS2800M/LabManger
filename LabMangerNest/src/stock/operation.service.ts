@@ -9,6 +9,7 @@ import { UserPrismaService } from '../prisma/user-prisma.service';
 import { Prisma } from '../../generated/prisma-manger/client';
 import { LotService } from './lot.service';
 import { GS1Field, GS1Parser } from '@valentynb/gs1-parser';
+import { is } from 'zod/v4/locales';
 
 
 type OperationQueryFilters = Pick<
@@ -277,12 +278,16 @@ export class OperationService {
     tx: Prisma.TransactionClient,
   ): Promise<OperationDto['responseInbound']> {
     // 普通入库：一条 inboundList 对应一个批次头，多个条码明细挂在同一批次下。
+    if (dto.inboundList.length === 0) {
+      return { success: true, data:[{isSuccess: false, message: '入库列表不能为空'}] ,barcodeData: [] };
+    }
     const reagentIds = [...new Set(dto.inboundList.map((item) => item.reagentId))];
     const lotIds = [...new Set(dto.inboundList.map((item) => item.lotId))];
     const [reagentMap, lotMap] = await Promise.all([
       this.loadReagentMap(reagentIds),
       this.loadLotMap(lotIds),
     ]);
+    const responseBarcodeData :{barcodeNumber: string,reagentName: string,lotName: string}[]= [];
 
     let inventoryResults = await Promise.all(
       dto.inboundList.map(async (item) => {
@@ -326,6 +331,11 @@ export class OperationService {
             udi: randomUUID(),
             status: Status.Enable,
           });
+          responseBarcodeData.push({
+            barcodeNumber: this.encodeBarcode(nextBarcodeId + BigInt(j)),
+            reagentName: reagentMap.get(item.reagentId) ?? '',
+            lotName: lotMap.get(item.lotId) ?? '',
+          });
         }
         await tx.operationItem.createMany({ data: itemsData });
         nextBarcodeId += BigInt(item.number);
@@ -335,6 +345,7 @@ export class OperationService {
     return {
       success: true,
       data: inventoryResults,
+      barcodeData: responseBarcodeData,
     };
   }
 
@@ -452,6 +463,9 @@ export class OperationService {
     tx: Prisma.TransactionClient,
   ): Promise<OperationDto['responseOutbound']> {
     // 普通出库：先逐项校验库存，再为成功项写批次和明细，失败项仅返回提示。
+    if (dto.outboundList.length === 0) {
+      return { success: true, data: [{ isSuccess: false, message: '出库列表不能为空' }] };
+    }
     const reagentIds = [...new Set(dto.outboundList.map((item) => item.reagentId))];
     const lotIds = [...new Set(dto.outboundList.map((item) => item.lotId))];
     const [reagentMap, lotMap] = await Promise.all([

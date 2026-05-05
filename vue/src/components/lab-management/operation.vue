@@ -387,7 +387,7 @@ function getRowClass(rowData, rowIndex) {
 }
 
 function getDetailRowClass(rowData, rowIndex) {
-  return 'normal-row'
+  return rowData.status === 'Disable' ? 'unactive-row' : 'normal-row'
 }
 
 function handleOperationCheckboxChange(checked, rowData) {

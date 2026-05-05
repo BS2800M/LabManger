@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import { api_operation_showall } from '@/api/operation'
 import { api_sensorRecord_showAll } from '@/api/sensorRecord'
 import { formatDateColumn, format_operation_action } from '@/utils/format'
-
+import { api_inventory_showAll } from '@/api/inventory'
 function formatDateForFilename(date = new Date()) {
   const year = String(date.getFullYear())
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -123,4 +123,45 @@ async function operation_exporttoexcel_list(filter = {}) {
   }
 }
 
-export { operation_exporttoexcel_list, sensorRecord_exporttoexcel_list }
+async function inventory_exportExcel_list(filter = {}) {
+  try {
+    const result = await api_inventory_showAll({
+      name: filter.name,
+      page: 1,
+      pageSize: 10000,
+    })
+
+    const exportData = (result.data || []).map((item) => ({
+      '试剂名称': item.reagent?.name ?? '',
+      '批号': item.name ?? '',
+      '有效期': formatDateColumn(null, null, item.expirationDate),
+      '该批号数量': item.number ?? 0,
+      '该试剂数量': item.reagent?.number ?? 0,
+      '预警数量': item.warnNumber ?? 0,
+      '最后出库时间': formatDateColumn(null, null, item.updatedAt),
+
+    }))
+
+    const columns = [
+      { header: '试剂名称', key: '试剂名称', width: 24 },
+      { header: '批号', key: '批号', width: 20 },
+      { header: '有效期', key: '有效期', width: 20 },
+      { header: '该批号数量', key: '该批号数量', width: 15 },
+      { header: '该试剂数量', key: '该试剂数量', width: 15 },
+      { header: '预警数量', key: '预警数量', width: 15 },
+      { header: '最后出库时间', key: '最后出库时间', width: 24 },
+    ]
+
+  await downloadWorkbookByExceljs({
+      sheetName: '库存列表',
+      rows: exportData,
+      columns,
+      filenamePrefix: '库存列表',
+    })
+    ElMessage.success('导出成功')
+  } catch {
+    ElMessage.error('导出失败，请稍后重试')
+  }
+  
+}
+export { operation_exporttoexcel_list, sensorRecord_exporttoexcel_list,inventory_exportExcel_list }

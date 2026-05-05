@@ -23,4 +23,11 @@ export class InventoryController {
     ) {
         return this.inventoryService.showLot(dto, session);
     }
+    @Get('showAll')
+    showAll(
+        @ZodQuery(InventoryZod.requestShowAll) dto: InventoryDto['requestShowAll'],
+        @SessionUser() session: ISessionUser,
+    ) {
+        return this.inventoryService.showAll(dto, session);
+    }
 }

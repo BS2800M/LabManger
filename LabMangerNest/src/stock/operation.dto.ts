@@ -43,7 +43,11 @@ const operationResult = z.object({
     message: z.string(),
     isSuccess: z.boolean(),
 });
-
+const barcodeData = z.object({
+    barcodeNumber: z.string(),
+    reagentName: z.string(),
+    lotName: z.string(),
+});
 export const OperationZod = {
     requestFastInbound: z.object({
         udi: z.string(),
@@ -52,7 +56,7 @@ export const OperationZod = {
     }),
     requestInbound: z.object({
         allowExpiringInbound: z.boolean().default(false),
-        inboundList: z.array(inboundListItem).min(1),
+        inboundList: z.array(inboundListItem),
     }),
     requestFastOutbound: z.object({
         useUdi: z.boolean().default(false),
@@ -61,7 +65,7 @@ export const OperationZod = {
         note: z.string().default(''),
     }),
     requestOutbound: z.object({
-        outboundList: z.array(outboundListItem).min(1),
+        outboundList: z.array(outboundListItem),
     }),
     requestShow: ApiRequestZod.pageQuery.extend({
         reagentName: z.string().optional(),
@@ -90,7 +94,7 @@ export const OperationZod = {
     responseFastInbound: ApiResponseZod.extend({
         data: z.object({ status:z.boolean, message: z.string() }),
     }),
-    responseInbound: ApiResponseZod.extend({ data: z.array(operationResult) }),
+    responseInbound: ApiResponseZod.extend({ data: z.array(operationResult) , barcodeData: z.array(barcodeData) }),
     responseFastOutbound: ApiResponseZod.extend({
         data: z.object({ status: z.boolean, message: z.string() }),
     }),

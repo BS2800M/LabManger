@@ -18,3 +18,12 @@ export const api_inventory_showLot = (params = {}) => {
         pageSize: params.pageSize,
     })
 }
+
+export const api_inventory_showAll = (params = {}) => {
+  return myrequest.get('/stock/inventory/showAll', {
+    lot: params.lot,
+    page: params.page,
+    pageSize: params.pageSize,
+  })
+}
+

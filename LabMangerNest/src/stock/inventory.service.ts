@@ -34,12 +34,12 @@ export class InventoryService {
 
     const now = new Date();
     if (delta > 0 && options.allowExpiringInbound !== true && now > lot.warningDate) {
-      return { isSuccess: false, message: `试剂${reagent.name}的批号${lot.name}临期试剂，禁止入库` };
+      return { isSuccess: false, message: `试剂${reagent.name}的批号${lot.name}临期为${lot.warningDate.toLocaleDateString()}，禁止入库` };
     }
 
     if (delta < 0 && options.allowNegativeInventory !== true) {
       if (lot.number + delta < 0 || reagent.number + delta < 0) {
-        return { isSuccess: false, message: `试剂${reagent.name}的批号${lot.name}库存不足` };
+        return { isSuccess: false, message: `试剂${reagent.name}的批号${lot.name}目前库存为${lot.number},出库数量${-delta}，库存不足，禁止出库` };
       }
     }
     await tx.lot.update({
@@ -136,9 +136,10 @@ export class InventoryService {
           warnDays: true,
           warningDate: true,
           number: true,
+          warnNumber: true,
           status: true,
           updatedAt: true,
-          reagent: { select: { name: true,id:true } },
+          reagent: { select: { name: true,id:true,number:true,warnNumber:true } },
         },
       }),
       this.prisma.lot.count({ where }),
@@ -146,4 +147,49 @@ export class InventoryService {
     const totalPage = Math.ceil(total / pageSize);
     return { success: true, data, meta: { total, page, pageSize, totalPage } };
   }
+  async showAll(
+    dto: InventoryDto['requestShowAll'],
+    _session: SessionUser,
+  ): Promise<InventoryDto['responseShowAll']> {
+    const where: Prisma.LotWhereInput = {
+      status: { not: Status.Delete },
+      reagent: { status: { not: Status.Delete } },
+      ...(dto.lot ? { name: { contains: dto.lot } } : {}),
+    };
+    const page = dto.page || 1;
+    const pageSize = dto.pageSize || 10;
+    const skip = (page - 1) * pageSize;
+    const [data, total] = await Promise.all([
+      this.prisma.lot.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: [{ updatedAt: 'desc' }, { reagentId: 'desc' }],
+        select: {
+          id: true,
+          name: true,
+          reagentId: true,
+          expirationDate: true,
+          warnDays: true,
+          warningDate: true,
+          number: true,
+          warnNumber: true,
+          status: true,
+          updatedAt: true,
+          reagent: { select: { name: true,id:true,number:true,warnNumber:true } },
+        },
+      }),
+      this.prisma.lot.count({ where }),
+    ]);
+
+    const totalPage = Math.ceil(total / pageSize);
+    return {
+      success: true,
+      data,
+      meta: { total, page, pageSize, totalPage },
+    };
+  }
 }
+
+
+
