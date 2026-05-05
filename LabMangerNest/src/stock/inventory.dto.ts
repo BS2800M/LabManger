@@ -27,6 +27,7 @@ const lotInventoryRow = z.object({
     warnDays: z.number(),
     warningDate: z.coerce.date(),
     number: z.number(),
+    warnNumber: z.number(),
     status: z.enum(Object.values(Status) as [Status, ...Status[]]),
     updatedAt: z.coerce.date().nullable(),
 });
