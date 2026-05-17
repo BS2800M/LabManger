@@ -9,7 +9,6 @@ import { UserPrismaService } from '../prisma/user-prisma.service';
 import { Prisma } from '../../generated/prisma-manger/client';
 import { LotService } from './lot.service';
 import { GS1Field, GS1Parser } from '@valentynb/gs1-parser';
-import { is } from 'zod/v4/locales';
 
 
 type OperationQueryFilters = Pick<
