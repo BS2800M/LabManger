@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import * as cluster from 'cluster';
+import cluster from 'node:cluster';
 
 const worker_number = 2; // 或者使用 os.cpus().length
 
