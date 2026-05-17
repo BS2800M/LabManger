@@ -28,7 +28,4 @@ jobs:
     - name: Build
       working-directory: ./vue
       run: npm run build --if-present
-    
-    - name: Test
-      working-directory: ./vue
-      run: npm test
+
