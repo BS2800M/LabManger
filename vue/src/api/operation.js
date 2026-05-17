@@ -53,7 +53,7 @@ export let api_operation_show=(body)=>{
 }
 export let api_operation_showdetail=(body)=>{
     return myrequest.get('/stock/operations/showDetail',{
-        searchId:body.searchId,
+        batchId:body.batchId,
         barcodeNumber:body.barcodeNumber,
         udi:body.udi,
         page:body.page,

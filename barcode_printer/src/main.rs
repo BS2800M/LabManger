@@ -1,6 +1,10 @@
+#![windows_subsystem = "windows"]
+
 use std::collections::VecDeque;
 use std::fs;
 use std::net::{Shutdown, TcpStream};
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -9,12 +13,12 @@ use std::sync::{Arc, RwLock};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{anyhow, Context, Result};
 use barcoders::generators::image::{Color, Image, Rotation};
 use barcoders::sym::code128::Code128;
 use eframe::egui;
 use image::{ImageBuffer, Rgba, RgbaImage};
-use rusttype::{Font, Scale, point};
+use rusttype::{point, Font, Scale};
 use serde::Deserialize;
 use serde_json::json;
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
@@ -23,8 +27,11 @@ const DEFAULT_PORT: u16 = 18080;
 const LOG_LIMIT: usize = 300;
 const BIND_RETRY_TIMES: usize = 6;
 const BIND_RETRY_DELAY_MS: u64 = 300;
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 #[cfg(target_os = "windows")]
+
 const CJK_FONT_CANDIDATES: &[&str] = &[
     r"C:\Windows\Fonts\msyh.ttc",
     r"C:\Windows\Fonts\msyh.ttf",
@@ -54,6 +61,38 @@ const CJK_FONT_CANDIDATES: &[&str] = &[];
 #[derive(Debug, Clone)]
 struct RuntimeConfig {
     default_printer: Option<String>,
+    print_layout: PrintLayout,
+}
+
+#[derive(Debug, Clone)]
+struct PrintLayout {
+    page_width: u32,
+    page_height: u32,
+    barcode_height: u32,
+    barcode_xdim: u32,
+    barcode_x: i32,
+    barcode_y: i32,
+    text_x: i32,
+    text_y: i32,
+    font_size: f32,
+    line_gap: u32,
+}
+
+impl Default for PrintLayout {
+    fn default() -> Self {
+        Self {
+            page_width: 420,
+            page_height: 260,
+            barcode_height: 120,
+            barcode_xdim: 2,
+            barcode_x: 24,
+            barcode_y: 16,
+            text_x: 24,
+            text_y: 152,
+            font_size: 24.0,
+            line_gap: 10,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -117,7 +156,10 @@ impl BarcodeApp {
             }
         };
 
-        let runtime_config = Arc::new(RwLock::new(RuntimeConfig { default_printer }));
+        let runtime_config = Arc::new(RwLock::new(RuntimeConfig {
+            default_printer,
+            print_layout: PrintLayout::default(),
+        }));
 
         let mut app = Self {
             runtime_config,
@@ -170,7 +212,6 @@ impl BarcodeApp {
         let shown = printer.unwrap_or_else(|| "系统默认".to_string());
         self.push_log(format!("[gui] 默认打印机已设置为: {shown}"));
     }
-    
 
     fn start_server(&mut self) {
         let config = Arc::clone(&self.runtime_config);
@@ -248,6 +289,19 @@ impl BarcodeApp {
             .ok()
             .and_then(|cfg| cfg.default_printer.clone())
     }
+
+    fn current_print_layout(&self) -> PrintLayout {
+        self.runtime_config
+            .read()
+            .map(|cfg| cfg.print_layout.clone())
+            .unwrap_or_default()
+    }
+
+    fn set_print_layout(&mut self, layout: PrintLayout) {
+        if let Ok(mut cfg) = self.runtime_config.write() {
+            cfg.print_layout = layout;
+        }
+    }
 }
 
 impl Drop for BarcodeApp {
@@ -314,6 +368,130 @@ impl eframe::App for BarcodeApp {
             });
 
             ui.separator();
+            egui::CollapsingHeader::new("打印版式设置")
+                .default_open(true)
+                .show(ui, |ui| {
+                    let mut layout = self.current_print_layout();
+                    let mut changed = false;
+
+                    egui::Grid::new("print_layout_grid")
+                        .num_columns(4)
+                        .spacing([12.0, 8.0])
+                        .show(ui, |ui| {
+                            ui.label("页面宽度");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.page_width)
+                                        .range(120..=2400)
+                                        .speed(1)
+                                        .suffix(" px"),
+                                )
+                                .changed();
+                            ui.label("页面高度");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.page_height)
+                                        .range(120..=2400)
+                                        .speed(1)
+                                        .suffix(" px"),
+                                )
+                                .changed();
+                            ui.end_row();
+
+                            ui.label("条码高度");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.barcode_height)
+                                        .range(20..=1200)
+                                        .speed(1)
+                                        .suffix(" px"),
+                                )
+                                .changed();
+                            ui.label("条码宽度倍率");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.barcode_xdim)
+                                        .range(1..=8)
+                                        .speed(1),
+                                )
+                                .changed();
+                            ui.end_row();
+
+                            ui.label("条码 X");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.barcode_x)
+                                        .range(-2400..=2400)
+                                        .speed(1)
+                                        .suffix(" px"),
+                                )
+                                .changed();
+                            ui.label("条码 Y");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.barcode_y)
+                                        .range(-2400..=2400)
+                                        .speed(1)
+                                        .suffix(" px"),
+                                )
+                                .changed();
+                            ui.end_row();
+
+                            ui.label("文字 X");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.text_x)
+                                        .range(-2400..=2400)
+                                        .speed(1)
+                                        .suffix(" px"),
+                                )
+                                .changed();
+                            ui.label("文字 Y");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.text_y)
+                                        .range(-2400..=2400)
+                                        .speed(1)
+                                        .suffix(" px"),
+                                )
+                                .changed();
+                            ui.end_row();
+
+                            ui.label("文字大小");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.font_size)
+                                        .range(8.0..=96.0)
+                                        .speed(0.5)
+                                        .suffix(" px"),
+                                )
+                                .changed();
+                            ui.label("文字行距");
+                            changed |= ui
+                                .add(
+                                    egui::DragValue::new(&mut layout.line_gap)
+                                        .range(0..=80)
+                                        .speed(1)
+                                        .suffix(" px"),
+                                )
+                                .changed();
+                            ui.end_row();
+                        });
+
+                    ui.horizontal(|ui| {
+                        if ui.button("恢复默认版式").clicked() {
+                            layout = PrintLayout::default();
+                            changed = true;
+                        }
+                        ui.label("调整后立即用于后续打印任务");
+                    });
+
+                    if changed {
+                        self.set_print_layout(layout);
+                    }
+                });
+
+            ui.separator();
             ui.label("HTTP 接口: POST /print");
             ui.label("示例 JSON: {\"data\":[{\"barcodeNumber\":\"1234567890\",\"reagentName\":\"试剂A\",\"lotName\":\"批号A\"}],\"printer\":\"可选\"}");
             ui.label(format!("当前监听: 127.0.0.1:{}", self.current_port));
@@ -334,14 +512,12 @@ impl eframe::App for BarcodeApp {
 }
 
 fn main() -> Result<()> {
+    let app = BarcodeApp::new();
     let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_title("Barcode Silent Printer")
-            .with_inner_size([520.0, 460.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size([600.0, 720.0]),
+        renderer: eframe::Renderer::Wgpu,
         ..Default::default()
     };
-
-    let app = BarcodeApp::new();
 
     eframe::run_native(
         "Barcode Silent Printer",
@@ -428,11 +604,7 @@ fn spawn_http_server_with_retry(
     let mut last_err: Option<anyhow::Error> = None;
 
     for attempt in 1..=BIND_RETRY_TIMES {
-        match spawn_http_server(
-            port,
-            Arc::clone(&runtime_config),
-            log_tx.clone(),
-        ) {
+        match spawn_http_server(port, Arc::clone(&runtime_config), log_tx.clone()) {
             Ok(handle) => return Ok(handle),
             Err(err) => {
                 if is_addr_in_use_error(&err) && attempt < BIND_RETRY_TIMES {
@@ -469,12 +641,7 @@ fn handle_http_request(
     log_tx: &Sender<String>,
 ) {
     if request.method() != &Method::Post || request.url() != "/print" {
-        respond_error_json(
-            request,
-            404,
-            "NOT_FOUND",
-            "only POST /print is supported",
-        );
+        respond_error_json(request, 404, "NOT_FOUND", "only POST /print is supported");
         return;
     }
 
@@ -562,7 +729,11 @@ fn handle_http_request(
         .printer
         .and_then(|p| {
             let s = p.trim().to_string();
-            if s.is_empty() { None } else { Some(s) }
+            if s.is_empty() {
+                None
+            } else {
+                Some(s)
+            }
         })
         .or_else(|| {
             runtime_config
@@ -570,16 +741,31 @@ fn handle_http_request(
                 .ok()
                 .and_then(|cfg| cfg.default_printer.clone())
         });
+    let print_layout = runtime_config
+        .read()
+        .map(|cfg| cfg.print_layout.clone())
+        .unwrap_or_default();
 
     let chosen_printer = printer.clone().unwrap_or_else(|| "系统默认".to_string());
     let _ = log_tx.send(format!(
-        "[print][{}] count={} printer={}",
-        request_id, task_count, chosen_printer
+        "[print][{}] count={} printer={} page={}x{} barcode={}x{}@{},{} text@{},{}",
+        request_id,
+        task_count,
+        chosen_printer,
+        print_layout.page_width,
+        print_layout.page_height,
+        print_layout.barcode_xdim,
+        print_layout.barcode_height,
+        print_layout.barcode_x,
+        print_layout.barcode_y,
+        print_layout.text_x,
+        print_layout.text_y
     ));
 
     let tasks_for_job = tasks;
     let task_count_for_job = task_count;
     let printer_for_job = printer;
+    let print_layout_for_job = print_layout;
     let log_tx_for_job = log_tx.clone();
     let request_id_for_job = request_id.clone();
 
@@ -601,6 +787,7 @@ fn handle_http_request(
                     &task.code128_payload,
                     &task.reagent_name,
                     &task.lot_name,
+                    &print_layout_for_job,
                 )?;
                 print_image_silently(&barcode_file, printer_for_job.as_deref())?;
             }
@@ -611,15 +798,12 @@ fn handle_http_request(
             Ok(()) => {
                 let _ = log_tx_for_job.send(format!(
                     "[print][{}] 打印完成, count={}",
-                    request_id_for_job,
-                    task_count_for_job
+                    request_id_for_job, task_count_for_job
                 ));
             }
             Err(err) => {
-                let _ = log_tx_for_job.send(format!(
-                    "[print][{}] 打印失败: {}",
-                    request_id_for_job, err
-                ));
+                let _ = log_tx_for_job
+                    .send(format!("[print][{}] 打印失败: {}", request_id_for_job, err));
             }
         }
     });
@@ -644,11 +828,7 @@ fn current_request_id() -> String {
     }
 }
 
-fn respond_success_json(
-    request: Request,
-    status: u16,
-    data: serde_json::Value,
-) {
+fn respond_success_json(request: Request, status: u16, data: serde_json::Value) {
     let body = json!({
         "success": true,
         "data": data
@@ -658,12 +838,7 @@ fn respond_success_json(
     respond_raw_json(request, status, body);
 }
 
-fn respond_error_json(
-    request: Request,
-    status: u16,
-    code: &str,
-    message: &str,
-) {
+fn respond_error_json(request: Request, status: u16, code: &str, message: &str) {
     let body = json!({
         "success": false,
         "error": {
@@ -695,14 +870,15 @@ fn generate_barcode_png(
     code128_payload: &str,
     reagent_name: &str,
     lot_name: &str,
+    layout: &PrintLayout,
 ) -> Result<PathBuf> {
     let barcode = Code128::new(code128_payload)
         .map_err(|err| anyhow!("Code128 生成失败（编码参数）: {err}"))?;
     let encoded = barcode.encode();
 
     let generator = Image::PNG {
-        height: 120,
-        xdim: 2,
+        height: layout.barcode_height,
+        xdim: layout.barcode_xdim,
         rotation: Rotation::Zero,
         foreground: Color::new([0, 0, 0, 255]),
         background: Color::new([255, 255, 255, 255]),
@@ -712,7 +888,7 @@ fn generate_barcode_png(
         .generate(&encoded)
         .map_err(|err| anyhow!("条码图生成失败: {err}"))?;
 
-    let image = compose_barcode_with_labels(&bytes, content, reagent_name, lot_name)?;
+    let image = compose_barcode_with_labels(&bytes, content, reagent_name, lot_name, layout)?;
 
     let safe_tail = sanitize_file_part(content);
     let ts = SystemTime::now()
@@ -730,74 +906,39 @@ fn compose_barcode_with_labels(
     barcode_number: &str,
     reagent_name: &str,
     lot_name: &str,
+    layout: &PrintLayout,
 ) -> Result<RgbaImage> {
     let barcode_img = image::load_from_memory(barcode_png_bytes)
         .context("加载条码图片失败")?
         .to_rgba8();
     let font = load_print_font()?;
 
-    const FONT_SIZE: f32 = 24.0;
-    const TOP_PADDING: u32 = 16;
-    const SIDE_PADDING: u32 = 24;
-    const BOTTOM_PADDING: u32 = 18;
-    const LINE_GAP: u32 = 10;
-
-    let scale = Scale::uniform(FONT_SIZE);
+    let scale = Scale::uniform(layout.font_size);
     let line1 = format!("条码号: {barcode_number}");
     let line2 = format!("试剂名称: {reagent_name}");
     let line3 = format!("批号名称: {lot_name}");
-    let line1_width = measure_text_width(&font, &line1, scale);
-    let line2_width = measure_text_width(&font, &line2, scale);
-    let line3_width = measure_text_width(&font, &line3, scale);
-    let max_line_width = line1_width.max(line2_width).max(line3_width);
-    let line_height = FONT_SIZE.ceil() as u32 + 8;
-    let text_block_height = line_height * 3 + LINE_GAP * 2;
+    let line_height = layout.font_size.ceil() as u32 + 8;
 
-    let canvas_width = barcode_img
-        .width()
-        .max(max_line_width.saturating_add(SIDE_PADDING * 2));
-    let canvas_height = TOP_PADDING + barcode_img.height() + LINE_GAP + text_block_height + BOTTOM_PADDING;
-    let mut canvas = ImageBuffer::from_pixel(
-        canvas_width,
-        canvas_height,
-        Rgba([255, 255, 255, 255]),
-    );
+    let canvas_width = layout.page_width.max(1);
+    let canvas_height = layout.page_height.max(1);
+    let mut canvas =
+        ImageBuffer::from_pixel(canvas_width, canvas_height, Rgba([255, 255, 255, 255]));
 
-    let barcode_x = ((canvas_width - barcode_img.width()) / 2) as i64;
-    image::imageops::overlay(&mut canvas, &barcode_img, barcode_x, TOP_PADDING as i64);
-
-    let mut baseline_y = TOP_PADDING as i32 + barcode_img.height() as i32 + LINE_GAP as i32;
-    let line1_x = ((canvas_width.saturating_sub(line1_width)) / 2) as i32;
-    draw_text_line(
+    image::imageops::overlay(
         &mut canvas,
-        &font,
-        &line1,
-        scale,
-        line1_x,
-        baseline_y,
+        &barcode_img,
+        layout.barcode_x as i64,
+        layout.barcode_y as i64,
     );
 
-    baseline_y += line_height as i32 + LINE_GAP as i32;
-    let line2_x = ((canvas_width.saturating_sub(line2_width)) / 2) as i32;
-    draw_text_line(
-        &mut canvas,
-        &font,
-        &line2,
-        scale,
-        line2_x,
-        baseline_y,
-    );
+    let mut baseline_y = layout.text_y;
+    draw_text_line(&mut canvas, &font, &line1, scale, layout.text_x, baseline_y);
 
-    baseline_y += line_height as i32 + LINE_GAP as i32;
-    let line3_x = ((canvas_width.saturating_sub(line3_width)) / 2) as i32;
-    draw_text_line(
-        &mut canvas,
-        &font,
-        &line3,
-        scale,
-        line3_x,
-        baseline_y,
-    );
+    baseline_y += line_height as i32 + layout.line_gap as i32;
+    draw_text_line(&mut canvas, &font, &line2, scale, layout.text_x, baseline_y);
+
+    baseline_y += line_height as i32 + layout.line_gap as i32;
+    draw_text_line(&mut canvas, &font, &line3, scale, layout.text_x, baseline_y);
 
     Ok(canvas)
 }
@@ -857,26 +998,6 @@ fn draw_text_line(
     }
 }
 
-fn measure_text_width(font: &Font<'static>, text: &str, scale: Scale) -> u32 {
-    let ascent = font.v_metrics(scale).ascent;
-    let glyphs = font.layout(text, scale, point(0.0, ascent));
-
-    let mut min_x = i32::MAX;
-    let mut max_x = i32::MIN;
-    for glyph in glyphs {
-        if let Some(bb) = glyph.pixel_bounding_box() {
-            min_x = min_x.min(bb.min.x);
-            max_x = max_x.max(bb.max.x);
-        }
-    }
-
-    if min_x == i32::MAX || max_x == i32::MIN || max_x <= min_x {
-        0
-    } else {
-        (max_x - min_x) as u32
-    }
-}
-
 fn prepare_code128_payload(content: &str) -> Result<String> {
     if !content.is_ascii() {
         return Err(anyhow!(
@@ -885,9 +1006,7 @@ fn prepare_code128_payload(content: &str) -> Result<String> {
     }
 
     if content.chars().any(|ch| ch.is_ascii_control()) {
-        return Err(anyhow!(
-            "Code128 内容含不可见控制字符，请仅使用可见字符"
-        ));
+        return Err(anyhow!("Code128 内容含不可见控制字符，请仅使用可见字符"));
     }
 
     // `barcoders` 需要显式提供 Code128 起始字符集，这里固定使用字符集 B。
@@ -971,6 +1090,7 @@ try {
     cmd.args(["-NoProfile", "-NonInteractive", "-Command", SCRIPT]);
     cmd.env("BARCODE_PATH", path.as_os_str());
     cmd.env("BARCODE_PRINTER", printer.unwrap_or(""));
+    cmd.creation_flags(CREATE_NO_WINDOW);
 
     let output = cmd.output().context("调用 Windows 打印流程失败")?;
     if !output.status.success() {
@@ -1004,9 +1124,11 @@ fn print_image_silently(_path: &Path, _printer: Option<&str>) -> Result<()> {
 
 #[cfg(target_os = "windows")]
 fn list_printers() -> Result<(Vec<String>, Option<String>)> {
-    let script = "Get-CimInstance Win32_Printer | Select-Object Name,Default | ConvertTo-Json -Compress";
+    let script =
+        "Get-CimInstance Win32_Printer | Select-Object Name,Default | ConvertTo-Json -Compress";
     let output = Command::new("powershell")
         .args(["-NoProfile", "-NonInteractive", "-Command", script])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .context("获取打印机列表失败")?;
 

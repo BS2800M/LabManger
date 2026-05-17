@@ -9,7 +9,6 @@ import { UserPrismaService } from '../prisma/user-prisma.service';
 import { Prisma } from '../../generated/prisma-manger/client';
 import { LotService } from './lot.service';
 import { GS1Field, GS1Parser } from '@valentynb/gs1-parser';
-import { is } from 'zod/v4/locales';
 
 
 type OperationQueryFilters = Pick<
@@ -17,17 +16,6 @@ type OperationQueryFilters = Pick<
   'reagentName' | 'barcodeNumber' | 'udi' | 'startTime' | 'endTime'
 >;
 
-const operationBatchArgs = {
-  // 列表查询统一读取批次头 + 明细项，避免每个接口重复拼 include。
-  include: {
-    reagent: { select: { id: true, name: true } },
-    lot: { select: { id: true, name: true } },
-    items: {
-      where: { status: { not: Status.Delete } },
-      orderBy: [{ id: 'asc' }],
-    },
-  },
-} satisfies Prisma.OperationBatchDefaultArgs;
 
 
 @Injectable()
@@ -539,7 +527,7 @@ export class OperationService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        orderBy: [{ createdAt: 'desc' }],
       }),
       this.prisma.operationBatch.count({ where }),
     ]);
@@ -571,23 +559,34 @@ export class OperationService {
     // 该接口仅返回明细数据，供导出使用。
     const page = dto.page || 1;
     const pageSize = dto.pageSize || 10;
-    const items = await this.prisma.operationItem.findMany({
-      where: {
-        batchId: dto.searchId? dto.searchId : undefined,
-        barcodeNumber: dto.barcodeNumber ? { contains: dto.barcodeNumber } : undefined,
-        udi: dto.udi ? { contains: dto.udi } : undefined,
-      },
-      skip:(page-1)*pageSize,
-      take:pageSize,
-      orderBy: [{ id: 'asc' }],
-    })
-    const total = await this.prisma.operationItem.count({
-      where: {
-        batchId: dto.searchId? dto.searchId : undefined,
-        barcodeNumber: dto.barcodeNumber ? { contains: dto.barcodeNumber } : undefined,
-        udi: dto.udi ? { contains: dto.udi } : undefined,
-      },
-    });
+    const where: Prisma.OperationItemWhereInput = {
+      batchId: dto.batchId,
+    };
+    if (dto.barcodeNumber) {
+      where.barcodeNumber = { contains: dto.barcodeNumber };
+    }
+    if (dto.udi) {
+      where.udi = { contains: dto.udi };
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.operationItem.findMany({
+        where,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: [{ id: 'asc' }],
+        include: {batch: {
+          select: {
+            reagentNameSnapshot: true,
+            lotNameSnapshot: true,
+          }
+        }}
+      }),
+      this.prisma.operationItem.count({ where }),
+    ]);
+
+
+
     return { success: true, data: items, meta: { total, page, pageSize, totalPage: Math.ceil(total / pageSize) } };
   }
 
@@ -606,7 +605,10 @@ export class OperationService {
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        include: operationBatchArgs.include,
+        include: {
+            reagent: { select: { id: true, name: true } },
+            lot: { select: { id: true, name: true } },
+                  },
       }),
       this.prisma.operationBatch.count({ where }),
     ]);

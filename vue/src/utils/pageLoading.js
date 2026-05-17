@@ -17,12 +17,7 @@ export function usePageLoading() {
     try {
       const timeoutPromise = new Promise((_, reject) => {
         timer = setTimeout(() => {
-          openErrorMessageBox({
-            title: timeoutTitle,
-            message: timeoutMessage,
-          })
-          reject(new Error(timeoutMessage))
-        }, timeoutMs)
+          openErrorMessageBox({title: timeoutTitle,message: timeoutMessage}) }, timeoutMs)
       })
 
       const taskPromise = (async () => await task())()
