@@ -1,9 +1,10 @@
 import axios from 'axios'
 import router from '@/router/index.js'
 import { openErrorMessageBox } from '@/utils/messagebox'
+import config from '../../public/config.json'
 
 const myservice = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/cross',
+  baseURL: config.baseurl,
   headers: {
     'Content-Type': 'application/json;charset=utf-8'
   }
@@ -30,18 +31,14 @@ myservice.interceptors.request.use(
 myservice.interceptors.response.use(
   (res) => res.data,
   (err) => {
-    if (err.response !== undefined) {
-      openErrorMessageBox({
+       openErrorMessageBox({
         title: '网络连接错误',
-        message: err.response.data.message || "无法连接服务器或服务器内部错误",
+        message:  "无法连接服务器或服务器内部错误",
         action: null,
       })
-      if (err.response.data) {
-        if (err.response.data.error === 'Unauthorized') {
+      if (err.response.data.error === 'Unauthorized') {
         router.push('/signin')
       }
-    }
-    } 
     return Promise.reject(err)
   }
 )

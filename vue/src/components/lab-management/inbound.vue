@@ -19,17 +19,18 @@
                 @keydown.enter.prevent="handleQuickInbound"
             />
             <el-input
-                v-model="quickInbound.note"
+                v-model="quickInboundFormdata.note"
                 class="inbound-quick-note"
                 placeholder="注释（可选）"
                 clearable
                 @keydown.enter.prevent="handleQuickInbound"
             />
             <el-switch
-                v-model="quickInbound.allowExpiringInbound"
+                v-model="quickInboundFormdata.allowExpiringInbound"
                 size="large"
                 active-text="允许入库临期试剂"
                 inactive-text="禁止入库临期试剂"
+                @change="saveAllowExpiring"
             />
             <button class="stock-action-btn" @click="handleQuickInbound">
               <span>入库</span>
@@ -46,7 +47,7 @@
                 <span class="inbound-field-label">试剂</span>
                 <reagent-select
                     class="inbound-field-control"
-                    v-model="formData.reagentid"
+                    v-model="inboundFormdata.reagentid"
                     placeholder="选择试剂"
                     @options-loaded="handleReagentOptionsLoaded"
                     @change="handleReagentChange"
@@ -56,8 +57,8 @@
                 <span class="inbound-field-label">批号</span>
                 <lot-select
                     class="inbound-field-control"
-                    v-model="formData.lotid"
-                    :reagent-id="formData.reagentid"
+                    v-model="inboundFormdata.lotid"
+                    :reagent-id="inboundFormdata.reagentid"
                     placeholder="选择批号"
                     @options-loaded="handleLotOptionsLoaded"
                     @change="handleLotChange"
@@ -67,7 +68,7 @@
                 <span class="inbound-field-label">数量</span>
                 <el-input-number
                     class="inbound-field-control inbound-field-control--small"
-                    v-model="formData.number"
+                    v-model="inboundFormdata.number"
                     :min="1"
                     :max="9999"
                     placeholder="0"
@@ -78,17 +79,28 @@
                 <span class="inbound-field-label">注释</span>
                 <el-input
                     class="inbound-field-control"
-                    v-model="formData.note"
+                    v-model="inboundFormdata.note"
                     placeholder="可填写注释"
                 />
             </div>
             <div class="inbound-field-row">
                 <span class="inbound-field-label">临期</span>
                 <el-switch
-                    v-model="formData.allowExpiringInbound"
+                    v-model="inboundFormdata.allowExpiringInbound"
                     size="large"
                     active-text="允许入库临期试剂"
                     inactive-text="禁止入库临期试剂"
+                    @change="saveAllowExpiring"
+                />
+            </div>
+            <div class="inbound-field-row">
+                <span class="inbound-field-label">条码</span>
+                <el-switch
+                    v-model="inboundFormdata.autoPrintBarcode"
+                    size="large"
+                    active-text="自动打印条码"
+                    inactive-text="不打印条码"
+                    @change="saveAllowExpiring"
                 />
             </div>
         </div>
@@ -96,7 +108,7 @@
             <el-button
                 class="inbound-prepare-btn"
                 type="primary"
-                :disabled="formData.submitDisabled"
+                :disabled="inboundFormdata.submitDisabled"
                 @click="ready_inbound"
             >准备入库</el-button>
         </div>
@@ -105,7 +117,7 @@
             <template #default="{ width, height }">
               <el-table-v2
                 :columns="tableColumns"
-                :data="formData.tableData"
+                :data="inboundFormdata.tableData"
                 :width="width"
                 :height="height"
                 :row-height="36"
@@ -136,33 +148,36 @@ import { syncSubmitDisabledByFields } from '@/utils/crud'
 import { gs1RawToVisible, gs1VisibleToRaw } from '@/utils/gs1'
 import { openErrorMessageBox } from '@/utils/messagebox'
 import { usePageLoading } from '@/utils/pageLoading'
+import { api_barcode_printer_print } from '@/api/barcodePrinter'
 // 组件引用
 // 使用reactive统一管理状态
-const formData = reactive({
+const inboundFormdata = reactive({
     number:1,//数量
     submitDisabled: true, // 是否禁用按钮 默认禁用
     reagentid:null,
     lotid:null,
     note: '',
-    allowExpiringInbound: false,
+    allowExpiringInbound: localStorage.getItem('Inbound_allowExpiringInbound') === 'true' ? true : false,
     tableData: [], // 表格数据  
-
+    reagentOptions: [], // 试剂选项
+    lotOptions: [], // 批号选项
+    autoPrintBarcode: localStorage.getItem('Inbound_autoPrintBarcode') === 'true' ? true : false,
+    responseBarcodeData: [], // 入库后返回的条码数据
 })
 const REQUIRED_FIELDS = ['reagentid', 'lotid', 'number']
-const reagentOptions = ref([])
-const lotOptions = ref([])
-const quickInbound = reactive({
+
+const quickInboundFormdata = reactive({
   rawUdi: '',
   note: '',
-  allowExpiringInbound: false,
+  allowExpiringInbound: localStorage.getItem('QuickInbound_allowExpiringInbound') === 'true' ? true : false,
 })
 
 const { pageLoading, withPageLoading } = usePageLoading()
 
 const quickInboundDisplay = computed({
-  get: () => gs1RawToVisible(quickInbound.rawUdi),
+  get: () => gs1RawToVisible(quickInboundFormdata.rawUdi),
   set: (value) => {
-    quickInbound.rawUdi = gs1VisibleToRaw(value)
+    quickInboundFormdata.rawUdi = gs1VisibleToRaw(value)
   },
 })
 const tableColumns = [
@@ -214,36 +229,45 @@ function showOperationResults(results) {
 
 
 async function ready_inbound() {
-        formData.tableData.push({
-        rowsid: formData.tableData.length + 1,
-        reagentId: formData.reagentid,
-        reagentid: formData.reagentid,
-        reagentname: reagentOptions.value.find(item => item.value === formData.reagentid)?.name,
-        lotId: formData.lotid,
-        lotid: formData.lotid,
-        lot: lotOptions.value.find(item => item.value === formData.lotid)?.name,
-        number: formData.number,
-        note: formData.note,
+        inboundFormdata.tableData.push({
+        rowsid: inboundFormdata.tableData.length + 1,
+        reagentId: inboundFormdata.reagentid,
+        reagentid: inboundFormdata.reagentid,
+        reagentname: inboundFormdata.reagentOptions.find(item => item.value === inboundFormdata.reagentid)?.name,
+        lotId: inboundFormdata.lotid,
+        lotid: inboundFormdata.lotid,
+        lot: inboundFormdata.lotOptions.find(item => item.value === inboundFormdata.lotid)?.name,
+        number: inboundFormdata.number,
+        note: inboundFormdata.note,
     })
 }
 async function inbound() {
-    return withPageLoading(async () => {
-      const data = await api_operation_inbound(formData.tableData, {
-        allowExpiringInbound: formData.allowExpiringInbound,
+    await withPageLoading(async () => {
+      const data = await api_operation_inbound(inboundFormdata.tableData, {
+        allowExpiringInbound: inboundFormdata.allowExpiringInbound,
       })
-      formData.tableData = []
+      inboundFormdata.tableData = []
+      inboundFormdata.responseBarcodeData = data.barcodeData
       showOperationResults(data.data ?? [])
     })
+    if (inboundFormdata.autoPrintBarcode && inboundFormdata.responseBarcodeData && inboundFormdata.responseBarcodeData.length > 0) {
+      try {
+        await api_barcode_printer_print({data: inboundFormdata.responseBarcodeData})
+        inboundFormdata.responseBarcodeData = []
+      } catch (error) {
+        ElMessage.error('条码打印失败：' + (error.message || '未知错误'))
+      }
+    }
 }
 function delete_inbound(rowsid) {
-    formData.tableData = formData.tableData.filter(item => item.rowsid !== rowsid)
+    inboundFormdata.tableData = inboundFormdata.tableData.filter(item => item.rowsid !== rowsid)
 }
 
 function syncSubmitDisabled() {
   syncSubmitDisabledByFields({
-    formData,
+    formData: inboundFormdata,
     requiredFields: REQUIRED_FIELDS,
-    target: formData,
+    target: inboundFormdata,
     disabledKey: 'submitDisabled',
   })
 }
@@ -257,29 +281,29 @@ function handleLotChange() {
 }
 
 function handleReagentOptionsLoaded(options) {
-  reagentOptions.value = options
+  inboundFormdata.reagentOptions = options
 }
 
-function handleLotOptionsLoaded(options) {
-  lotOptions.value = options
+function  handleLotOptionsLoaded(options) {
+  inboundFormdata.lotOptions = options
 }
 
 async function handleQuickInbound() {
-  const normalizedUdi = String(quickInbound.rawUdi ?? '').trim()
+  const normalizedUdi = String(quickInboundFormdata.rawUdi ?? '').trim()
   if (!normalizedUdi) {
     ElMessage.warning('请输入医疗器械唯一标识')
     return
   }
-  quickInbound.rawUdi = normalizedUdi
+  quickInboundFormdata.rawUdi = normalizedUdi
     await withPageLoading(async () => {
       const result = await api_operation_fast_inbound({
         udi: normalizedUdi,
-        note: String(quickInbound.note ?? '').trim(),
-        allowExpiringInbound: quickInbound.allowExpiringInbound,
+        note: String(quickInboundFormdata.note ?? '').trim(),
+        allowExpiringInbound: quickInboundFormdata  .allowExpiringInbound,
       })
       if (result.isSuccess === true) {
-        quickInbound.rawUdi = ''
-        quickInbound.note = ''
+        quickInboundFormdata.rawUdi = ''
+        quickInboundFormdata.note = ''
         ElMessage({
           type: 'success',
           duration: 5000,
@@ -294,6 +318,11 @@ async function handleQuickInbound() {
         })
       }
     })
+}
+function saveAllowExpiring() {
+  localStorage.setItem('Inbound_allowExpiringInbound', inboundFormdata.allowExpiringInbound ? 'true' : 'false')
+  localStorage.setItem('QuickInbound_allowExpiringInbound', quickInboundFormdata.allowExpiringInbound ? 'true' : 'false')
+  localStorage.setItem('Inbound_autoPrintBarcode', inboundFormdata.autoPrintBarcode ? 'true' : 'false')
 }
 </script>
 

@@ -27,6 +27,9 @@
           :page-count="reagentState.totalPage"
           @change="listReagentInventory"
         />
+        <div class="lm-toolbar-actions">
+          <el-button id="handleExport" type="primary" @click="handleExport">导出盘库表</el-button>
+        </div>
       </div>
       <div class="lm-table-wrap">
         <el-auto-resizer>
@@ -102,10 +105,10 @@
 <script setup>
 import { h, onMounted, reactive } from 'vue'
 import { ElCheckbox } from 'element-plus'
-import { api_inventory_showReagent, api_inventory_showLot } from '@/api/inventory'
+import { api_inventory_showReagent, api_inventory_showLot, api_inventory_showAll } from '@/api/inventory'
 import { formatDateColumn } from '@/utils/format'
 import { usePageLoading } from '@/utils/pageLoading'
-
+import { inventory_exportExcel_list } from '@/utils/exportexcel.js'
 const { pageLoading, withPageLoading } = usePageLoading()
 
 const reagentState = reactive({
@@ -155,7 +158,7 @@ const reagentColumns = [
 
 const lotColumns = [
   { key: 'name', dataKey: 'name', title: '批号', width: 220, flexGrow: 1 },
-  { key: 'reagentName', dataKey: 'reagentName', title: '试剂名称', width: 180, flexGrow: 1 },
+  { key: 'reagent.name', dataKey: 'reagent.name', title: '试剂名称', width: 180, flexGrow: 1 },
   {
     key: 'expirationDate',
     dataKey: 'expirationDate',
@@ -248,6 +251,11 @@ async function listLotInventory() {
   })
 }
 
+async function handleExport() {
+  inventory_exportExcel_list({
+    name: reagentState.name,
+  })
+}
 onMounted(async () => {
   await listReagentInventory()
 })

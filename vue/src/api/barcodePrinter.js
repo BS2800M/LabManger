@@ -1,7 +1,7 @@
 import axios from 'axios'
-
+import config from '../../public/config.json'
 const barcodePrinterRequest = axios.create({
-  baseURL: import.meta.env.VITE_BARCODE_PRINTER_BASE_URL || '/barcode-printer',
+  baseURL: config.barcodePrinterBaseUrl,
   headers: {
     'Content-Type': 'application/json;charset=utf-8',
   },

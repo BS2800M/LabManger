@@ -16,17 +16,6 @@ type OperationQueryFilters = Pick<
   'reagentName' | 'barcodeNumber' | 'udi' | 'startTime' | 'endTime'
 >;
 
-const operationBatchArgs = {
-  // 列表查询统一读取批次头 + 明细项，避免每个接口重复拼 include。
-  include: {
-    reagent: { select: { id: true, name: true } },
-    lot: { select: { id: true, name: true } },
-    items: {
-      where: { status: { not: Status.Delete } },
-      orderBy: [{ id: 'asc' }],
-    },
-  },
-} satisfies Prisma.OperationBatchDefaultArgs;
 
 
 @Injectable()
@@ -277,12 +266,16 @@ export class OperationService {
     tx: Prisma.TransactionClient,
   ): Promise<OperationDto['responseInbound']> {
     // 普通入库：一条 inboundList 对应一个批次头，多个条码明细挂在同一批次下。
+    if (dto.inboundList.length === 0) {
+      return { success: true, data:[{isSuccess: false, message: '入库列表不能为空'}] ,barcodeData: [] };
+    }
     const reagentIds = [...new Set(dto.inboundList.map((item) => item.reagentId))];
     const lotIds = [...new Set(dto.inboundList.map((item) => item.lotId))];
     const [reagentMap, lotMap] = await Promise.all([
       this.loadReagentMap(reagentIds),
       this.loadLotMap(lotIds),
     ]);
+    const responseBarcodeData :{barcodeNumber: string,reagentName: string,lotName: string}[]= [];
 
     let inventoryResults = await Promise.all(
       dto.inboundList.map(async (item) => {
@@ -326,6 +319,11 @@ export class OperationService {
             udi: randomUUID(),
             status: Status.Enable,
           });
+          responseBarcodeData.push({
+            barcodeNumber: this.encodeBarcode(nextBarcodeId + BigInt(j)),
+            reagentName: reagentMap.get(item.reagentId) ?? '',
+            lotName: lotMap.get(item.lotId) ?? '',
+          });
         }
         await tx.operationItem.createMany({ data: itemsData });
         nextBarcodeId += BigInt(item.number);
@@ -335,6 +333,7 @@ export class OperationService {
     return {
       success: true,
       data: inventoryResults,
+      barcodeData: responseBarcodeData,
     };
   }
 
@@ -452,6 +451,9 @@ export class OperationService {
     tx: Prisma.TransactionClient,
   ): Promise<OperationDto['responseOutbound']> {
     // 普通出库：先逐项校验库存，再为成功项写批次和明细，失败项仅返回提示。
+    if (dto.outboundList.length === 0) {
+      return { success: true, data: [{ isSuccess: false, message: '出库列表不能为空' }] };
+    }
     const reagentIds = [...new Set(dto.outboundList.map((item) => item.reagentId))];
     const lotIds = [...new Set(dto.outboundList.map((item) => item.lotId))];
     const [reagentMap, lotMap] = await Promise.all([
@@ -525,7 +527,7 @@ export class OperationService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        orderBy: [{ createdAt: 'desc' }],
       }),
       this.prisma.operationBatch.count({ where }),
     ]);
@@ -557,23 +559,34 @@ export class OperationService {
     // 该接口仅返回明细数据，供导出使用。
     const page = dto.page || 1;
     const pageSize = dto.pageSize || 10;
-    const items = await this.prisma.operationItem.findMany({
-      where: {
-        batchId: dto.searchId? dto.searchId : undefined,
-        barcodeNumber: dto.barcodeNumber ? { contains: dto.barcodeNumber } : undefined,
-        udi: dto.udi ? { contains: dto.udi } : undefined,
-      },
-      skip:(page-1)*pageSize,
-      take:pageSize,
-      orderBy: [{ id: 'asc' }],
-    })
-    const total = await this.prisma.operationItem.count({
-      where: {
-        batchId: dto.searchId? dto.searchId : undefined,
-        barcodeNumber: dto.barcodeNumber ? { contains: dto.barcodeNumber } : undefined,
-        udi: dto.udi ? { contains: dto.udi } : undefined,
-      },
-    });
+    const where: Prisma.OperationItemWhereInput = {
+      batchId: dto.batchId,
+    };
+    if (dto.barcodeNumber) {
+      where.barcodeNumber = { contains: dto.barcodeNumber };
+    }
+    if (dto.udi) {
+      where.udi = { contains: dto.udi };
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.operationItem.findMany({
+        where,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: [{ id: 'asc' }],
+        include: {batch: {
+          select: {
+            reagentNameSnapshot: true,
+            lotNameSnapshot: true,
+          }
+        }}
+      }),
+      this.prisma.operationItem.count({ where }),
+    ]);
+
+
+
     return { success: true, data: items, meta: { total, page, pageSize, totalPage: Math.ceil(total / pageSize) } };
   }
 
@@ -592,7 +605,10 @@ export class OperationService {
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        include: operationBatchArgs.include,
+        include: {
+            reagent: { select: { id: true, name: true } },
+            lot: { select: { id: true, name: true } },
+                  },
       }),
       this.prisma.operationBatch.count({ where }),
     ]);

@@ -97,11 +97,18 @@
           v-model:current-page="state.detailpage"
           :page-count="state.detailtotalpage"
           @change="operation_showdetail"
+          :disabled="!state.selectedRowId"
         />
         <div class="lm-toolbar-actions">
-          <el-button id="barcodeprint" type="primary" @click="barcodeprint">补打条码</el-button>
-          <el-button id="copyudi" type="primary" @click="copyUdi">复制UDI</el-button>
+          <el-button id="barcodeprint" type="primary" @click="barcodeprint" :disabled="!state.selectedRowId">补打条码</el-button>
+          <el-button id="copyudi" type="primary" @click="copyUdi" :disabled="!state.selectedRowId">复制UDI</el-button>
         </div>
+      </div>
+      <div class="lot-selected-tip">
+        <span v-if="state.selectedRowId">
+          当前记录：ID {{ formData.batchId }} / {{ formData.actualReagentName }} / {{ formData.actualLotName }} / {{ formData.action }}
+        </span>
+        <span v-else>请在上表勾选一条操作记录后查看详情</span>
       </div>
 
       <div class="lm-table-wrap">
@@ -122,7 +129,7 @@
     </section>
   </div>
 
-  <el-drawer v-model="state.drawer" direction="rtl" size="70%" @open="state.selectedRowId = null" @close="resetFormData">
+  <el-drawer v-model="state.drawer" direction="rtl" size="70%" @close="resetFormData">
     <template #header>
       <span class="operation-drawer-title lm-drawer-title">操作查询</span>
     </template>
@@ -161,22 +168,20 @@
 </template>
 
 <script setup>
-import { h, onMounted, reactive, ref } from 'vue'
-import { ElCheckbox, ElConfigProvider } from 'element-plus'
+import { h, onMounted, reactive } from 'vue'
+import { ElCheckbox, ElConfigProvider, ElMessage } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { api_operation_show, api_operation_disable,api_operation_showdetail } from '@/api/operation'
 import { api_barcode_printer_print } from '@/api/barcodePrinter'
 import { formatDateColumn, getnowtime, getnowtime_previousmonth, format_operation_action } from '@/utils/format'
 import { format_YYYYMMDDHHmm_iso } from '@/utils/format'
 import { operation_exporttoexcel_list } from '@/utils/exportexcel.js'
-import { api_reagent_showall } from '@/api/reagent'
-import { api_lot_showall } from '@/api/lot'
 import { createSingleToggleSelection, tryOpenEditDrawerBySelection } from '@/utils/crud'
 import { closeMessageBox, openConfirmMessageBox, openInfoMessageBox } from '@/utils/messagebox'
 import { usePageLoading } from '@/utils/pageLoading'
 
 
-const allreagentlist = ref([])
+
 
 const state = reactive({
   selectedRowId: null,
@@ -217,6 +222,8 @@ const detailFormData = reactive({
   barcodeNumber: '',
   udi: '',
   id: null,
+  reagentNameSnapshot:null,
+  lotNameSnapshot:null,
 })
 const dataDetailColumns = [
   {
@@ -244,6 +251,20 @@ const dataDetailColumns = [
     flexGrow: 1,
     cellRenderer: ({ rowData }) => rowData.udi,
   },
+  {
+    key: 'batch.reagentNameSnapshot',
+    dataKey: 'batch.reagentNameSnapshot',
+    title: '试剂名称',
+    width: 300,
+    flexGrow: 1,
+  },
+  {
+    key: 'batch.lotNameSnapshot',
+    dataKey: 'batch.lotNameSnapshot',
+    title: '批号',
+    width: 300,
+    flexGrow: 1,
+  }
 ]
 
 const tableColumns = [
@@ -325,7 +346,12 @@ const operationCheckboxSelection = createSingleToggleSelection({
   getSelectedRowId: () => state.selectedRowId,
   setSelectedRowId: (value) => { state.selectedRowId = value },
   getRowId: (row) => row.id,
-  onSelect: (rowdata)=>{fillFormDataFromRow(rowdata),operation_showdetail()},
+  onSelect: (rowdata) => {
+    fillFormDataFromRow(rowdata)
+    resetDetailArea()
+    state.detailpage = 1
+    operation_showdetail()
+  },
   onDeselect: resetFormData,
 })
 
@@ -338,7 +364,7 @@ const detailCheckboxSelection = createSingleToggleSelection({
 })
 function resetFormData() {
   state.selectedRowId = null
-  resetDetailFormData()
+  resetDetailArea()
   Object.assign(formData, {
     batchId: null,
     action: '',
@@ -354,6 +380,7 @@ function resetFormData() {
 
 function fillFormDataFromRow(rowData) {
   Object.assign(formData, {
+    batchId: rowData.id,
     action: rowData.action === 'inbound' ? '入库' : '出库',
     createdAt: rowData.createdAt,
     note: rowData.note,
@@ -370,6 +397,8 @@ function fillDetailFormDataFromRow(rowData) {
     barcodeNumber: rowData.barcodeNumber,
     udi: rowData.udi,
     id: rowData.id,
+    reagentNameSnapshot: rowData.batch?.reagentNameSnapshot ?? '',
+    lotNameSnapshot: rowData.batch?.lotNameSnapshot ?? '',
   })
 }
 
@@ -379,7 +408,16 @@ function resetDetailFormData() {
     barcodeNumber: '',
     udi: '',
     id: null,
+    reagentNameSnapshot: '',
+    lotNameSnapshot: '',
   })
+}
+
+function resetDetailArea() {
+  resetDetailFormData()
+  state.detailTableData = []
+  state.detailpage = 1
+  state.detailtotalpage = 1
 }
 
 function getRowClass(rowData, rowIndex) {
@@ -387,7 +425,7 @@ function getRowClass(rowData, rowIndex) {
 }
 
 function getDetailRowClass(rowData, rowIndex) {
-  return 'normal-row'
+  return rowData.status === 'Disable' ? 'unactive-row' : 'normal-row'
 }
 
 function handleOperationCheckboxChange(checked, rowData) {
@@ -399,6 +437,7 @@ function handleDetailCheckboxChange(checked, rowData) {
 }
 async function operation_show() {
   const reqId = ++operationShowReqId
+  resetFormData()
   return withPageLoading(async () => {
     state.starttime = format_YYYYMMDDHHmm_iso(state.starttime_show)
     state.endtime = format_YYYYMMDDHHmm_iso(state.endtime_show)
@@ -414,14 +453,17 @@ async function operation_show() {
     if (reqId !== operationShowReqId) return
     state.tableData = data.data
     state.totalpage = data.meta?.totalPage ?? 1
-    await operation_showdetail()
   })
 }
 
 async function operation_showdetail() {
+  if (!state.selectedRowId) {
+    resetDetailArea()
+    return
+  }
   return withPageLoading(async () => {
     const data = await api_operation_showdetail({
-      searchId: state.selectedRowId,
+      batchId: state.selectedRowId,
       barcodeNumber: state.barcodeNumber,
       udi: state.udi,
       page: state.detailpage,
@@ -433,14 +475,16 @@ async function operation_showdetail() {
 }
 
 async function barcodeprint() {
+  if(!state.selectedRowId) {
+    ElMessage.warning('请先选择操作记录')
+    return
+  }
   if(!detailFormData.barcodeNumber) {
     ElMessage.error('请选择条码号')
     return
   }
-  const reagentName = String(
-    detailFormData.actualReagentName
-  ).trim()
-  const lotName = String(detailFormData.actualLotName).trim()
+  const reagentName = String(detailFormData.reagentNameSnapshot).trim()
+  const lotName = String(detailFormData.lotNameSnapshot).trim()
   if (!reagentName || !lotName) {
     ElMessage.error('缺少试剂或批号信息，无法补打')
     return
@@ -452,8 +496,8 @@ async function barcodeprint() {
         data: [
           {
             barcodeNumber: detailFormData.barcodeNumber,
-            reagentName,
-            lotName,
+            reagentName:detailFormData.reagentNameSnapshot,
+            lotName:detailFormData.lotNameSnapshot,
           },
         ],
       })
@@ -472,6 +516,10 @@ async function barcodeprint() {
 
 
 async function copyUdi() {
+  if(!state.selectedRowId) {
+    ElMessage.warning('请先选择操作记录')
+    return
+  }
 
   const udi = String(detailFormData.udi ?? '').trim()
 
@@ -532,24 +580,20 @@ function handleExport() {
     udi: state.udi,
   })
 }
-
-onMounted(async () => {
-  await withPageLoading(async () => {
-    await operation_show()
-    let data = await api_reagent_showall()
-    allreagentlist.value = data.data.map((item) => ({
-      value: item.id,
-      label: item.name,
-      name: item.name,
-    }))
-    data = await api_lot_showall()
-  })
+onMounted(() => {
+  operation_show()
 })
+
 </script>
 
 <style scoped>
 
 
+.lot-selected-tip {
+  margin-top: 8px;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+}
 
 
 

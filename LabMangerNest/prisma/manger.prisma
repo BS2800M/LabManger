@@ -130,12 +130,12 @@ model OperationBatch {
   // 一次批次下的条码明细
   items   OperationItem[]
 
-  // 常用查询：按团队+时间倒序查看操作记录
-  @@index([teamId, createdAt])
-  // 常用查询：按动作类型+时间筛选
-  @@index([action, createdAt])
-  // 常用查询：按团队+试剂+批号定位记录
-  @@index([teamId, reagentId, lotId])
+  // 常用查询：时间查看操作记录
+  @@index([createdAt])
+  // 常用查询：试剂明细查询
+  
+  // 常用查询：按试剂名称
+  @@index([reagentNameSnapshot])
   @@map("OperationBatch")
 }
 
@@ -157,6 +157,9 @@ model OperationItem {
 
   // 常用查询：按批次拉取明细
   @@index([batchId])
+  @@index([barcodeNumber])
+  @@index([udi])
+
   @@map("OperationItem")
 }
 

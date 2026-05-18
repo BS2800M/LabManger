@@ -1,0 +1,182 @@
+name: 发布构建
+
+on:
+  # 推送 v1.0.0 这类版本标签时自动打包并发布 GitHub Release。
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "手动发布到 GitHub Release 时填写标签，例如 v1.0.0；留空则只构建 artifact。"
+        required: false
+        type: string
+
+permissions:
+  # 允许 workflow 创建 Release 并上传压缩包。
+  contents: write
+
+jobs:
+  build:
+    name: 构建 Node ${{ matrix.node-version }} 版本
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        # 使用 bash 编写原生命令，不调用 PowerShell 脚本。
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 24
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: |
+            vue/package-lock.json
+            LabMangerNest/package-lock.json
+
+      - name: 配置 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: x86_64-pc-windows-gnu
+
+      - name: 安装 Vue 依赖
+        working-directory: vue
+        run: npm ci
+
+      - name: 构建 Vue 前端
+        working-directory: vue
+        run: npm run build
+
+      - name: 安装 Nest 依赖
+        working-directory: LabMangerNest
+        run: npm ci
+
+      - name: 生成 Prisma 客户端
+        working-directory: LabMangerNest
+        run: npm run prisma:generate
+
+      - name: 构建 Nest 后端
+        working-directory: LabMangerNest
+        run: npm run build
+
+      - name: 构建 Rust 打印程序(静态链接)
+        working-directory: barcode_printer
+        run: |
+          rustup default stable-x86_64-pc-windows-gnu
+          RUSTFLAGS="-C link-arg=-static" cargo build --release --target x86_64-pc-windows-gnu
+
+      - name: 整理发布目录
+        run: |
+          set -euo pipefail
+
+          RELEASE_DIR="$GITHUB_WORKSPACE/release"
+          rm -rf "$RELEASE_DIR"
+          mkdir -p "$RELEASE_DIR/vue" "$RELEASE_DIR/nest/prisma" "$RELEASE_DIR/rust"
+
+          cp -R "$GITHUB_WORKSPACE/vue/dist/." "$RELEASE_DIR/vue/"
+
+          cp -R "$GITHUB_WORKSPACE/LabMangerNest/dist" "$RELEASE_DIR/nest/dist"
+          cp -R "$GITHUB_WORKSPACE/LabMangerNest/generated" "$RELEASE_DIR/nest/generated"
+          cp "$GITHUB_WORKSPACE"/LabMangerNest/prisma/*.prisma "$RELEASE_DIR/nest/prisma/"
+          cp "$GITHUB_WORKSPACE/LabMangerNest/package.json" "$RELEASE_DIR/nest/"
+          cp "$GITHUB_WORKSPACE/LabMangerNest/package-lock.json" "$RELEASE_DIR/nest/"
+          find "$RELEASE_DIR/nest" -name "*.db" -type f -delete
+
+          cat > "$RELEASE_DIR/nest/README.txt" <<'EOF'
+          LabMangerNest 发布包
+
+          这是精简生产发布包，不包含 node_modules，也不包含 SQLite .db 数据库文件。
+
+          在目标机器上：
+          1. npm ci --omit=dev
+          2. 按 prisma/*.prisma 提供或初始化 SQLite 数据库。
+          3. npm run prod
+          EOF
+
+          cp "$GITHUB_WORKSPACE/barcode_printer/target/x86_64-pc-windows-gnu/release/barcode_silent_printer.exe" "$RELEASE_DIR/rust/"
+
+      - name: 校验发布内容
+        run: |
+          set -euo pipefail
+
+          test -f "$GITHUB_WORKSPACE/release/vue/index.html"
+          test -f "$GITHUB_WORKSPACE/release/nest/dist/src/main.js"
+          test -d "$GITHUB_WORKSPACE/release/nest/generated"
+          test -f "$GITHUB_WORKSPACE/release/nest/prisma/user.prisma"
+          test -f "$GITHUB_WORKSPACE/release/nest/prisma/manger.prisma"
+          test -f "$GITHUB_WORKSPACE/release/nest/prisma/PatientTest.prisma"
+          test -f "$GITHUB_WORKSPACE/release/rust/barcode_silent_printer.exe"
+
+          if find "$GITHUB_WORKSPACE/release/nest" -name "*.db" -type f | grep -q .; then
+            echo "Nest 发布包中发现了不应包含的 SQLite 数据库文件。"
+            exit 1
+          fi
+
+          if [ -d "$GITHUB_WORKSPACE/release/nest/node_modules" ]; then
+            echo "Nest 发布包中发现了不应包含的 node_modules 目录。"
+            exit 1
+          fi
+
+          if [ -d "$GITHUB_WORKSPACE/release/nest/src" ]; then
+            echo "Nest 发布包中发现了不应包含的 src 目录。"
+            exit 1
+          fi
+
+      - name: 创建 zip 压缩包
+        run: |
+          set -euo pipefail
+
+          ARCHIVE="$GITHUB_WORKSPACE/LabManger-dev-${GITHUB_REF_NAME}-node${{ matrix.node-version }}.zip"
+          rm -f "$ARCHIVE"
+
+          cd "$GITHUB_WORKSPACE/release"
+          if command -v 7z >/dev/null 2>&1; then
+            ZIP_BIN="7z"
+          elif [ -x "/c/Program Files/7-Zip/7z.exe" ]; then
+            ZIP_BIN="/c/Program Files/7-Zip/7z.exe"
+          else
+            echo "当前 runner 中未找到 7-Zip。"
+            exit 1
+          fi
+
+          "$ZIP_BIN" a -tzip "$ARCHIVE" .
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-node${{ matrix.node-version }}
+          path: LabManger-dev-${{ github.ref_name }}-node${{ matrix.node-version }}.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: 发布到 GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' || github.event.inputs.release_tag != ''
+
+    steps:
+      - name: 下载构建产物
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-node*
+          path: dist
+          merge-multiple: true
+
+      - name: 创建 Release 并上传压缩包
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
+          files: dist/*.zip
+          fail_on_unmatched_files: true

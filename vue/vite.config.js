@@ -24,19 +24,5 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     hmr: true,
-    proxy: {
-      '/cross': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/cross/, '')
-      },
-      '/barcode-printer': {
-        target: 'http://127.0.0.1:18080',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/barcode-printer/, '')
-      }
-    }
   }
 })
