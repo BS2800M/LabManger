@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   # 允许 workflow 创建 Release 并上传压缩包。
@@ -42,6 +43,8 @@ jobs:
 
       - name: 配置 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
+        with:
+          target: x86_64-pc-windows-gnu
 
       - name: 安装 Vue 依赖
         working-directory: vue
@@ -63,9 +66,9 @@ jobs:
         working-directory: LabMangerNest
         run: npm run build
 
-      - name: 构建 Rust 打印程序
+      - name: 构建 Rust 打印程序(静态链接)
         working-directory: barcode_printer
-        run: cargo build --release
+        run: RUSTFLAGS="-C link-arg=-static" cargo build --release --target x86_64-pc-windows-gnu
 
       - name: 整理发布目录
         run: |
